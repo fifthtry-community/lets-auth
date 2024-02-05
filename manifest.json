@@ -1,0 +1,56 @@
+{
+  "files": {
+    "FASTN.ftd": {
+      "name": "FASTN.ftd",
+      "checksum": "933E2B6A8C985468C032846DF67271B701D317EB98FB9CA43A02AB34563223D0",
+      "size": 599
+    },
+    "FASTN/ds.ftd": {
+      "name": "FASTN/ds.ftd",
+      "checksum": "C033F1433A1B6498C4961D97900090E3E2CF76DB3E0F0D16F8B4A83D3A1CDD49",
+      "size": 2349
+    },
+    "README.md": {
+      "name": "README.md",
+      "checksum": "2C372A7AA51EFF6E5BE56E3D2D56DD55D63FBDF58A4D2E279392A02B55DDB960",
+      "size": 1416
+    },
+    "_config.yml": {
+      "name": "_config.yml",
+      "checksum": "A42D91290C93B5F17412C3B346737EA1C796E5D287306758AFE8B20470119D80",
+      "size": 21
+    },
+    "assets/ipsum-logo-dark.svg": {
+      "name": "assets/ipsum-logo-dark.svg",
+      "checksum": "8290B3397C465FE1BB40B7CA280C976DF7DA3DABFC655B429805ABF33964FB5B",
+      "size": 16202
+    },
+    "assets/ipsum-logo.svg": {
+      "name": "assets/ipsum-logo.svg",
+      "checksum": "A227CF22E798ACFB2D01B6352FC22A28047444F028AF05440C6CE6F9499C0EDF",
+      "size": 15494
+    },
+    "favicon.ico": {
+      "name": "favicon.ico",
+      "checksum": "65056A1D6C6AAE6E3DC4626E29F4BD4B628B17A8E9CC1D3A5E8FE9F6743F306B",
+      "size": 15406
+    },
+    "index.ftd": {
+      "name": "index.ftd",
+      "checksum": "32532606DDF89B56B42BA173EEAC7F7E9006DEEC07ABF10F6ABE246DC0EC1482",
+      "size": 1190
+    },
+    "sidebar.ftd": {
+      "name": "sidebar.ftd",
+      "checksum": "98EA5E5D5540AA8CCFA6C4ABEE6C2D476F6E1310B6B7E8978E81F62368EFA035",
+      "size": 1281
+    },
+    "vercel.json": {
+      "name": "vercel.json",
+      "checksum": "0A911690620506F0D47EBA9F49D46DCD57D84C7D6A3BEA93BF0875DD6B374089",
+      "size": 181
+    }
+  },
+  "zip_url": "https://codeload.github.com/fastn-community/auth/zip/refs/heads/main",
+  "checksum": "449EDF8E88B7193909046D3E36590B4B87702532A96CF43C75C7D1D6A5574767"
+}
