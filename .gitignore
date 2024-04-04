@@ -3,4 +3,6 @@
 .DS_Store
 .idea
 
-wasm/target
+auth/target
+
+.direnv

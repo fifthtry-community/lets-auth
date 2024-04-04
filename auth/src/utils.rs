@@ -38,3 +38,42 @@ pub async fn secret_key(ds: &fastn_ds::DocumentStore) -> String {
 pub fn is_authenticated(req: &fastn_core::http::Request) -> bool {
     req.cookie(fastn_core::auth::SESSION_COOKIE_NAME).is_some()
 }
+
+#[derive(
+    Clone,
+    Debug,
+    Default,
+    diesel::deserialize::FromSqlRow,
+    diesel::expression::AsExpression,
+    PartialOrd,
+    PartialEq,
+)]
+#[diesel(sql_type = fastn_core::schema::sql_types::Citext)]
+pub struct CiString(pub String);
+
+pub fn citext(s: &str) -> CiString {
+    CiString(s.into())
+}
+
+impl diesel::serialize::ToSql<fastn_core::schema::sql_types::Citext, diesel::pg::Pg> for CiString {
+    fn to_sql<'b>(
+        &'b self,
+        out: &mut diesel::serialize::Output<'b, '_, diesel::pg::Pg>,
+    ) -> diesel::serialize::Result {
+        diesel::serialize::ToSql::<diesel::sql_types::Text, diesel::pg::Pg>::to_sql(&self.0, out)
+    }
+}
+
+impl diesel::deserialize::FromSql<fastn_core::schema::sql_types::Citext, diesel::pg::Pg>
+    for CiString
+{
+    fn from_sql(
+        bytes: <diesel::pg::Pg as diesel::backend::Backend>::RawValue<'_>,
+    ) -> diesel::deserialize::Result<Self> {
+        Ok(CiString(diesel::deserialize::FromSql::<
+            diesel::sql_types::Text,
+            diesel::pg::Pg,
+        >::from_sql(bytes)?))
+    }
+}
+
