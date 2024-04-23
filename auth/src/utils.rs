@@ -77,6 +77,7 @@
 //     }
 // }
 
+/// get a required string value for a json field or a form error
 pub fn get_required_json_field(
     body: &ft_sdk::JsonBody,
     key: &str,
