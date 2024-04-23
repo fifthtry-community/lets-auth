@@ -39,6 +39,9 @@ impl ft_sdk::Layout for Auth {
             AuthError::UsageError(message) => {
                 ft_sdk::not_found!("{message}")
             }
+            AuthError::HashingError(message) => {
+                ft_sdk::not_found!("{message}")
+            }
         }
     }
 }
@@ -57,6 +60,8 @@ pub enum AuthError {
     Unauthorized(String),
     #[error("usage error: {0}")]
     UsageError(String),
+    #[error("password hash error: {0}")]
+    HashingError(String),
 }
 
 impl AuthError {

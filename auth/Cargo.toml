@@ -10,10 +10,12 @@ crate-type = ["cdylib"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ft-sdk = { path = "../../ft-sdk/ft-sdk/" }
+ft-sdk = { path = "../../ft-sdk/ft-sdk/", features = ["postgres", "auth-providers"] }
 serde = {  version = "1", features = ["derive"] }
 serde_json = "1"
 http = "1.0"
 bytes = "1.0"
 diesel = "2"
 thiserror = "1"
+argon2 = { version = "0.5" }
+rand_core = { version = "0.6", features = ["getrandom"] }

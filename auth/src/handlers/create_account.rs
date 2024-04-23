@@ -3,8 +3,7 @@ use auth::layout::{Auth, AuthError};
 pub struct CreateAccount {
     email: String,
     name: String,
-    password: String,
-    password2: String,
+    hashed_password: String,
     accept_terms: bool,
 }
 
@@ -95,11 +94,22 @@ impl ft_sdk::Action<Auth, AuthError> for CreateAccount {
             return Err(AuthError::form_error("email", "email already exists"));
         }
 
+        let salt = argon2::password_hash::SaltString::generate(&mut rand_core::OsRng);
+
+        let argon2 = argon2::Argon2::default();
+
+        let hashed_password = argon2::password_hash::PasswordHasher::hash_password(
+            &argon2,
+            password.as_bytes(),
+            &salt,
+        )
+        .map_err(|e| AuthError::HashingError(e.to_string()))?
+        .to_string();
+
         Ok(Self {
             email,
             name,
-            password,
-            password2,
+            hashed_password,
             accept_terms,
         })
     }
@@ -108,7 +118,7 @@ impl ft_sdk::Action<Auth, AuthError> for CreateAccount {
     where
         Self: Sized,
     {
-        // TODO: hash password
+        ft_sdk::auth_provider::authenticate();
         // TODO: call ft_sdk::authenticate() // this will add the info and log them in
         // TODO: figure out sending confirmation emails
         // TODO: redirect to ?next
