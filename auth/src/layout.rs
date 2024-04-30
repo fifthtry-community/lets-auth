@@ -1,13 +1,17 @@
 pub struct Auth {
     pub in_: ft_sdk::In,
-    pub conn: ft_sdk::PgConnection,
+    pub conn: ft_sdk::Connection,
 }
 
 impl ft_sdk::Layout for Auth {
     type Error = AuthError;
 
     fn from_in(in_: ft_sdk::In, _ty: ft_sdk::RequestType) -> Result<Self, Self::Error> {
+        #[cfg(feature = "pg")]
         let conn = ft_sdk::default_pg()?;
+
+        #[cfg(not(feature = "pg"))]
+        let conn = ft_sdk::default_sqlite()?;
 
         Ok(Self { in_, conn })
     }
@@ -42,6 +46,9 @@ impl ft_sdk::Layout for Auth {
             AuthError::HashingError(message) => {
                 ft_sdk::not_found!("{message}")
             }
+            AuthError::LoginError(e) => {
+                ft_sdk::server_error!("login error: {e:?}")
+            }
         }
     }
 }
@@ -62,6 +69,8 @@ pub enum AuthError {
     UsageError(String),
     #[error("password hash error: {0}")]
     HashingError(String),
+    #[error("login error: {0:?}")]
+    LoginError(#[from] ft_sdk::auth_provider::LoginError),
 }
 
 impl AuthError {

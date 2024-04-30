@@ -4,7 +4,97 @@ pub struct CreateAccount {
     email: String,
     name: String,
     hashed_password: String,
-    accept_terms: bool,
+}
+
+impl CreateAccount {
+    fn to_provider_data(&self) -> Vec<ft_sdk::auth::UserData> {
+        vec![
+            ft_sdk::auth::UserData::Email(self.email.clone()),
+            ft_sdk::auth::UserData::Name(self.name.clone()),
+            ft_sdk::auth::UserData::Custom {
+                key: "hashed_password".to_string(),
+                value: self.hashed_password.clone().into(),
+            },
+        ]
+    }
+
+    /// create relative path to the confirm account route handler
+    ///
+    /// this route needs to be prefixed with the mount point that you used in
+    /// your fastn app's url-mappings
+    fn create_conf_path(
+        &self,
+        conn: &mut ft_sdk::Connection,
+        user_id: ft_sdk::auth::UserId,
+    ) -> Result<String, ft_sdk::auth_provider::AuthError> {
+        let key = CreateAccount::generate_key(64);
+
+        let data = vec![ft_sdk::auth::UserData::Custom {
+            key: "conf_code".to_string(),
+            value: key.clone().into(),
+        }];
+
+        // save the conf link for later use
+        ft_sdk::auth_provider::authenticate(
+            conn,
+            auth::PROVIDER_ID,
+            &self.name,
+            data,
+            Some(user_id),
+        )?;
+
+        Ok(CreateAccount::confirmation_link(key))
+    }
+
+    fn confirm_account_html(name: &str, link: &str) -> String {
+        // TODO: until we figure out email templates, this has to do
+        format!(
+            r#"
+            <html>
+                <head>
+                    <title>Confirm your account</title>
+                </head>
+                <body>
+                    <h1>Hi {name},</h1>
+                    <p>Click the link below to confirm your account</p>
+                    <a href="{link}">Confirm your account</a>
+
+                    In case you can't click the link, copy and paste the following link in your browser:
+                    <br>
+                    <a href="{link}">{link}</a>
+                </body>
+            </html>
+            "#,
+            name = name,
+            link = link,
+        )
+    }
+
+    fn generate_key(length: usize) -> String {
+        let mut rng = rand::thread_rng();
+        rand::distributions::DistString::sample_string(
+            &rand::distributions::Alphanumeric,
+            &mut rng,
+            length,
+        )
+    }
+
+    fn confirmation_link(key: String) -> String {
+        format!(
+            "{confirm_email_route}?code={key}",
+            confirm_email_route = auth::urls::Route::ConfirmEmail,
+        )
+    }
+
+    fn validate_strong_password(_password: &str) -> bool {
+        // TODO:
+        true
+    }
+
+    fn validate_email(_email: &str) -> bool {
+        // TODO:
+        true
+    }
 }
 
 impl ft_sdk::Action<Auth, AuthError> for CreateAccount {
@@ -64,7 +154,7 @@ impl ft_sdk::Action<Auth, AuthError> for CreateAccount {
         let password2 = password2.unwrap();
         let accept_terms = accept_terms.unwrap();
 
-        if !validate_email(&email) {
+        if !CreateAccount::validate_email(&email) {
             errors.insert("email".to_string(), "invalid email format".to_string());
         }
 
@@ -75,7 +165,7 @@ impl ft_sdk::Action<Auth, AuthError> for CreateAccount {
             );
         }
 
-        if validate_strong_password(&password) {
+        if CreateAccount::validate_strong_password(&password) {
             errors.insert("password".to_string(), "password is too weak".to_string());
         }
 
@@ -90,7 +180,7 @@ impl ft_sdk::Action<Auth, AuthError> for CreateAccount {
             return Err(AuthError::FormError(errors));
         }
 
-        if ft_sdk::auth::check_email(&email) {
+        if ft_sdk::auth_provider::check_email(&mut c.conn, &email)? {
             return Err(AuthError::form_error("email", "email already exists"));
         }
 
@@ -110,7 +200,6 @@ impl ft_sdk::Action<Auth, AuthError> for CreateAccount {
             email,
             name,
             hashed_password,
-            accept_terms,
         })
     }
 
@@ -118,20 +207,51 @@ impl ft_sdk::Action<Auth, AuthError> for CreateAccount {
     where
         Self: Sized,
     {
-        ft_sdk::auth_provider::authenticate();
-        // TODO: call ft_sdk::authenticate() // this will add the info and log them in
-        // TODO: figure out sending confirmation emails
-        // TODO: redirect to ?next
-        todo!()
+        let user_id = ft_sdk::auth_provider::authenticate(
+            &mut c.conn,
+            "email",
+            &self.name,
+            self.to_provider_data(),
+            None,
+        )
+        .map_err(sdk_auth_err_to_auth_err)?;
+
+        ft_sdk::auth_provider::login(
+            &mut c.conn,
+            &mut c.in_.set_cookies,
+            &user_id,
+            "email",
+            &self.name,
+        )?;
+
+        let conf_link = self
+            .create_conf_path(&mut c.conn, user_id)
+            .map_err(sdk_auth_err_to_auth_err)?;
+
+        if let Err(e) = ft_sdk::email::queue_email(
+            (&self.name, &self.email),
+            "Confirm you account",
+            &mut c.conn,
+            &CreateAccount::confirm_account_html(&self.name, &conf_link),
+            "auth_confirm_account",
+        ) {
+            ft_sdk::println!("auth.wasm: failed to queue email: {:?}", e);
+        }
+
+        let mut resp_json = std::collections::HashMap::new();
+
+        resp_json.insert("message".to_string(), "account created".into());
+        resp_json.insert("success".to_string(), true.into());
+
+        Ok(ft_sdk::ActionOutput::Data(resp_json))
     }
 }
 
-fn validate_strong_password(password: &str) -> bool {
-    // TODO:
-    true
-}
-
-fn validate_email(email: &str) -> bool {
-    // TODO:
-    true
+fn sdk_auth_err_to_auth_err(e: ft_sdk::auth_provider::AuthError) -> AuthError {
+    match e {
+        ft_sdk::auth_provider::AuthError::Diesel(e) => AuthError::Diesel(e),
+        ft_sdk::auth_provider::AuthError::NameNotProvided => {
+            AuthError::form_error("name", "name not provided")
+        }
+    }
 }
