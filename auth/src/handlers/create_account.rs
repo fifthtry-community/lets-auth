@@ -11,6 +11,7 @@ impl CreateAccount {
         vec![
             ft_sdk::auth::UserData::Email(self.email.clone()),
             ft_sdk::auth::UserData::Name(self.name.clone()),
+            ft_sdk::auth::UserData::Identity(self.name.clone()),
             ft_sdk::auth::UserData::Custom {
                 key: "hashed_password".to_string(),
                 value: self.hashed_password.clone().into(),
