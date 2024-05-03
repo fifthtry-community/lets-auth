@@ -6,7 +6,7 @@ pub fn route(r: http::Request<bytes::Bytes>) -> http::Response<bytes::Bytes> {
 
     match Into::<Route>::into(r.uri().path()) {
         Route::CreateAccount => Auth::action::<handlers::CreateAccount>(r),
-        Route::Login => todo!(),
+        Route::Login => Auth::action::<handlers::Login>(r),
         Route::Logout => todo!(),
         Route::EmailConfirmationSent => todo!(),
         Route::ConfirmEmail => todo!(),

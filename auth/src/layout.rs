@@ -26,7 +26,7 @@ impl ft_sdk::Layout for Auth {
         match err {
             AuthError::FormError(errors) => {
                 ft_sdk::println!("form error: {errors:?}");
-                ft_sdk::json_response(serde_json::json!({"errors": errors}))
+                ft_sdk::json_response(serde_json::json!({"errors": errors}), None)
             }
             AuthError::Sdk(error) => {
                 ft_sdk::server_error!("sdk error: {error:?}")

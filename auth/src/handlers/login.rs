@@ -1,6 +1,6 @@
 use auth::layout::{Auth, AuthError};
 
-struct Login {
+pub struct Login {
     user_id: ft_sdk::auth::UserId,
     identity: String,
 }
@@ -102,7 +102,7 @@ impl ft_sdk::Action<Auth, AuthError> for Login {
     {
         ft_sdk::auth_provider::login(
             &mut c.conn,
-            &mut c.in_.set_cookies,
+            c.in_.clone(),
             &self.user_id,
             "email",
             &self.identity,

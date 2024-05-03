@@ -72,12 +72,7 @@ impl CreateAccount {
     }
 
     fn generate_key(length: usize) -> String {
-        let mut rng = rand::thread_rng();
-        rand::distributions::DistString::sample_string(
-            &rand::distributions::Alphanumeric,
-            &mut rng,
-            length,
-        )
+        auth::rng::WasmRng::generate_key(length)
     }
 
     fn confirmation_link(key: String) -> String {
@@ -185,7 +180,7 @@ impl ft_sdk::Action<Auth, AuthError> for CreateAccount {
             return Err(AuthError::form_error("email", "email already exists"));
         }
 
-        let salt = argon2::password_hash::SaltString::generate(&mut rand_core::OsRng);
+        let salt = argon2::password_hash::SaltString::generate(&mut auth::rng::WasmRng {});
 
         let argon2 = argon2::Argon2::default();
 
@@ -217,13 +212,7 @@ impl ft_sdk::Action<Auth, AuthError> for CreateAccount {
         )
         .map_err(sdk_auth_err_to_auth_err)?;
 
-        ft_sdk::auth_provider::login(
-            &mut c.conn,
-            &mut c.in_.set_cookies,
-            &user_id,
-            "email",
-            &self.name,
-        )?;
+        ft_sdk::auth_provider::login(&mut c.conn, c.in_.clone(), &user_id, "email", &self.name)?;
 
         let conf_link = self
             .create_conf_path(&mut c.conn, user_id)
