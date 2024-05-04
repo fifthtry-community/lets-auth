@@ -72,7 +72,7 @@ impl CreateAccount {
     }
 
     fn generate_key(length: usize) -> String {
-        auth::rng::WasmRng::generate_key(length)
+        ft_sdk::Rng::generate_key(length)
     }
 
     fn confirmation_link(key: String) -> String {
@@ -176,11 +176,11 @@ impl ft_sdk::Action<Auth, AuthError> for CreateAccount {
             return Err(AuthError::FormError(errors));
         }
 
-        if ft_sdk::auth_provider::check_email(&mut c.conn, &email)? {
+        if ft_sdk::auth_provider::check_if_verified_email_exists(&mut c.conn, &email, None)? {
             return Err(AuthError::form_error("email", "email already exists"));
         }
 
-        let salt = argon2::password_hash::SaltString::generate(&mut auth::rng::WasmRng {});
+        let salt = argon2::password_hash::SaltString::generate(&mut ft_sdk::Rng {});
 
         let argon2 = argon2::Argon2::default();
 

@@ -2,7 +2,6 @@ extern crate self as auth;
 
 mod handlers;
 mod layout;
-mod rng;
 mod route;
 mod schema;
 mod urls;
