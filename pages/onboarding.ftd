@@ -1,0 +1,14 @@
+-- component onboarding:
+
+-- ftd.column:
+-- ftd.text: welcome aboard, meine freundin
+color: green
+
+-- ftd.text: This page is shown only once. Override it in your fastn package to get custom behaviour
+
+-- ftd.text: 
+
+-- end: ftd.column
+
+-- end: onboarding
+

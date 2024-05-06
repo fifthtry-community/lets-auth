@@ -1,0 +1,9 @@
+-- component email-confirmation-request-sent:
+
+-- ftd.column:
+
+-- ftd.text: We have sent you an email. Please verify.
+
+-- end: ftd.column
+
+-- end: email-confirmation-request-sent
