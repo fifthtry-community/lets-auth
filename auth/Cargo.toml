@@ -21,4 +21,3 @@ argon2 = { version = "0.5" }
 chrono = { version = "0.4", default-features = false, features = ["serde"] }
 include_dir = "0.7"
 validator = "0.18"
-zxcvbn = "2.2"

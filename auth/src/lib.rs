@@ -6,7 +6,6 @@ mod route;
 mod schema;
 mod urls;
 mod utils;
-mod validator;
 
 pub const PROVIDER_ID: &str = "email";
 

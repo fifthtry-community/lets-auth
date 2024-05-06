@@ -81,7 +81,12 @@ impl CreateAccount {
     }
 
     fn is_strong_password(password: &str, email: &str, name: &str) -> Option<String> {
-        auth::validator::is_weak_password(password, (name, email))
+        // TODO: better password validation
+        if password.len() < 4 {
+            return Some("password is too short".to_string());
+        }
+
+        None
     }
 
     fn validate_email(email: &str) -> bool {
