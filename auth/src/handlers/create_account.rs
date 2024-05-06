@@ -1,4 +1,5 @@
 use auth::layout::{Auth, AuthError};
+use validator::ValidateEmail;
 
 pub struct CreateAccount {
     email: String,
@@ -79,14 +80,12 @@ impl CreateAccount {
         )
     }
 
-    fn is_strong_password(_password: &str) -> bool {
-        // TODO:
-        true
+    fn is_strong_password(password: &str, email: &str, name: &str) -> Option<String> {
+        auth::validator::is_weak_password(password, (name, email))
     }
 
-    fn validate_email(_email: &str) -> bool {
-        // TODO:
-        true
+    fn validate_email(email: &str) -> bool {
+        email.validate_email()
     }
 }
 
@@ -158,8 +157,8 @@ impl ft_sdk::Action<Auth, AuthError> for CreateAccount {
             );
         }
 
-        if !CreateAccount::is_strong_password(&password) {
-            errors.insert("password".to_string(), "password is too weak".to_string());
+        if let Some(message) = CreateAccount::is_strong_password(&password, &email, &name) {
+            errors.insert("password".to_string(), message);
         }
 
         if !accept_terms {
