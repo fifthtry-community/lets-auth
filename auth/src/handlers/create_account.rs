@@ -1,4 +1,5 @@
 use auth::layout::{Auth, AuthError};
+use ft_sdk::auth::provider as auth_provider;
 use validator::ValidateEmail;
 
 pub struct CreateAccount {
@@ -28,7 +29,7 @@ impl CreateAccount {
         &self,
         conn: &mut ft_sdk::Connection,
         user_id: ft_sdk::auth::UserId,
-    ) -> Result<String, ft_sdk::auth_provider::AuthError> {
+    ) -> Result<String, auth_provider::AuthError> {
         let key = CreateAccount::generate_key(64);
 
         let data = vec![
@@ -40,7 +41,7 @@ impl CreateAccount {
         ];
 
         // save the conf link for later use
-        ft_sdk::auth_provider::update_user(&user_id, conn, auth::PROVIDER_ID, &self.name, data)?;
+        auth_provider::update_user(&user_id, conn, auth::PROVIDER_ID, &self.name, data)?;
 
         Ok(CreateAccount::confirmation_link(key))
     }
@@ -177,7 +178,7 @@ impl ft_sdk::Action<Auth, AuthError> for CreateAccount {
             return Err(AuthError::FormError(errors));
         }
 
-        if ft_sdk::auth_provider::check_if_verified_email_exists(&mut c.conn, &email, None)? {
+        if auth_provider::check_if_verified_email_exists(&mut c.conn, &email, None)? {
             return Err(AuthError::form_error("email", "email already exists"));
         }
 
@@ -204,15 +205,11 @@ impl ft_sdk::Action<Auth, AuthError> for CreateAccount {
     where
         Self: Sized,
     {
-        let user_id = ft_sdk::auth_provider::create_user(
-            &mut c.conn,
-            "email",
-            &self.name,
-            self.to_provider_data(),
-        )
-        .map_err(sdk_auth_err_to_auth_err)?;
+        let user_id =
+            auth_provider::create_user(&mut c.conn, "email", &self.name, self.to_provider_data())
+                .map_err(sdk_auth_err_to_auth_err)?;
 
-        ft_sdk::auth_provider::login(&mut c.conn, c.in_.clone(), &user_id, "email", &self.name)?;
+        auth_provider::login(&mut c.conn, c.in_.clone(), &user_id, "email", &self.name)?;
 
         let conf_link = self
             .create_conf_path(&mut c.conn, user_id)
@@ -237,10 +234,10 @@ impl ft_sdk::Action<Auth, AuthError> for CreateAccount {
     }
 }
 
-fn sdk_auth_err_to_auth_err(e: ft_sdk::auth_provider::AuthError) -> AuthError {
+fn sdk_auth_err_to_auth_err(e: auth_provider::AuthError) -> AuthError {
     match e {
-        ft_sdk::auth_provider::AuthError::Diesel(e) => AuthError::Diesel(e),
-        ft_sdk::auth_provider::AuthError::NameNotProvided => {
+        auth_provider::AuthError::Diesel(e) => AuthError::Diesel(e),
+        auth_provider::AuthError::NameNotProvided => {
             AuthError::form_error("name", "name not provided")
         }
     }

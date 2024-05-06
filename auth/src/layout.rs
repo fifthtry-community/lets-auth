@@ -7,11 +7,7 @@ impl ft_sdk::Layout for Auth {
     type Error = AuthError;
 
     fn from_in(in_: ft_sdk::In, _ty: ft_sdk::RequestType) -> Result<Self, Self::Error> {
-        #[cfg(feature = "pg")]
-        let conn = ft_sdk::default_pg()?;
-
-        #[cfg(not(feature = "pg"))]
-        let mut conn = ft_sdk::default_sqlite()?;
+        let mut conn = ft_sdk::default_connection()?;
 
         ft_sdk::migrate(
             &mut conn,
@@ -79,7 +75,7 @@ pub enum AuthError {
     #[error("password hash error: {0}")]
     HashingError(String),
     #[error("login error: {0:?}")]
-    LoginError(#[from] ft_sdk::auth_provider::LoginError),
+    LoginError(#[from] ft_sdk::auth::provider::LoginError),
 }
 
 impl AuthError {
