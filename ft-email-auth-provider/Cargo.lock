@@ -39,8 +39,6 @@ dependencies = [
  "diesel",
  "ft-sdk",
  "http",
- "include_dir",
- "rand_core",
  "serde",
  "serde_json",
  "thiserror",

@@ -30,14 +30,10 @@ impl CreateAccount {
     ) -> Result<String, ft_sdk::auth_provider::AuthError> {
         let key = CreateAccount::generate_key(64);
 
-
-        let data = vec![
-            ft_sdk::auth::UserData::Custom {
-                key: "conf_code".to_string(),
-                value: key.clone().into(),
-            },
-            ft_sdk::auth::UserData::Name(self.name.clone()),
-        ];
+        let data = vec![ft_sdk::auth::UserData::Custom {
+            key: "conf_code".to_string(),
+            value: key.clone().into(),
+        }];
 
         // save the conf link for later use
         ft_sdk::auth_provider::authenticate(
@@ -86,7 +82,7 @@ impl CreateAccount {
         )
     }
 
-    fn is_strong_password(_password: &str) -> bool {
+    fn validate_strong_password(_password: &str) -> bool {
         // TODO:
         true
     }
@@ -165,7 +161,7 @@ impl ft_sdk::Action<Auth, AuthError> for CreateAccount {
             );
         }
 
-        if !CreateAccount::is_strong_password(&password) {
+        if CreateAccount::validate_strong_password(&password) {
             errors.insert("password".to_string(), "password is too weak".to_string());
         }
 

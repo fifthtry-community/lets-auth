@@ -3,12 +3,13 @@ extern crate self as auth;
 mod handlers;
 mod layout;
 mod route;
-mod schema;
 mod urls;
 mod utils;
 
 pub const PROVIDER_ID: &str = "email";
 
+// TODO: login
+// TODO: create-account
 // TODO: logout
 
 #[no_mangle]
