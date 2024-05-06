@@ -30,7 +30,6 @@ impl CreateAccount {
     ) -> Result<String, ft_sdk::auth_provider::AuthError> {
         let key = CreateAccount::generate_key(64);
 
-
         let data = vec![
             ft_sdk::auth::UserData::Custom {
                 key: "conf_code".to_string(),
@@ -40,13 +39,7 @@ impl CreateAccount {
         ];
 
         // save the conf link for later use
-        ft_sdk::auth_provider::authenticate(
-            conn,
-            auth::PROVIDER_ID,
-            &self.name,
-            data,
-            Some(user_id),
-        )?;
+        ft_sdk::auth_provider::update_user(&user_id, conn, auth::PROVIDER_ID, &self.name, data)?;
 
         Ok(CreateAccount::confirmation_link(key))
     }
@@ -207,12 +200,11 @@ impl ft_sdk::Action<Auth, AuthError> for CreateAccount {
     where
         Self: Sized,
     {
-        let user_id = ft_sdk::auth_provider::authenticate(
+        let user_id = ft_sdk::auth_provider::create_user(
             &mut c.conn,
             "email",
             &self.name,
             self.to_provider_data(),
-            None,
         )
         .map_err(sdk_auth_err_to_auth_err)?;
 
@@ -222,7 +214,7 @@ impl ft_sdk::Action<Auth, AuthError> for CreateAccount {
             .create_conf_path(&mut c.conn, user_id)
             .map_err(sdk_auth_err_to_auth_err)?;
 
-        if let Err(e) = ft_sdk::email::queue_email(
+        if let Err(e) = ft_sdk::send_email(
             (&self.name, &self.email),
             "Confirm you account",
             &mut c.conn,
