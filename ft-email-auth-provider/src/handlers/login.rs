@@ -1,4 +1,5 @@
 use auth::layout::{Auth, AuthError};
+use ft_sdk::auth::provider as auth_provider;
 
 pub struct Login {
     user_id: ft_sdk::auth::UserId,
@@ -79,7 +80,7 @@ impl ft_sdk::Action<Auth, AuthError> for Login {
         let password = password.unwrap();
 
         let (user_id, user_data) =
-            ft_sdk::auth_provider::get_user_data_by_email(&mut c.conn, auth::PROVIDER_ID, &email)
+            auth_provider::get_user_data_by_email(&mut c.conn, auth::PROVIDER_ID, &email)
                 .map_err(user_data_error_to_auth_err)?;
 
         if !Login::match_password(&user_data, &password) {
@@ -100,7 +101,7 @@ impl ft_sdk::Action<Auth, AuthError> for Login {
     where
         Self: Sized,
     {
-        ft_sdk::auth_provider::login(
+        auth_provider::login(
             &mut c.conn,
             c.in_.clone(),
             &self.user_id,
@@ -117,11 +118,11 @@ impl ft_sdk::Action<Auth, AuthError> for Login {
     }
 }
 
-fn user_data_error_to_auth_err(e: ft_sdk::auth_provider::UserDataError) -> AuthError {
+fn user_data_error_to_auth_err(e: auth_provider::UserDataError) -> AuthError {
     match e {
-        ft_sdk::auth_provider::UserDataError::NoDataFound => {
+        auth_provider::UserDataError::NoDataFound => {
             AuthError::form_error("email", "invalid email")
         }
-        ft_sdk::auth_provider::UserDataError::DatabaseError(d) => AuthError::Diesel(d),
+        auth_provider::UserDataError::DatabaseError(d) => AuthError::Diesel(d),
     }
 }

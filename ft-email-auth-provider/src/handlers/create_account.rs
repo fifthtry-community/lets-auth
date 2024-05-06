@@ -1,4 +1,6 @@
 use auth::layout::{Auth, AuthError};
+use ft_sdk::auth::provider as auth_provider;
+use validator::ValidateEmail;
 
 pub struct CreateAccount {
     email: String,
@@ -27,22 +29,19 @@ impl CreateAccount {
         &self,
         conn: &mut ft_sdk::Connection,
         user_id: ft_sdk::auth::UserId,
-    ) -> Result<String, ft_sdk::auth_provider::AuthError> {
+    ) -> Result<String, auth_provider::AuthError> {
         let key = CreateAccount::generate_key(64);
 
-        let data = vec![ft_sdk::auth::UserData::Custom {
-            key: "conf_code".to_string(),
-            value: key.clone().into(),
-        }];
+        let data = vec![
+            ft_sdk::auth::UserData::Custom {
+                key: "conf_code".to_string(),
+                value: key.clone().into(),
+            },
+            ft_sdk::auth::UserData::Name(self.name.clone()),
+        ];
 
         // save the conf link for later use
-        ft_sdk::auth_provider::authenticate(
-            conn,
-            auth::PROVIDER_ID,
-            &self.name,
-            data,
-            Some(user_id),
-        )?;
+        auth_provider::update_user(&user_id, conn, auth::PROVIDER_ID, &self.name, data)?;
 
         Ok(CreateAccount::confirmation_link(key))
     }
@@ -82,14 +81,17 @@ impl CreateAccount {
         )
     }
 
-    fn validate_strong_password(_password: &str) -> bool {
-        // TODO:
-        true
+    fn is_strong_password(password: &str, email: &str, name: &str) -> Option<String> {
+        // TODO: better password validation
+        if password.len() < 4 {
+            return Some("password is too short".to_string());
+        }
+
+        None
     }
 
-    fn validate_email(_email: &str) -> bool {
-        // TODO:
-        true
+    fn validate_email(email: &str) -> bool {
+        email.validate_email()
     }
 }
 
@@ -161,8 +163,8 @@ impl ft_sdk::Action<Auth, AuthError> for CreateAccount {
             );
         }
 
-        if CreateAccount::validate_strong_password(&password) {
-            errors.insert("password".to_string(), "password is too weak".to_string());
+        if let Some(message) = CreateAccount::is_strong_password(&password, &email, &name) {
+            errors.insert("password".to_string(), message);
         }
 
         if !accept_terms {
@@ -176,7 +178,7 @@ impl ft_sdk::Action<Auth, AuthError> for CreateAccount {
             return Err(AuthError::FormError(errors));
         }
 
-        if ft_sdk::auth_provider::check_if_verified_email_exists(&mut c.conn, &email, None)? {
+        if auth_provider::check_if_verified_email_exists(&mut c.conn, &email, None)? {
             return Err(AuthError::form_error("email", "email already exists"));
         }
 
@@ -203,22 +205,17 @@ impl ft_sdk::Action<Auth, AuthError> for CreateAccount {
     where
         Self: Sized,
     {
-        let user_id = ft_sdk::auth_provider::authenticate(
-            &mut c.conn,
-            "email",
-            &self.name,
-            self.to_provider_data(),
-            None,
-        )
-        .map_err(sdk_auth_err_to_auth_err)?;
+        let user_id =
+            auth_provider::create_user(&mut c.conn, "email", &self.name, self.to_provider_data())
+                .map_err(sdk_auth_err_to_auth_err)?;
 
-        ft_sdk::auth_provider::login(&mut c.conn, c.in_.clone(), &user_id, "email", &self.name)?;
+        auth_provider::login(&mut c.conn, c.in_.clone(), &user_id, "email", &self.name)?;
 
         let conf_link = self
             .create_conf_path(&mut c.conn, user_id)
             .map_err(sdk_auth_err_to_auth_err)?;
 
-        if let Err(e) = ft_sdk::email::queue_email(
+        if let Err(e) = ft_sdk::send_email(
             (&self.name, &self.email),
             "Confirm you account",
             &mut c.conn,
@@ -237,10 +234,10 @@ impl ft_sdk::Action<Auth, AuthError> for CreateAccount {
     }
 }
 
-fn sdk_auth_err_to_auth_err(e: ft_sdk::auth_provider::AuthError) -> AuthError {
+fn sdk_auth_err_to_auth_err(e: auth_provider::AuthError) -> AuthError {
     match e {
-        ft_sdk::auth_provider::AuthError::Diesel(e) => AuthError::Diesel(e),
-        ft_sdk::auth_provider::AuthError::NameNotProvided => {
+        auth_provider::AuthError::Diesel(e) => AuthError::Diesel(e),
+        auth_provider::AuthError::NameNotProvided => {
             AuthError::form_error("name", "name not provided")
         }
     }

@@ -7,6 +7,7 @@ pub fn route(r: http::Request<bytes::Bytes>) -> http::Response<bytes::Bytes> {
     match Into::<Route>::into(r.uri().path()) {
         Route::CreateAccount => Auth::action::<handlers::CreateAccount>(r),
         Route::Login => Auth::action::<handlers::Login>(r),
+        Route::Logout => todo!(),
         Route::EmailConfirmationSent => todo!(),
         Route::ConfirmEmail => todo!(),
         Route::ResendConfirmationEmail => todo!(),
@@ -18,7 +19,9 @@ pub fn route(r: http::Request<bytes::Bytes>) -> http::Response<bytes::Bytes> {
         Route::SetPassword => todo!(),
         Route::SetPasswordSuccess => todo!(),
 
+        Route::GithubLogin => todo!(),
+        Route::GithubCallback => todo!(),
+
         Route::Invalid => todo!(),
     }
 }
-
