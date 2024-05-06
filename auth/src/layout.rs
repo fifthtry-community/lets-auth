@@ -11,7 +11,16 @@ impl ft_sdk::Layout for Auth {
         let conn = ft_sdk::default_pg()?;
 
         #[cfg(not(feature = "pg"))]
-        let conn = ft_sdk::default_sqlite()?;
+        let mut conn = ft_sdk::default_sqlite()?;
+
+        ft_sdk::migrate(
+            &mut conn,
+            "auth.wasm",
+            include_dir::include_dir!("migrations"),
+            vec![],
+            &in_.now,
+        )
+        .unwrap();
 
         Ok(Self { in_, conn })
     }

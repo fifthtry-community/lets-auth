@@ -10,8 +10,6 @@ mod utils;
 
 pub const PROVIDER_ID: &str = "email";
 
-// TODO: login
-// TODO: create-account
 // TODO: logout
 
 #[no_mangle]
