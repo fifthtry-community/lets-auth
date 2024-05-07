@@ -34,25 +34,25 @@ impl ft_sdk::Layout for Auth {
                 ft_sdk::json_response(serde_json::json!({"errors": errors}), None)
             }
             AuthError::Sdk(error) => {
-                ft_sdk::server_error!("sdk error: {error:?}")
+                ft_sdk::server_error!("sdk error: {error:?}").unwrap()
             }
             AuthError::Diesel(error) => {
-                ft_sdk::server_error!("diesel error: {error:?}")
+                ft_sdk::server_error!("diesel error: {error:?}").unwrap()
             }
             AuthError::CantDeserializeInput(message) => {
-                ft_sdk::server_error!("serde error: {message:?}")
+                ft_sdk::server_error!("serde error: {message:?}").unwrap()
             }
             AuthError::Unauthorized(message) => {
-                ft_sdk::not_found!("unauthorized error: {message}")
+                ft_sdk::not_found!("unauthorized error: {message}").unwrap()
             }
             AuthError::UsageError(message) => {
-                ft_sdk::not_found!("{message}")
+                ft_sdk::not_found!("{message}").unwrap()
             }
             AuthError::HashingError(message) => {
-                ft_sdk::not_found!("{message}")
+                ft_sdk::not_found!("{message}").unwrap()
             }
             AuthError::LoginError(e) => {
-                ft_sdk::server_error!("login error: {e:?}")
+                ft_sdk::server_error!("login error: {e:?}").unwrap()
             }
         }
     }
