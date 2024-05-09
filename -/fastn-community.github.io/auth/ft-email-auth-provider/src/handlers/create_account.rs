@@ -1,5 +1,4 @@
-use auth::layout::{Auth, AuthError};
-use ft_sdk::auth::provider as auth_provider;
+use ft_sdk::{auth::provider as auth_provider, JsonBodyExt, QueryExt};
 use validator::ValidateEmail;
 
 pub struct CreateAccount {
@@ -81,7 +80,7 @@ impl CreateAccount {
         )
     }
 
-    fn is_strong_password(password: &str, email: &str, name: &str) -> Option<String> {
+    fn is_strong_password(password: &str, _email: &str, _name: &str) -> Option<String> {
         // TODO: better password validation
         if password.len() < 4 {
             return Some("password is too short".to_string());
@@ -95,150 +94,103 @@ impl CreateAccount {
     }
 }
 
-impl ft_sdk::Action<Auth, AuthError> for CreateAccount {
-    fn validate(c: &mut Auth) -> Result<Self, AuthError>
-    where
-        Self: Sized,
-    {
-        use auth::utils::get_required_json_field;
-        use ft_sdk::JsonBodyExt;
+fn validate(
+    in_: ft_sdk::In,
+    conn: &mut ft_sdk::Connection,
+) -> Result<CreateAccount, ft_sdk::http::Error> {
+    let email: String = in_.req.required("email")?;
+    let name: String = in_.req.required("name")?;
+    let password: String = in_.req.required("password")?;
+    let password2: String = in_.req.required("password2")?;
+    let accept_terms: bool = in_.req.required("accept_terms")?;
 
-        let body = c.in_.req.json_body().map_err(|e| {
-            AuthError::form_error("payload", format!("invalid payload: {:?}", e).as_str())
-        })?;
+    let mut errors = std::collections::HashMap::new();
 
-        // TODO: this can be done with a macro, maybe our version of validator crate in ft-sdk?
-        let email = get_required_json_field(&body, "email");
-        let name = get_required_json_field(&body, "name");
-        let password = get_required_json_field(&body, "password");
-        let password2 = get_required_json_field(&body, "password2");
-        let accept_terms = body.field::<bool>("accept_terms")?;
-
-        let mut errors = std::collections::HashMap::new();
-
-        if let Err(_) = email {
-            errors.insert("email".to_string(), "email is required".to_string());
-        }
-
-        if let Err(_) = name {
-            errors.insert("name".to_string(), "name is required".to_string());
-        }
-
-        if let Err(_) = password {
-            errors.insert("password".to_string(), "password is required".to_string());
-        }
-
-        if let Err(_) = password2 {
-            errors.insert(
-                "password2".to_string(),
-                "confirm password is required".to_string(),
-            );
-        }
-
-        if let None = accept_terms {
-            errors.insert(
-                "accept_terms".to_string(),
-                "you must accept the terms and conditions".to_string(),
-            );
-        }
-
-        if !errors.is_empty() {
-            return Err(AuthError::FormError(errors));
-        }
-
-        let email = email.unwrap();
-        let name = name.unwrap();
-        let password = password.unwrap();
-        let password2 = password2.unwrap();
-        let accept_terms = accept_terms.unwrap();
-
-        if !CreateAccount::validate_email(&email) {
-            errors.insert("email".to_string(), "invalid email format".to_string());
-        }
-
-        if password != password2 {
-            errors.insert(
-                "password2".to_string(),
-                "password and confirm password field do not match".to_string(),
-            );
-        }
-
-        if let Some(message) = CreateAccount::is_strong_password(&password, &email, &name) {
-            errors.insert("password".to_string(), message);
-        }
-
-        if !accept_terms {
-            errors.insert(
-                "accept_terms".to_string(),
-                "you must accept the terms and conditions".to_string(),
-            );
-        }
-
-        if !errors.is_empty() {
-            return Err(AuthError::FormError(errors));
-        }
-
-        if auth_provider::check_if_verified_email_exists(&mut c.conn, &email, None)? {
-            return Err(AuthError::form_error("email", "email already exists"));
-        }
-
-        let salt = argon2::password_hash::SaltString::generate(&mut ft_sdk::Rng {});
-
-        let argon2 = argon2::Argon2::default();
-
-        let hashed_password = argon2::password_hash::PasswordHasher::hash_password(
-            &argon2,
-            password.as_bytes(),
-            &salt,
-        )
-        .map_err(|e| AuthError::HashingError(e.to_string()))?
-        .to_string();
-
-        Ok(Self {
-            email,
-            name,
-            hashed_password,
-        })
+    if !CreateAccount::validate_email(&email) {
+        errors.insert("email".to_string(), "invalid email format".to_string());
     }
 
-    fn action(&self, c: &mut Auth) -> Result<ft_sdk::ActionOutput, AuthError>
-    where
-        Self: Sized,
-    {
-        let user_id =
-            auth_provider::create_user(&mut c.conn, "email", &self.name, self.to_provider_data())
-                .map_err(sdk_auth_err_to_auth_err)?;
-
-        auth_provider::login(&mut c.conn, c.in_.clone(), &user_id, "email", &self.name)?;
-
-        let conf_link = self
-            .create_conf_path(&mut c.conn, user_id)
-            .map_err(sdk_auth_err_to_auth_err)?;
-
-        if let Err(e) = ft_sdk::send_email(
-            (&self.name, &self.email),
-            "Confirm you account",
-            &mut c.conn,
-            &CreateAccount::confirm_account_html(&self.name, &conf_link),
-            "auth_confirm_account",
-        ) {
-            ft_sdk::println!("auth.wasm: failed to queue email: {:?}", e);
-        }
-
-        let mut resp_json = std::collections::HashMap::new();
-
-        resp_json.insert("message".to_string(), "account created".into());
-        resp_json.insert("success".to_string(), true.into());
-
-        Ok(ft_sdk::ActionOutput::Data(resp_json))
+    if password != password2 {
+        errors.insert(
+            "password2".to_string(),
+            "password and confirm password field do not match".to_string(),
+        );
     }
+
+    if let Some(message) = CreateAccount::is_strong_password(&password, &email, &name) {
+        errors.insert("password".to_string(), message);
+    }
+
+    if !accept_terms {
+        errors.insert(
+            "accept_terms".to_string(),
+            "you must accept the terms and conditions".to_string(),
+        );
+    }
+
+    if !errors.is_empty() {
+        return Err(ft_sdk::http::Error::Form(errors));
+    }
+
+    if auth_provider::check_if_verified_email_exists(conn, &email, None)? {
+        return Err(ft_sdk::http::single_error("email", "email already exists"));
+    }
+
+    let salt = argon2::password_hash::SaltString::generate(&mut ft_sdk::Rng {});
+
+    let argon2 = argon2::Argon2::default();
+
+    let hashed_password =
+        argon2::password_hash::PasswordHasher::hash_password(&argon2, password.as_bytes(), &salt)
+            .unwrap()
+            .to_string();
+
+    Ok(CreateAccount {
+        email,
+        name,
+        hashed_password,
+    })
 }
 
-fn sdk_auth_err_to_auth_err(e: auth_provider::AuthError) -> AuthError {
+pub fn handle(in_: ft_sdk::In, conn: &mut ft_sdk::Connection) -> ft_sdk::http::Result {
+    let account_meta = validate(in_.clone(), conn)?;
+
+    let user_id = auth_provider::create_user(
+        conn,
+        "email",
+        &account_meta.name,
+        account_meta.to_provider_data(),
+    )
+    .map_err(sdk_auth_err_to_http_err)?;
+
+    auth_provider::login(conn, in_.clone(), &user_id, "email", &account_meta.name)?;
+
+    let conf_link = account_meta
+        .create_conf_path(conn, user_id)
+        .map_err(sdk_auth_err_to_http_err)?;
+
+    if let Err(e) = ft_sdk::send_email(
+        (&account_meta.name, &account_meta.email),
+        "Confirm you account",
+        conn,
+        &CreateAccount::confirm_account_html(&account_meta.name, &conf_link),
+        "auth_confirm_account",
+    ) {
+        ft_sdk::println!("auth.wasm: failed to queue email: {:?}", e);
+    }
+
+    let query = in_.req.query();
+
+    let next = query.get("next").unwrap_or(auth::DEFAULT_REDIRECT_ROUTE);
+
+    ft_sdk::http::redirect(next)
+}
+
+fn sdk_auth_err_to_http_err(e: auth_provider::AuthError) -> ft_sdk::http::Error {
     match e {
-        auth_provider::AuthError::Diesel(e) => AuthError::Diesel(e),
+        auth_provider::AuthError::Diesel(e) => ft_sdk::http::Error::Diesel(e),
         auth_provider::AuthError::NameNotProvided => {
-            AuthError::form_error("name", "name not provided")
+            ft_sdk::http::single_error("name", "name not provided")
         }
     }
 }

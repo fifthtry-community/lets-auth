@@ -1,5 +1,2 @@
-mod create_account;
-mod login;
-
-pub use create_account::CreateAccount;
-pub use login::Login;
+pub mod create_account;
+pub mod login;
