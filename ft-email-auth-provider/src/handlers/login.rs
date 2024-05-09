@@ -1,5 +1,4 @@
-use auth::layout::{Auth, AuthError};
-use ft_sdk::auth::provider as auth_provider;
+use ft_sdk::{auth::provider as auth_provider, JsonBodyExt, QueryExt};
 
 pub struct Login {
     user_id: ft_sdk::auth::UserId,
@@ -47,82 +46,50 @@ impl Login {
     }
 }
 
-impl ft_sdk::Action<Auth, AuthError> for Login {
-    fn validate(c: &mut Auth) -> Result<Self, AuthError>
-    where
-        Self: Sized,
-    {
-        use auth::utils::get_required_json_field;
-        use ft_sdk::JsonBodyExt;
+fn validate(in_: ft_sdk::In, conn: &mut ft_sdk::Connection) -> Result<Login, ft_sdk::http::Error> {
+    let email: String = in_.req.required("email")?;
+    let password: String = in_.req.required("password")?;
 
-        let body = c.in_.req.json_body().map_err(|e| {
-            AuthError::form_error("payload", format!("invalid payload: {:?}", e).as_str())
-        })?;
+    let (user_id, user_data) =
+        auth_provider::get_user_data_by_email(conn, auth::PROVIDER_ID, &email)
+            .map_err(user_data_error_to_http_err)?;
 
-        let mut errors = std::collections::HashMap::new();
-
-        let email = get_required_json_field(&body, "email");
-        let password = get_required_json_field(&body, "password");
-
-        if let Err(_) = email {
-            errors.insert("email".into(), "email is required".into());
-        }
-
-        if let Err(_) = password {
-            errors.insert("password".into(), "password is required".into());
-        }
-
-        if !errors.is_empty() {
-            return Err(AuthError::FormError(errors));
-        }
-
-        let email = email.unwrap();
-        let password = password.unwrap();
-
-        let (user_id, user_data) =
-            auth_provider::get_user_data_by_email(&mut c.conn, auth::PROVIDER_ID, &email)
-                .map_err(user_data_error_to_auth_err)?;
-
-        if !Login::match_password(&user_data, &password) {
-            return Err(AuthError::form_error(
-                "password",
-                "incorrect email/password",
-            ));
-        }
-
-        let identity = Login::get_identity(&user_data).expect(
-            "Expected identity to be present in user data. All providers must provide an identity",
-        );
-
-        Ok(Login { user_id, identity })
+    if !Login::match_password(&user_data, &password) {
+        return Err(ft_sdk::http::single_error(
+            "password",
+            "incorrect email/password",
+        ));
     }
 
-    fn action(&self, c: &mut Auth) -> Result<ft_sdk::ActionOutput, AuthError>
-    where
-        Self: Sized,
-    {
-        auth_provider::login(
-            &mut c.conn,
-            c.in_.clone(),
-            &self.user_id,
-            "email",
-            &self.identity,
-        )?;
+    let identity = Login::get_identity(&user_data).expect(
+        "Expected identity to be present in user data. All providers must provide an identity",
+    );
 
-        let mut resp_json = std::collections::HashMap::new();
-
-        resp_json.insert("message".to_string(), "login successfull".into());
-        resp_json.insert("success".to_string(), true.into());
-
-        Ok(ft_sdk::ActionOutput::Data(resp_json))
-    }
+    Ok(Login { user_id, identity })
 }
 
-fn user_data_error_to_auth_err(e: auth_provider::UserDataError) -> AuthError {
+pub fn handle(in_: ft_sdk::In, conn: &mut ft_sdk::Connection) -> ft_sdk::http::Result {
+    let login_meta = validate(in_.clone(), conn)?;
+
+    auth_provider::login(
+        conn,
+        in_.clone(),
+        &login_meta.user_id,
+        "email",
+        &login_meta.identity,
+    )?;
+
+    let query = in_.req.query();
+    let next = query.get("next").unwrap_or(auth::DEFAULT_REDIRECT_ROUTE);
+
+    ft_sdk::http::redirect(next)
+}
+
+fn user_data_error_to_http_err(e: auth_provider::UserDataError) -> ft_sdk::http::Error {
     match e {
         auth_provider::UserDataError::NoDataFound => {
-            AuthError::form_error("email", "invalid email")
+            ft_sdk::http::single_error("email", "invalid email")
         }
-        auth_provider::UserDataError::DatabaseError(d) => AuthError::Diesel(d),
+        auth_provider::UserDataError::DatabaseError(d) => ft_sdk::http::Error::Diesel(d),
     }
 }
