@@ -47,11 +47,12 @@ impl Login {
 }
 
 fn validate(in_: ft_sdk::In, conn: &mut ft_sdk::Connection) -> Result<Login, ft_sdk::http::Error> {
-    let email: String = in_.req.required("email")?;
+    // TODO: should be able to take username/email
+    let username: String = in_.req.required("username")?;
     let password: String = in_.req.required("password")?;
 
     let (user_id, user_data) =
-        auth_provider::get_user_data_by_email(conn, auth::PROVIDER_ID, &email)
+        auth_provider::user_data_by_identity(conn, auth::PROVIDER_ID, &username)
             .map_err(user_data_error_to_http_err)?;
 
     if !Login::match_password(&user_data, &password) {

@@ -52,8 +52,8 @@
     },
     "ft-email-auth-provider/ft_email_auth_provider.wasm": {
       "name": "ft-email-auth-provider/ft_email_auth_provider.wasm",
-      "checksum": "0C337A4683B7C04AF43BAF55B6169A710D332D8823E06C8128486D34F261F034",
-      "size": 2930452
+      "checksum": "5A7B57569282616C98988E859A33B0716FB14C87239B83B46DC7B28B01D0DB6F",
+      "size": 2884298
     },
     "ft-email-auth-provider/migrations/00000000000000_diesel_initial_setup/down.sql": {
       "name": "ft-email-auth-provider/migrations/00000000000000_diesel_initial_setup/down.sql",
@@ -82,13 +82,13 @@
     },
     "ft-email-auth-provider/src/handlers/create_account.rs": {
       "name": "ft-email-auth-provider/src/handlers/create_account.rs",
-      "checksum": "05754D108596352DC6A9772A6918D638FB580B9366085816344840D5B1921181",
-      "size": 6035
+      "checksum": "9D77239C860A39671847FF4EB9E481A212660180381C5D6FDFE77B6902F19FEF",
+      "size": 7132
     },
     "ft-email-auth-provider/src/handlers/login.rs": {
       "name": "ft-email-auth-provider/src/handlers/login.rs",
-      "checksum": "AB4CC940759E3DEDC36882C8C0F88FDF39EA5E7C246F79FFE491188DDC2A779E",
-      "size": 3120
+      "checksum": "BC8B2763B2E8FE9394EA7337B0130CD2420CEBFDABB0739ADBA2D145EDE66043",
+      "size": 3179
     },
     "ft-email-auth-provider/src/handlers/mod.rs": {
       "name": "ft-email-auth-provider/src/handlers/mod.rs",
@@ -97,8 +97,8 @@
     },
     "ft-email-auth-provider/src/lib.rs": {
       "name": "ft-email-auth-provider/src/lib.rs",
-      "checksum": "462E1F37E59053993BBB1956700304F09DBCDD5BE417DD518061483367FC0529",
-      "size": 1053
+      "checksum": "04021C5398AAC6F321C711CCDAFEE62C980DFD650A2761212628D1B7C9DE391F",
+      "size": 1397
     },
     "ft-email-auth-provider/src/urls.rs": {
       "name": "ft-email-auth-provider/src/urls.rs",
@@ -127,5 +127,5 @@
     }
   },
   "zip_url": "https://codeload.github.com/fastn-community/auth/zip/refs/heads/main",
-  "checksum": "5DC6757627843760BF17A9B2B424FBF14947B3011964EB3D306EFE8C11264EF5"
+  "checksum": "078DE08DC96253BD168A392F305A6B879DFB2CE1DE5898C3D5D0C6599692D3F7"
 }
