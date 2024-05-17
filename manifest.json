@@ -32,28 +32,28 @@
     },
     "flake.lock": {
       "name": "flake.lock",
-      "checksum": "C977FB32E3FDD322D72A4EA04470ED36CB33D590381A6878FA567CFB56A15765",
-      "size": 2461
+      "checksum": "D59E6665949EDC6A1738CBDFEDE9A0C061202CD2969A94ABBDB2995FB51FC6CC",
+      "size": 2400
     },
     "flake.nix": {
       "name": "flake.nix",
-      "checksum": "C4A899617369BDD974A0D5926196B58720CD10F2E275DEFE25735A93BB176EB9",
-      "size": 1078
+      "checksum": "A99D89BD910B01EF0C08A4B974EB421D20802DCF2860CC63AF1C32C9F509CDB8",
+      "size": 915
     },
     "ft-email-auth-provider/Cargo.lock": {
       "name": "ft-email-auth-provider/Cargo.lock",
-      "checksum": "837E2C7A5A237F5D1A784BDC7AA3F173A640D112861F99FDEF0846D993CDE37B",
-      "size": 19851
+      "checksum": "0AD6B280FC93445C19EFE5BFC9AB0EABD11A6BE4AEBA2623D9582078A7FDE96B",
+      "size": 20053
     },
     "ft-email-auth-provider/Cargo.toml": {
       "name": "ft-email-auth-provider/Cargo.toml",
-      "checksum": "75085C42E1A543CDFE279F76F1E8EDAC519E1ED7CFC9D79793CC2AB7EF9B228C",
-      "size": 613
+      "checksum": "8C8F237F8C3694F74758319F6789C71F46B1A6F2121854E6105511AB789E810F",
+      "size": 633
     },
     "ft-email-auth-provider/ft_email_auth_provider.wasm": {
       "name": "ft-email-auth-provider/ft_email_auth_provider.wasm",
-      "checksum": "5A7B57569282616C98988E859A33B0716FB14C87239B83B46DC7B28B01D0DB6F",
-      "size": 2884298
+      "checksum": "401282C0C436B00D0E6B995C18DA7B74705A56DD24619497D5D42D1BC6938020",
+      "size": 1453053
     },
     "ft-email-auth-provider/migrations/00000000000000_diesel_initial_setup/down.sql": {
       "name": "ft-email-auth-provider/migrations/00000000000000_diesel_initial_setup/down.sql",
@@ -75,20 +75,15 @@
       "checksum": "B2375F84181272F495325472EB9B2D50B9BE92201301F360F88289C79216777D",
       "size": 2704
     },
-    "ft-email-auth-provider/rust-toolchain.toml": {
-      "name": "ft-email-auth-provider/rust-toolchain.toml",
-      "checksum": "1B686AF6E951BE4E805CAE9CBF74109995205A53A9B7B80125ACC586FEC458C2",
-      "size": 32
-    },
     "ft-email-auth-provider/src/handlers/create_account.rs": {
       "name": "ft-email-auth-provider/src/handlers/create_account.rs",
-      "checksum": "9D77239C860A39671847FF4EB9E481A212660180381C5D6FDFE77B6902F19FEF",
-      "size": 7132
+      "checksum": "BCE24D15C70F60D178475642E49C4E95EBC84A3C28C754AE9B540FC6BD68F665",
+      "size": 7058
     },
     "ft-email-auth-provider/src/handlers/login.rs": {
       "name": "ft-email-auth-provider/src/handlers/login.rs",
-      "checksum": "BC8B2763B2E8FE9394EA7337B0130CD2420CEBFDABB0739ADBA2D145EDE66043",
-      "size": 3179
+      "checksum": "DB4CBAACEB376C8C655579A5EC15D43F1177F3E4AF502592E0E08C31BE0EA2B7",
+      "size": 3018
     },
     "ft-email-auth-provider/src/handlers/mod.rs": {
       "name": "ft-email-auth-provider/src/handlers/mod.rs",
@@ -97,13 +92,13 @@
     },
     "ft-email-auth-provider/src/lib.rs": {
       "name": "ft-email-auth-provider/src/lib.rs",
-      "checksum": "04021C5398AAC6F321C711CCDAFEE62C980DFD650A2761212628D1B7C9DE391F",
-      "size": 1397
+      "checksum": "7F96273D0F668259E288248363CF081F27ED9F065FECDF8BF0F38DC3BABC1583",
+      "size": 138
     },
     "ft-email-auth-provider/src/urls.rs": {
       "name": "ft-email-auth-provider/src/urls.rs",
-      "checksum": "4D0545BEF7C881DFB7EA8597B77B3989ED30D2F62101485832EBFB9EA74C3184",
-      "size": 2232
+      "checksum": "4DCCA6680F18BFC3B2D03F3F290BE91CE52552ED7A9557B0A76936E49724A8AE",
+      "size": 2360
     },
     "index.ftd": {
       "name": "index.ftd",
@@ -120,6 +115,11 @@
       "checksum": "E8F291D0C8CAEF3E98F1C6EBB598A059DCE020C139EDC428D31B3E11A37F50A8",
       "size": 256
     },
+    "rust-toolchain.toml": {
+      "name": "rust-toolchain.toml",
+      "checksum": "095FD520C721B7FD530254089C80AD8C13D8C10A542312308AF8B116F3D2BDCF",
+      "size": 195
+    },
     "vercel.json": {
       "name": "vercel.json",
       "checksum": "0A911690620506F0D47EBA9F49D46DCD57D84C7D6A3BEA93BF0875DD6B374089",
@@ -127,5 +127,5 @@
     }
   },
   "zip_url": "https://codeload.github.com/fastn-community/auth/zip/refs/heads/main",
-  "checksum": "078DE08DC96253BD168A392F305A6B879DFB2CE1DE5898C3D5D0C6599692D3F7"
+  "checksum": "F8FA8C578E7657A354CD6FD4F4BEC7D1F6B9CC26AE323AEDF99B8DF91395DE94"
 }

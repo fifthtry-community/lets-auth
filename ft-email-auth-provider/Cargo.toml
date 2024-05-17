@@ -10,7 +10,7 @@ crate-type = ["cdylib"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ft-sdk = { path = "../../ft-sdk/ft-sdk/", features = ["sqlite-default", "auth-provider"] }
+ft-sdk = { path = "../../ft-sdk/ft-sdk/", features = ["sqlite-default", "auth-provider", "field-extractors"] }
 serde = {  version = "1", features = ["derive"] }
 serde_json = "1"
 http = "1"

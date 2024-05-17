@@ -1,4 +1,4 @@
-use ft_sdk::{auth::provider as auth_provider, JsonBodyExt, QueryExt};
+use ft_sdk::auth::provider as auth_provider;
 use validator::ValidateEmail;
 
 pub struct CreateAccount {
@@ -117,34 +117,27 @@ impl CreateAccount {
 }
 
 fn validate(
-    in_: ft_sdk::In,
+    payload: CreateAccountPayload,
     conn: &mut ft_sdk::Connection,
-) -> Result<CreateAccount, ft_sdk::http::Error> {
-    let email: String = in_.req.required("email")?;
-    let username: String = in_.req.required("username")?;
-    let name: String = in_.req.required("name")?;
-    let password: String = in_.req.required("password")?;
-    let password2: String = in_.req.required("password2")?;
-    let accept_terms: bool = in_.req.required("accept_terms")?;
-
+) -> Result<CreateAccount, ft_sdk::Error> {
     let mut errors = std::collections::HashMap::new();
 
-    if !CreateAccount::validate_email(&email) {
+    if !CreateAccount::validate_email(&payload.email) {
         errors.insert("email".to_string(), "invalid email format".to_string());
     }
 
-    if password != password2 {
+    if payload.password != payload.password2 {
         errors.insert(
             "password2".to_string(),
             "password and confirm password field do not match".to_string(),
         );
     }
 
-    if let Some(message) = CreateAccount::is_strong_password(&password, &email, &name) {
+    if let Some(message) = CreateAccount::is_strong_password(&payload.password, &payload.email, &payload.name) {
         errors.insert("password".to_string(), message);
     }
 
-    if !accept_terms {
+    if !payload.accept_terms {
         errors.insert(
             "accept_terms".to_string(),
             "you must accept the terms and conditions".to_string(),
@@ -152,11 +145,11 @@ fn validate(
     }
 
     if !errors.is_empty() {
-        return Err(ft_sdk::http::Error::Form(errors));
+        return Err(ft_sdk::SpecialError::Multi(errors).into());
     }
 
-    if auth_provider::check_if_verified_email_exists(conn, &email, None)? {
-        return Err(ft_sdk::http::single_error("email", "email already exists"));
+    if auth_provider::check_if_verified_email_exists(conn, &payload.email, None)? {
+        return Err(ft_sdk::single_error("email", "email already exists").into());
     }
 
     let salt = argon2::password_hash::SaltString::generate(&mut ft_sdk::Rng {});
@@ -164,41 +157,56 @@ fn validate(
     let argon2 = argon2::Argon2::default();
 
     let hashed_password =
-        argon2::password_hash::PasswordHasher::hash_password(&argon2, password.as_bytes(), &salt)
+        argon2::password_hash::PasswordHasher::hash_password(&argon2, payload.password.as_bytes(), &salt)
             .unwrap()
             .to_string();
 
     Ok(CreateAccount {
-        email,
-        name,
+        email: payload.email,
+        name: payload.name,
         hashed_password,
-        username,
+        username: payload.username,
     })
 }
 
-pub fn handle(in_: ft_sdk::In, conn: &mut ft_sdk::Connection) -> ft_sdk::http::Result {
-    let account_meta = validate(in_.clone(), conn)?;
+#[derive(serde::Deserialize)]
+struct CreateAccountPayload {
+    email: String,
+    username: String,
+    name: String,
+    password: String,
+    password2: String,
+    accept_terms: bool,
+}
+
+#[ft_sdk::form]
+pub fn create_account(
+    mut conn: ft_sdk::Connection,
+    ft_sdk::Form(payload): ft_sdk::Form<CreateAccountPayload>,
+    ft_sdk::Query(next): ft_sdk::Query<"next">,
+) -> ft_sdk::form::Result {
+    let account_meta = validate(payload, &mut conn)?;
 
     let user_id = auth_provider::create_user(
-        conn,
+        &mut conn,
         "email",
         &account_meta.username,
         account_meta.to_provider_data(),
     )
     .map_err(sdk_auth_err_to_http_err)?;
 
-    auth_provider::login(conn, in_.clone(), &user_id, "email", &account_meta.name)?;
+    let resp = auth_provider::login(&mut conn, &user_id, "email", &account_meta.name, &next)?;
 
     let conf_link = account_meta
-        .create_conf_path(conn, user_id)
+        .create_conf_path(&mut conn, user_id)
         .map_err(sdk_auth_err_to_http_err)?;
 
     let (from_name, from_email) = CreateAccount::get_from_address_from_env();
 
     if let Err(e) = ft_sdk::send_email(
-        conn,
+        &mut conn,
         (&from_name, &from_email),
-        (&account_meta.name, &account_meta.email),
+        vec![(&account_meta.name, &account_meta.email)],
         "Confirm you account",
         &CreateAccount::confirm_account_html(&account_meta.name, &conf_link),
         &CreateAccount::confirm_account_text(&account_meta.name, &conf_link),
@@ -210,21 +218,17 @@ pub fn handle(in_: ft_sdk::In, conn: &mut ft_sdk::Connection) -> ft_sdk::http::R
         ft_sdk::println!("auth.wasm: failed to queue email: {:?}", e);
     }
 
-    let query = in_.req.query();
-
-    let next = query.get("next").unwrap_or(auth::DEFAULT_REDIRECT_ROUTE);
-
-    ft_sdk::http::redirect(next)
+    Ok(resp)
 }
 
-fn sdk_auth_err_to_http_err(e: auth_provider::AuthError) -> ft_sdk::http::Error {
+fn sdk_auth_err_to_http_err(e: auth_provider::AuthError) -> ft_sdk::Error {
     match e {
-        auth_provider::AuthError::Diesel(e) => ft_sdk::http::Error::Diesel(e),
         auth_provider::AuthError::NameNotProvided => {
-            ft_sdk::http::single_error("name", "name not provided")
+            ft_sdk::single_error("name", "name not provided").into()
         }
         auth_provider::AuthError::IdentityExists => {
-            ft_sdk::http::single_error("username", "username already exists")
+            ft_sdk::single_error("username", "username already exists").into()
         }
+        e => e.into()
     }
 }
