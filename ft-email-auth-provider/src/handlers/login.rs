@@ -55,7 +55,7 @@ fn validate(
             .map_err(user_data_error_to_http_err)?;
 
     if !Login::match_password(&user_data, &payload.password) {
-        return Err(ft_sdk::single_error("password", "incorrect email/password").into());
+        return Err(ft_sdk::single_error("password", "incorrect username/password").into());
     }
 
     let identity = Login::get_identity(&user_data).expect(
@@ -92,7 +92,7 @@ pub fn login(
 
 fn user_data_error_to_http_err(e: auth_provider::UserDataError) -> ft_sdk::Error {
     match e {
-        auth_provider::UserDataError::NoDataFound => ft_sdk::single_error("email", "invalid email").into(),
+        auth_provider::UserDataError::NoDataFound => ft_sdk::single_error("username", "invalid username").into(),
         auth_provider::UserDataError::DatabaseError(d) => d.into(),
     }
 }
