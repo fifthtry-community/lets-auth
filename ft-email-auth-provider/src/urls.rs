@@ -1,3 +1,5 @@
+// This code is not used anywhere.
+// TODO: Remove this when the project achieves feature parity with the old fastn's auth impl
 pub(crate) enum Route {
     Login,
     GithubLogin,
