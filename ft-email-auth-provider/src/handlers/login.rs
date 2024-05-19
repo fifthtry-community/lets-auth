@@ -82,7 +82,7 @@ pub fn login(
     let resp = auth_provider::login(
         &mut conn,
         &login_meta.user_id,
-        "email",
+        auth::PROVIDER_ID,
         &login_meta.identity,
         &next,
     )?;
@@ -93,6 +93,8 @@ pub fn login(
 fn user_data_error_to_http_err(e: auth_provider::UserDataError) -> ft_sdk::Error {
     match e {
         auth_provider::UserDataError::NoDataFound => ft_sdk::single_error("username", "invalid username").into(),
+        auth_provider::UserDataError::MultipleRowsFound => ft_sdk::server_error!("multiple users found").into(),
         auth_provider::UserDataError::DatabaseError(d) => d.into(),
+        auth_provider::UserDataError::FailedToDeserializeData(d) => d.into(),
     }
 }
