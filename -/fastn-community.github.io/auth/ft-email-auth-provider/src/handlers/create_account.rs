@@ -148,7 +148,7 @@ fn validate(
         return Err(ft_sdk::SpecialError::Multi(errors).into());
     }
 
-    if auth_provider::check_if_verified_email_exists(conn, &payload.email, None)? {
+    if auth_provider::user_data_by_email(conn, auth::PROVIDER_ID, &payload.email).is_ok() {
         return Err(ft_sdk::single_error("email", "email already exists").into());
     }
 
@@ -189,7 +189,7 @@ pub fn create_account(
 
     let user_id = auth_provider::create_user(
         &mut conn,
-        "email",
+        auth::PROVIDER_ID,
         &account_meta.username,
         account_meta.to_provider_data(),
     )

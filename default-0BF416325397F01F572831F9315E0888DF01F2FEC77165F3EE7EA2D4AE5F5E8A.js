@@ -518,10 +518,8 @@ const fastn = (function (fastn) {
 
                 let fields = {};
                 for (let key in value.#fields) {
-                    fields[key] = value.#fields[key];
+                    this.#fields[key].set(value.#fields[key]);
                 }
-
-                this.#fields = fields;
             } else if (this.#fields[key] === undefined) {
                 this.#fields[key] = fastn.mutable(null);
                 this.#fields[key].setWithoutUpdate(value);
@@ -2365,6 +2363,92 @@ class Node2 {
             }
         }
     }
+
+    attachImageSrcClosures(staticValue) {
+        if (fastn_utils.isNull(staticValue)) return;
+
+        if (staticValue instanceof fastn.recordInstanceClass) {
+            let value = staticValue;
+            let fields = value.getAllFields();
+
+            let light_field_value = fastn_utils.flattenMutable(fields["light"]);
+            light_field_value.addClosure(
+                fastn
+                    .closure(() => {
+                        const is_dark_mode = ftd.dark_mode.get();
+                        if (is_dark_mode) return;
+
+                        const src =
+                            fastn_utils.getStaticValue(light_field_value);
+                        if (!ssr) {
+                            let image_node = this.#node;
+                            if (!fastn_utils.isNull(image_node)) {
+                                if (image_node.nodeName.toLowerCase() === "a") {
+                                    let childNodes = image_node.childNodes;
+                                    childNodes.forEach(function (child) {
+                                        if (
+                                            child.nodeName.toLowerCase() ===
+                                            "img"
+                                        )
+                                            image_node = child;
+                                    });
+                                }
+                                image_node.setAttribute(
+                                    "src",
+                                    fastn_utils.getStaticValue(src),
+                                );
+                            }
+                        } else {
+                            this.attachAttribute(
+                                "src",
+                                fastn_utils.getStaticValue(src),
+                            );
+                        }
+                    })
+                    .addNodeProperty(this, null, inherited),
+            );
+            this.#mutables.push(light_field_value);
+
+            let dark_field_value = fastn_utils.flattenMutable(fields["dark"]);
+            dark_field_value.addClosure(
+                fastn
+                    .closure(() => {
+                        const is_dark_mode = ftd.dark_mode.get();
+                        if (!is_dark_mode) return;
+
+                        const src =
+                            fastn_utils.getStaticValue(dark_field_value);
+                        if (!ssr) {
+                            let image_node = this.#node;
+                            if (!fastn_utils.isNull(image_node)) {
+                                if (image_node.nodeName.toLowerCase() === "a") {
+                                    let childNodes = image_node.childNodes;
+                                    childNodes.forEach(function (child) {
+                                        if (
+                                            child.nodeName.toLowerCase() ===
+                                            "img"
+                                        )
+                                            image_node = child;
+                                    });
+                                }
+                                image_node.setAttribute(
+                                    "src",
+                                    fastn_utils.getStaticValue(src),
+                                );
+                            }
+                        } else {
+                            this.attachAttribute(
+                                "src",
+                                fastn_utils.getStaticValue(src),
+                            );
+                        }
+                    })
+                    .addNodeProperty(this, null, inherited),
+            );
+            this.#mutables.push(dark_field_value);
+        }
+    }
+
     attachLinkColor(value) {
         ftd.dark_mode.addClosure(
             fastn
@@ -2944,6 +3028,7 @@ class Node2 {
         } else if (kind === fastn_dom.PropertyKind.Src) {
             this.attachAttribute("src", staticValue);
         } else if (kind === fastn_dom.PropertyKind.ImageSrc) {
+            this.attachImageSrcClosures(staticValue);
             ftd.dark_mode.addClosure(
                 fastn
                     .closure(() => {
@@ -3664,6 +3749,14 @@ let fastn_utils = {
             return obj;
         }
     },
+    flattenMutable(value) {
+        if (!(value instanceof fastn.mutableClass)) return value;
+
+        if (value.get() instanceof fastn.mutableClass)
+            return this.flattenMutable(value.get());
+
+        return value;
+    },
     getFlattenStaticValue(obj) {
         let staticValue = fastn_utils.getStaticValue(obj);
         if (Array.isArray(staticValue)) {
@@ -3702,6 +3795,7 @@ let fastn_utils = {
         }
     },
     setter(variable, value) {
+        variable = fastn_utils.flattenMutable(variable);
         if (!fastn_utils.isNull(variable) && variable.set) {
             variable.set(value);
             return true;
@@ -4648,6 +4742,10 @@ const ftd = (function () {
     // Todo: Implement this (Remove highlighter)
     exports.clean_code = (args) => args.a;
 
+    exports.go_back = () => {
+        window.history.back();
+    };
+
     exports.set_rive_boolean = (args, node) => {
         if (!!args.rive) {
             let riveNode = riveNodes[`${args.rive}__${exports.device.get()}`];
@@ -4771,95 +4869,51 @@ const ftd = (function () {
         list.set(value);
     };
 
-    exports.http = function (url, opts, ...body) {
-        if ((!opts) instanceof fastn.recordInstanceClass) {
-            console.info(`opts must be a record instance of
-                -- record ftd.http-options:
-                string method: GET
-                string redirect: manual
-                string fastn-module:
-            `);
-            throw new Error("invalid opts");
-        }
-
-        let method = opts.get("method").get();
-        let fastn_module = opts.get("fastn_module").get();
-        let redirect = opts.get("redirect").get();
-
-        if (!["manual", "follow", "error"].includes(redirect)) {
-            throw new Error(
-                `redirect must be one of "manual", "follow", "error"`,
-            );
-        }
-
-        // change ftd.http-method and this function to add support for more
-        // http methods
-        if (!["GET", "POST"].includes(method)) {
-            throw new Error(
-                `${method} is invalid. Must be one of "GET", "POST"`,
-            );
-        }
-
+    exports.http = function (url, method, headers, ...body) {
         if (url instanceof fastn.mutableClass) url = url.get();
+        if (method instanceof fastn.mutableClass) method = method.get();
         method = method.trim().toUpperCase();
-        let request_json = {};
-
         const init = {
             method,
             headers: { "Content-Type": "application/json" },
-            json: null,
-            redirect,
         };
-
-        if (body) {
-            if (body[0] instanceof fastn.recordInstanceClass) {
-                if (body.length !== 1) {
-                    console.warn(
-                        "body is a record instance, but has more than 1 element, ignoring",
-                    );
-                }
-                request_json = body[0].toObject();
-            } else {
-                let json = body[0];
-                if (
-                    body.length !== 1 ||
-                    (body[0].length === 2 && Array.isArray(body[0]))
-                ) {
-                    let new_json = {};
-                    // @ts-ignore
-                    for (let [header, value] of Object.entries(body)) {
-                        let [key, val] =
-                            value.length === 2 ? value : [header, value];
-                        new_json[key] = fastn_utils.getStaticValue(val);
-                    }
-                    json = new_json;
-                }
-                request_json = json;
-            }
+        if (headers && headers instanceof fastn.recordInstanceClass) {
+            Object.assign(init.headers, headers.toObject());
         }
-
-        if (method === "POST") {
-            init.body = JSON.stringify(request_json);
+        if (method !== "GET") {
+            init.headers["Content-Type"] = "application/json";
         }
+        if (
+            body &&
+            body instanceof fastn.recordInstanceClass &&
+            method !== "GET"
+        ) {
+            init.body = JSON.stringify(body.toObject());
+        } else if (body && method !== "GET") {
+            let json = body[0];
+            if (
+                body.length !== 1 ||
+                (body[0].length === 2 && Array.isArray(body[0]))
+            ) {
+                let new_json = {};
+                // @ts-ignore
+                for (let [header, value] of Object.entries(body)) {
+                    let [key, val] =
+                        value.length == 2 ? value : [header, value];
 
-        if (method === "GET") {
-            url = new URL(url);
-
-            for (let [key, value] of Object.entries(request_json)) {
-                url.searchParams.set(key, value);
+                    new_json[key] = fastn_utils.getFlattenStaticValue(val);
+                }
+                json = new_json;
             }
+            init.body = JSON.stringify(json);
         }
 
         let json;
+
         fetch(url, init)
             .then((res) => {
-                if (res.redirected) {
-                    window.location.href = res.url;
-                    return;
-                }
-
                 if (!res.ok) {
-                    return new Error("[http]: Request failed", res);
+                    return new Error("[http]: Request failed: " + res);
                 }
 
                 return res.json();
@@ -4878,10 +4932,10 @@ const ftd = (function () {
                             if (Array.isArray(value)) {
                                 // django returns a list of strings
                                 value = value.join(" ");
+                                // also django does not append `-error`
+                                key = key + "-error";
                             }
-                            // also django does not append `-error`
-                            key = key + "-error";
-                            key = fastn_module + "#" + key;
+                            // @ts-ignore
                             data[key] = value;
                         }
                     }
@@ -4891,13 +4945,10 @@ const ftd = (function () {
                                 "both .errors and .data are present in response, ignoring .data",
                             );
                         } else {
-                            for (let key of Object.keys(response.data)) {
-                                const value = response.data[key];
-                                key = fastn_module + "#" + key;
-                                data[key] = value;
-                            }
+                            data = response.data;
                         }
                     }
+                    console.log(response);
                     for (let ftd_variable of Object.keys(data)) {
                         // @ts-ignore
                         window.ftd.set_value(ftd_variable, data[ftd_variable]);
@@ -5103,6 +5154,67 @@ const ftd = (function () {
         return fastn_utils.private.getCookie("fastn-lang");
     };
 
+    exports.submit_form = function (url, ...args) {
+        if (url instanceof fastn.mutableClass) url = url.get();
+
+        let data = {};
+        let arg_map = {};
+
+        for (let i = 0, len = args.length; i < len; i += 1) {
+            let obj = args[i];
+            console.assert(obj instanceof fastn.recordInstanceClass);
+            let name = obj.get("name").get();
+            arg_map[name] = obj;
+            obj.get("error").set(null);
+            data[name] = fastn_utils.getFlattenStaticValue(obj.get("value"));
+        }
+
+        let init = {
+            method: "POST",
+            redirect: "error",
+            // TODO: set credentials?
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+        };
+
+        console.log(url, data);
+
+        fetch(url, init)
+            .then((res) => {
+                if (!res.ok) {
+                    return new Error("[http_post]: Request failed: " + res);
+                }
+                return res.json();
+            })
+            .then((response) => {
+                console.log("[http]: Response OK", response);
+                if (response.redirect) {
+                    window.location.href = response.redirect;
+                } else if (!!response && !!response.reload) {
+                    window.location.reload();
+                } else if (!!response.errors) {
+                    for (let key of Object.keys(response.errors)) {
+                        let obj = arg_map[key];
+                        if (!obj) {
+                            console.warn("found unknown key, ignoring: ", key);
+                            continue;
+                        }
+                        let error = response.errors[key];
+                        if (Array.isArray(error)) {
+                            // django returns a list of strings
+                            error = error.join(" ");
+                        }
+                        // @ts-ignore
+                        obj.get("error").set(error);
+                    }
+                } else if (!!response.data) {
+                    console.error("data not yet implemented");
+                } else {
+                    console.error("found invalid response", response);
+                }
+            })
+            .catch(console.error);
+    };
     return exports;
 })();
 
