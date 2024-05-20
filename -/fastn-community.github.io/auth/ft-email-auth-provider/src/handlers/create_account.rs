@@ -1,4 +1,4 @@
-use ft_sdk::auth::{provider as auth_provider};
+use ft_sdk::auth::provider as auth_provider;
 use validator::ValidateEmail;
 
 pub struct CreateAccount {
@@ -25,7 +25,6 @@ impl CreateAccount {
             }),
         }
     }
-
 
     fn confirm_account_html(name: &str, link: &str) -> String {
         // TODO: until we figure out email templates, this has to do
@@ -114,7 +113,9 @@ fn validate(
         );
     }
 
-    if let Some(message) = CreateAccount::is_strong_password(&payload.password, &payload.email, &payload.name) {
+    if let Some(message) =
+        CreateAccount::is_strong_password(&payload.password, &payload.email, &payload.name)
+    {
         errors.insert("password".to_string(), message);
     }
 
@@ -141,7 +142,8 @@ fn validate(
         return Err(ft_sdk::single_error("username", "username already exists").into());
     }
 
-    if diesel::sql_query(r#"
+    if diesel::sql_query(
+        r#"
         SELECT
             COUNT(*) AS count
         FROM fastn_user
@@ -151,14 +153,18 @@ fn validate(
                 FROM json_each(data -> 'email' -> 'verified_emails' )
                 WHERE value = $1
             )
-    "#)
-        .bind::<diesel::sql_types::Text, _>(&payload.email)
-        .get_result::<ft_sdk::auth::Counter>(conn)?.count > 0
+    "#,
+    )
+    .bind::<diesel::sql_types::Text, _>(&payload.email)
+    .get_result::<ft_sdk::auth::Counter>(conn)?
+    .count
+        > 0
     {
         return Err(ft_sdk::single_error("email", "email already exists").into());
     }
 
-    if diesel::sql_query(r#"
+    if diesel::sql_query(
+        r#"
         SELECT
             COUNT(*) AS count
         FROM fastn_user
@@ -168,9 +174,12 @@ fn validate(
                 FROM json_each(data -> 'email' -> 'emails' )
                 WHERE value = $1
             )
-    "#)
-        .bind::<diesel::sql_types::Text, _>(&payload.email)
-        .get_result::<ft_sdk::auth::Counter>(conn)?.count > 0
+    "#,
+    )
+    .bind::<diesel::sql_types::Text, _>(&payload.email)
+    .get_result::<ft_sdk::auth::Counter>(conn)?
+    .count
+        > 0
     {
         return Err(ft_sdk::single_error("email", "email already exists").into());
     }
@@ -183,17 +192,20 @@ fn validate(
 
     let argon2 = argon2::Argon2::default();
 
-    let hashed_password =
-        argon2::password_hash::PasswordHasher::hash_password(&argon2, payload.password.as_bytes(), &salt)
-            .unwrap()
-            .to_string();
+    let hashed_password = argon2::password_hash::PasswordHasher::hash_password(
+        &argon2,
+        payload.password.as_bytes(),
+        &salt,
+    )
+    .unwrap()
+    .to_string();
 
     Ok(CreateAccount {
         email: payload.email,
         name: payload.name,
         hashed_password,
         username: payload.username,
-        email_confirmation_code: CreateAccount::generate_key(64)
+        email_confirmation_code: CreateAccount::generate_key(64),
     })
 }
 
@@ -224,7 +236,6 @@ pub fn create_account(
 
     let conf_link = account_meta.confirmation_link();
 
-
     let (from_name, from_email) = CreateAccount::get_from_address_from_env();
 
     if let Err(e) = ft_sdk::send_email(
@@ -245,4 +256,3 @@ pub fn create_account(
 
     Ok(ft_sdk::form::redirect("/")?.with_cookie(("fastn_sid", sid)))
 }
-

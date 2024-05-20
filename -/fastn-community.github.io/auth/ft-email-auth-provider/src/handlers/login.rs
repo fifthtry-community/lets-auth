@@ -7,14 +7,23 @@ pub struct Login {
 
 impl Login {
     /// Check if the password matches the hashed password in the database
-    fn match_password(ud: &ft_sdk::auth::ProviderData, password: &str) -> bool {
+    fn match_password(ud: &ft_sdk::auth::ProviderData, password: &str) -> Result<bool, ft_sdk::Error> {
+        ft_sdk::println!("ud: {ud:?}");
         let stored_password: String = match ud.get_custom("hashed_password") {
             Some(v) => v,
-            None => return false,
+            None => {
+                ft_sdk::println!("no hashed password found");
+                return Ok(false)
+            },
         };
 
-        let parsed_hash = argon2::PasswordHash::new(stored_password.as_str())
-            .expect("Expected password to be a valid hash");
+        let parsed_hash = match argon2::PasswordHash::new(stored_password.as_str()) {
+            Ok(v) => v,
+            Err(e) => {
+                ft_sdk::println!("error parsing hash: {:?}", e);
+                return Err(ft_sdk::server_error!("error verifying password: {:?}", e).into());
+            },
+        };
 
         let password_match = argon2::PasswordVerifier::verify_password(
             &argon2::Argon2::default(),
@@ -22,30 +31,50 @@ impl Login {
             &parsed_hash,
         );
 
-        if password_match.is_ok() {
-            return true;
+        match password_match {
+            Ok(()) => Ok(true),
+            Err(argon2::password_hash::Error::Password) => Ok(false),
+            Err(e) => Err(ft_sdk::server_error!("error verifying password: {:?}", e).into()),
         }
-
-
-        // User probably has no hashed_password. They can set it via reset
-        // password feature if they used some other auth provider
-        // (github oauth for example)
-        false
     }
 }
 
-fn validate(
-    conn: &mut ft_sdk::Connection,
-    payload: LoginPayload,
-) -> Result<Login, ft_sdk::Error> {
-    let (user_id, user_data) =
-        auth_provider::user_data_by_identity(conn, auth::PROVIDER_ID, &payload.username)?;
+fn validate(conn: &mut ft_sdk::Connection, payload: LoginPayload) -> Result<Login, ft_sdk::Error> {
+    let (user_id, user_data) = if payload.username.contains('@') {
+        match auth_provider::user_data_by_email(conn, auth::PROVIDER_ID, &payload.username) {
+            Ok(v) => v,
+            Err(ft_sdk::auth::UserDataError::NoDataFound) => {
+                match auth_provider::user_data_by_verified_email(conn, auth::PROVIDER_ID, &payload.username)
+                {
+                    Ok(v) => v,
+                    Err(ft_sdk::auth::UserDataError::NoDataFound) => {
+                        ft_sdk::println!("username not found");
+                        return Err(ft_sdk::single_error(
+                            "username",
+                            "incorrect username/password",
+                        )
+                        .into());
+                    }
+                    Err(e) => return Err(e.into()),
+                }
+            }
+            Err(e) => return Err(e.into()),
+        }
+    } else {
+        auth_provider::user_data_by_identity(conn, auth::PROVIDER_ID, &payload.username)?
+    };
 
-    if !Login::match_password(&user_data, &payload.password) {
-        return Err(ft_sdk::single_error("password", "incorrect username/password").into());
+    if !Login::match_password(&user_data, &payload.password)? {
+        // we intentionally send the error against username to avoid leaking the fact that the
+        // username exists
+        ft_sdk::println!("incorrect password");
+        return Err(ft_sdk::single_error("username", "incorrect username/password").into());
     }
 
-    Ok(Login { user_id, identity: user_data.identity })
+    Ok(Login {
+        user_id,
+        identity: user_data.identity,
+    })
 }
 
 #[derive(serde::Deserialize)]
@@ -72,4 +101,3 @@ pub fn login(
 
     Ok(resp)
 }
-
