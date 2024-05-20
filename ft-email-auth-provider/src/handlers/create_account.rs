@@ -129,7 +129,53 @@ fn validate(
         return Err(ft_sdk::SpecialError::Multi(errors).into());
     }
 
-    if auth_provider::user_data_by_email(conn, auth::PROVIDER_ID, &payload.email).is_ok() {
+    use diesel::prelude::*;
+    use ft_sdk::auth::fastn_user;
+
+    if fastn_user::table
+        .select(diesel::dsl::count_star())
+        .filter(fastn_user::identity.eq(&payload.username))
+        .get_result::<i64>(conn)?
+        > 0
+    {
+        return Err(ft_sdk::single_error("username", "username already exists").into());
+    }
+
+    if diesel::sql_query(r#"
+        SELECT
+            COUNT(*) AS count
+        FROM fastn_user
+        WHERE
+            EXISTS (
+                SELECT 1
+                FROM json_each(data -> 'email' -> 'verified_emails' )
+                WHERE value = $1
+            )
+    "#)
+        .bind::<diesel::sql_types::Text, _>(&payload.email)
+        .get_result::<ft_sdk::auth::Counter>(conn)?.count > 0
+    {
+        return Err(ft_sdk::single_error("email", "email already exists").into());
+    }
+
+    if diesel::sql_query(r#"
+        SELECT
+            COUNT(*) AS count
+        FROM fastn_user
+        WHERE
+            EXISTS (
+                SELECT 1
+                FROM json_each(data -> 'email' -> 'emails' )
+                WHERE value = $1
+            )
+    "#)
+        .bind::<diesel::sql_types::Text, _>(&payload.email)
+        .get_result::<ft_sdk::auth::Counter>(conn)?.count > 0
+    {
+        return Err(ft_sdk::single_error("email", "email already exists").into());
+    }
+
+    if auth_provider::user_data_by_identity(conn, auth::PROVIDER_ID, &payload.email).is_ok() {
         return Err(ft_sdk::single_error("email", "email already exists").into());
     }
 
@@ -168,7 +214,7 @@ pub fn create_account(
 ) -> ft_sdk::form::Result {
     let account_meta = validate(payload, &mut conn)?;
 
-    auth_provider::create_user(
+    let ft_sdk::auth::SessionID(sid) = auth_provider::create_user(
         &mut conn,
         None,
         auth::PROVIDER_ID,
@@ -197,6 +243,6 @@ pub fn create_account(
         return Err(e.into());
     }
 
-    ft_sdk::form::redirect("/")
+    Ok(ft_sdk::form::redirect("/")?.with_cookie(("fastn_sid", sid)))
 }
 
