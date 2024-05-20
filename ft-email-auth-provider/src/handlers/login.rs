@@ -7,42 +7,30 @@ pub struct Login {
 
 impl Login {
     /// Check if the password matches the hashed password in the database
-    fn match_password(ud: &Vec<ft_sdk::auth::UserData>, password: &str) -> bool {
-        for user_data in ud {
-            if let ft_sdk::auth::UserData::Custom { key, value } = user_data {
-                if key == "hashed_password" {
-                    let stored_password = value.as_str().expect("Expected password to be a string");
+    fn match_password(ud: &ft_sdk::auth::ProviderData, password: &str) -> bool {
+        let stored_password: String = match ud.get_custom("hashed_password") {
+            Some(v) => v,
+            None => return false,
+        };
 
-                    let parsed_hash = argon2::PasswordHash::new(stored_password)
-                        .expect("Expected password to be a valid hash");
+        let parsed_hash = argon2::PasswordHash::new(stored_password.as_str())
+            .expect("Expected password to be a valid hash");
 
-                    let password_match = argon2::PasswordVerifier::verify_password(
-                        &argon2::Argon2::default(),
-                        password.as_bytes(),
-                        &parsed_hash,
-                    );
+        let password_match = argon2::PasswordVerifier::verify_password(
+            &argon2::Argon2::default(),
+            password.as_bytes(),
+            &parsed_hash,
+        );
 
-                    if password_match.is_ok() {
-                        return true;
-                    }
-                }
-            }
+        if password_match.is_ok() {
+            return true;
         }
+
 
         // User probably has no hashed_password. They can set it via reset
         // password feature if they used some other auth provider
         // (github oauth for example)
         false
-    }
-
-    fn get_identity(ud: &Vec<ft_sdk::auth::UserData>) -> Option<String> {
-        for user_data in ud {
-            if let ft_sdk::auth::UserData::Identity(identity) = user_data {
-                return Some(identity.clone());
-            }
-        }
-
-        None
     }
 }
 
@@ -51,18 +39,13 @@ fn validate(
     payload: LoginPayload,
 ) -> Result<Login, ft_sdk::Error> {
     let (user_id, user_data) =
-        auth_provider::user_data_by_identity(conn, auth::PROVIDER_ID, &payload.username)
-            .map_err(user_data_error_to_http_err)?;
+        auth_provider::user_data_by_identity(conn, auth::PROVIDER_ID, &payload.username)?;
 
     if !Login::match_password(&user_data, &payload.password) {
         return Err(ft_sdk::single_error("password", "incorrect username/password").into());
     }
 
-    let identity = Login::get_identity(&user_data).expect(
-        "Expected identity to be present in user data. All providers must provide an identity",
-    );
-
-    Ok(Login { user_id, identity })
+    Ok(Login { user_id, identity: user_data.identity })
 }
 
 #[derive(serde::Deserialize)]
@@ -90,11 +73,3 @@ pub fn login(
     Ok(resp)
 }
 
-fn user_data_error_to_http_err(e: auth_provider::UserDataError) -> ft_sdk::Error {
-    match e {
-        auth_provider::UserDataError::NoDataFound => ft_sdk::single_error("username", "invalid username").into(),
-        auth_provider::UserDataError::MultipleRowsFound => ft_sdk::server_error!("multiple users found").into(),
-        auth_provider::UserDataError::DatabaseError(d) => d.into(),
-        auth_provider::UserDataError::FailedToDeserializeData(d) => d.into(),
-    }
-}

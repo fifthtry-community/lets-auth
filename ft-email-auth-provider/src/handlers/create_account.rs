@@ -1,4 +1,4 @@
-use ft_sdk::auth::provider as auth_provider;
+use ft_sdk::auth::{provider as auth_provider};
 use validator::ValidateEmail;
 
 pub struct CreateAccount {
@@ -7,45 +7,25 @@ pub struct CreateAccount {
     username: String,
     name: String,
     hashed_password: String,
+    email_confirmation_code: String,
 }
 
 impl CreateAccount {
-    fn to_provider_data(&self) -> Vec<ft_sdk::auth::UserData> {
-        vec![
-            ft_sdk::auth::UserData::Email(self.email.clone()),
-            ft_sdk::auth::UserData::Name(self.name.clone()),
-            ft_sdk::auth::UserData::Identity(self.username.clone()),
-            ft_sdk::auth::UserData::Custom {
-                key: "hashed_password".to_string(),
-                value: self.hashed_password.clone().into(),
-            },
-        ]
+    fn to_provider_data(&self) -> ft_sdk::auth::ProviderData {
+        ft_sdk::auth::ProviderData {
+            identity: self.username.to_string(),
+            username: Some(self.username.to_string()),
+            name: Some(self.name.to_string()),
+            emails: vec![self.email.clone()],
+            verified_emails: vec![],
+            profile_picture: None,
+            custom: serde_json::json!({
+                "hashed_password": self.hashed_password,
+                "email_confirmation_code": self.email_confirmation_code
+            }),
+        }
     }
 
-    /// create relative path to the confirm account route handler
-    ///
-    /// this route needs to be prefixed with the mount point that you used in
-    /// your fastn app's url-mappings
-    fn create_conf_path(
-        &self,
-        conn: &mut ft_sdk::Connection,
-        user_id: ft_sdk::auth::UserId,
-    ) -> Result<String, auth_provider::AuthError> {
-        let key = CreateAccount::generate_key(64);
-
-        let data = vec![
-            ft_sdk::auth::UserData::Custom {
-                key: "conf_code".to_string(),
-                value: key.clone().into(),
-            },
-            ft_sdk::auth::UserData::Name(self.name.clone()),
-        ];
-
-        // save the conf link for later use
-        auth_provider::update_user(&user_id, conn, auth::PROVIDER_ID, &self.username, data)?;
-
-        Ok(CreateAccount::confirmation_link(key))
-    }
 
     fn confirm_account_html(name: &str, link: &str) -> String {
         // TODO: until we figure out email templates, this has to do
@@ -88,9 +68,10 @@ impl CreateAccount {
         ft_sdk::Rng::generate_key(length)
     }
 
-    fn confirmation_link(key: String) -> String {
+    fn confirmation_link(&self) -> String {
         format!(
             "{confirm_email_route}?code={key}",
+            key = self.email_confirmation_code,
             confirm_email_route = auth::urls::Route::ConfirmEmail,
         )
     }
@@ -166,6 +147,7 @@ fn validate(
         name: payload.name,
         hashed_password,
         username: payload.username,
+        email_confirmation_code: CreateAccount::generate_key(64)
     })
 }
 
@@ -183,23 +165,19 @@ struct CreateAccountPayload {
 pub fn create_account(
     mut conn: ft_sdk::Connection,
     ft_sdk::Form(payload): ft_sdk::Form<CreateAccountPayload>,
-    ft_sdk::Query(next): ft_sdk::Query<"next">,
 ) -> ft_sdk::form::Result {
     let account_meta = validate(payload, &mut conn)?;
 
-    let user_id = auth_provider::create_user(
+    auth_provider::create_user(
         &mut conn,
+        None,
         auth::PROVIDER_ID,
         &account_meta.username,
         account_meta.to_provider_data(),
-    )
-    .map_err(sdk_auth_err_to_http_err)?;
+    )?;
 
-    let resp = auth_provider::login(&mut conn, &user_id, "email", &account_meta.name, &next)?;
+    let conf_link = account_meta.confirmation_link();
 
-    let conf_link = account_meta
-        .create_conf_path(&mut conn, user_id)
-        .map_err(sdk_auth_err_to_http_err)?;
 
     let (from_name, from_email) = CreateAccount::get_from_address_from_env();
 
@@ -216,19 +194,9 @@ pub fn create_account(
         "auth_confirm_account",
     ) {
         ft_sdk::println!("auth.wasm: failed to queue email: {:?}", e);
+        return Err(e.into());
     }
 
-    Ok(resp)
+    ft_sdk::form::redirect("/")
 }
 
-fn sdk_auth_err_to_http_err(e: auth_provider::AuthError) -> ft_sdk::Error {
-    match e {
-        auth_provider::AuthError::NameNotProvided => {
-            ft_sdk::single_error("name", "name not provided").into()
-        }
-        auth_provider::AuthError::IdentityExists => {
-            ft_sdk::single_error("username", "username already exists").into()
-        }
-        e => e.into()
-    }
-}
