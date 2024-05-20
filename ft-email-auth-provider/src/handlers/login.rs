@@ -87,17 +87,15 @@ struct LoginPayload {
 pub fn login(
     mut conn: ft_sdk::Connection,
     ft_sdk::Form(payload): ft_sdk::Form<LoginPayload>,
-    ft_sdk::Query(next): ft_sdk::Query<"next">,
+    ft_sdk::Cookie(sid): ft_sdk::Cookie<"fastn_sid">,
 ) -> ft_sdk::form::Result {
     let login_meta = validate(&mut conn, payload)?;
 
-    let resp = auth_provider::login(
+    let ft_sdk::auth::SessionID(sid) = auth_provider::login(
         &mut conn,
         &login_meta.user_id,
-        auth::PROVIDER_ID,
-        &login_meta.identity,
-        &next,
+        sid.map(ft_sdk::auth::SessionID),
     )?;
 
-    Ok(resp)
+    Ok(ft_sdk::form::redirect("/")?.with_cookie(("fastn_sid", sid)))
 }
