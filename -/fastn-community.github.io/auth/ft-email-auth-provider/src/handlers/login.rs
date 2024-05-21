@@ -7,14 +7,17 @@ pub struct Login {
 
 impl Login {
     /// Check if the password matches the hashed password in the database
-    fn match_password(ud: &ft_sdk::auth::ProviderData, password: &str) -> Result<bool, ft_sdk::Error> {
+    fn match_password(
+        ud: &ft_sdk::auth::ProviderData,
+        password: &str,
+    ) -> Result<bool, ft_sdk::Error> {
         ft_sdk::println!("ud: {ud:?}");
         let stored_password: String = match ud.get_custom("hashed_password") {
             Some(v) => v,
             None => {
                 ft_sdk::println!("no hashed password found");
-                return Ok(false)
-            },
+                return Ok(false);
+            }
         };
 
         let parsed_hash = match argon2::PasswordHash::new(stored_password.as_str()) {
@@ -22,7 +25,7 @@ impl Login {
             Err(e) => {
                 ft_sdk::println!("error parsing hash: {:?}", e);
                 return Err(ft_sdk::server_error!("error verifying password: {:?}", e).into());
-            },
+            }
         };
 
         let password_match = argon2::PasswordVerifier::verify_password(
@@ -44,8 +47,11 @@ fn validate(conn: &mut ft_sdk::Connection, payload: LoginPayload) -> Result<Logi
         match auth_provider::user_data_by_email(conn, auth::PROVIDER_ID, &payload.username) {
             Ok(v) => v,
             Err(ft_sdk::auth::UserDataError::NoDataFound) => {
-                match auth_provider::user_data_by_verified_email(conn, auth::PROVIDER_ID, &payload.username)
-                {
+                match auth_provider::user_data_by_verified_email(
+                    conn,
+                    auth::PROVIDER_ID,
+                    &payload.username,
+                ) {
                     Ok(v) => v,
                     Err(ft_sdk::auth::UserDataError::NoDataFound) => {
                         ft_sdk::println!("username not found");
@@ -87,7 +93,7 @@ struct LoginPayload {
 pub fn login(
     mut conn: ft_sdk::Connection,
     ft_sdk::Form(payload): ft_sdk::Form<LoginPayload>,
-    ft_sdk::Cookie(sid): ft_sdk::Cookie<{ft_sdk::auth::SESSION_KEY}>,
+    ft_sdk::Cookie(sid): ft_sdk::Cookie<{ ft_sdk::auth::SESSION_KEY }>,
     host: ft_sdk::Host,
 ) -> ft_sdk::form::Result {
     let login_meta = validate(&mut conn, payload)?;

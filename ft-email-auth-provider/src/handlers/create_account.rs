@@ -223,7 +223,7 @@ struct CreateAccountPayload {
 pub fn create_account(
     mut conn: ft_sdk::Connection,
     ft_sdk::Form(payload): ft_sdk::Form<CreateAccountPayload>,
-    ft_sdk::Cookie(sid): ft_sdk::Cookie<{ft_sdk::auth::SESSION_KEY}>,
+    ft_sdk::Cookie(sid): ft_sdk::Cookie<{ ft_sdk::auth::SESSION_KEY }>,
     host: ft_sdk::Host,
 ) -> ft_sdk::form::Result {
     let account_meta = validate(payload, &mut conn)?;
