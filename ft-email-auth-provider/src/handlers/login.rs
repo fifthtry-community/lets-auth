@@ -2,7 +2,6 @@ use ft_sdk::auth::provider as auth_provider;
 
 pub struct Login {
     user_id: ft_sdk::auth::UserId,
-    identity: String,
 }
 
 impl Login {
@@ -77,10 +76,7 @@ fn validate(conn: &mut ft_sdk::Connection, payload: LoginPayload) -> Result<Logi
         return Err(ft_sdk::single_error("username", "incorrect username/password").into());
     }
 
-    Ok(Login {
-        user_id,
-        identity: user_data.identity,
-    })
+    Ok(Login { user_id })
 }
 
 #[derive(serde::Deserialize)]

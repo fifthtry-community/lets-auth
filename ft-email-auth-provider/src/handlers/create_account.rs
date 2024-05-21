@@ -232,7 +232,6 @@ pub fn create_account(
         &mut conn,
         sid.map(ft_sdk::auth::SessionID),
         auth::PROVIDER_ID,
-        &account_meta.username,
         account_meta.to_provider_data(),
     )?;
 
