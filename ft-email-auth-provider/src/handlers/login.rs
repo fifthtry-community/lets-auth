@@ -88,6 +88,7 @@ pub fn login(
     mut conn: ft_sdk::Connection,
     ft_sdk::Form(payload): ft_sdk::Form<LoginPayload>,
     ft_sdk::Cookie(sid): ft_sdk::Cookie<{ft_sdk::auth::SESSION_KEY}>,
+    host: ft_sdk::Host,
 ) -> ft_sdk::form::Result {
     let login_meta = validate(&mut conn, payload)?;
 
@@ -97,5 +98,5 @@ pub fn login(
         sid.map(ft_sdk::auth::SessionID),
     )?;
 
-    Ok(ft_sdk::form::redirect("/")?.with_cookie((ft_sdk::auth::SESSION_KEY, sid)))
+    Ok(ft_sdk::form::redirect("/")?.with_cookie(auth::session_cookie(sid.as_str(), host)?))
 }

@@ -42,28 +42,28 @@
     },
     "ft-email-auth-provider/Cargo.lock": {
       "name": "ft-email-auth-provider/Cargo.lock",
-      "checksum": "E9460853904C3EB9B0F98A256642B5BB2883A351B6E82758B099E04B1CDEAFE9",
-      "size": 20071
+      "checksum": "A756395BB1ECDFE44086ABF20DEA70A793626B2F0F06AE7EA4EC8FD8AD10FEF6",
+      "size": 21659
     },
     "ft-email-auth-provider/Cargo.toml": {
       "name": "ft-email-auth-provider/Cargo.toml",
-      "checksum": "6511AB1B771B85C1DFF9FF6E10CB5B2CA3873915896E152C9D52A68600D53EA9",
-      "size": 632
+      "checksum": "4F0641AD2083C1254E66FD41449EE9BC4EC81B0959B14493541A858B7B93839C",
+      "size": 648
     },
     "ft-email-auth-provider/ft_email_auth_provider.wasm": {
       "name": "ft-email-auth-provider/ft_email_auth_provider.wasm",
-      "checksum": "DC04CE3BC0BB6C849C09A312279396D9DF4DDA57E1B36D1B7D35B5B11001EC10",
-      "size": 1493667
+      "checksum": "D8BAE7581F6F646C7205D3CC7FC9E9AD269D4F550BB7BAAAC52564B17316551F",
+      "size": 1532066
     },
     "ft-email-auth-provider/src/handlers/create_account.rs": {
       "name": "ft-email-auth-provider/src/handlers/create_account.rs",
-      "checksum": "F6EC0C3305D665FE0B4AA1512F151B031EA0FC5D60AAE670829F911EC781CC77",
-      "size": 7450
+      "checksum": "0D7AE8F55450906067CC7D3B249539EF916F9F8361E5ECA2817CE9227C70E4D1",
+      "size": 7483
     },
     "ft-email-auth-provider/src/handlers/login.rs": {
       "name": "ft-email-auth-provider/src/handlers/login.rs",
-      "checksum": "928E8155AEA066A8FB59D7D4F6E52B597873C2621FF865D2278D4CBFE158D0F3",
-      "size": 3511
+      "checksum": "98B6712FE0667AD28D1283BF3455CB4215FEF02E49CAE200FD992BDE555699B2",
+      "size": 3544
     },
     "ft-email-auth-provider/src/handlers/mod.rs": {
       "name": "ft-email-auth-provider/src/handlers/mod.rs",
@@ -72,8 +72,8 @@
     },
     "ft-email-auth-provider/src/lib.rs": {
       "name": "ft-email-auth-provider/src/lib.rs",
-      "checksum": "7F96273D0F668259E288248363CF081F27ED9F065FECDF8BF0F38DC3BABC1583",
-      "size": 138
+      "checksum": "FFCBBC2F63929FFD816C897D16F716D62661FE0B05CD5ABE2504E20B9137626F",
+      "size": 686
     },
     "ft-email-auth-provider/src/urls.rs": {
       "name": "ft-email-auth-provider/src/urls.rs",
@@ -112,5 +112,5 @@
     }
   },
   "zip_url": "https://codeload.github.com/fastn-community/auth/zip/refs/heads/main",
-  "checksum": "A3F83344B8C80F86B21FB638625ABCFDEC76462E89AAF4088C26AA3ADBA6617B"
+  "checksum": "70E1F3AF583ECC524AA2D6CA726CD1EA439BE91DAAC8B8D00553F9708BC20ABF"
 }
