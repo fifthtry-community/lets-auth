@@ -224,6 +224,7 @@ pub fn create_account(
     mut conn: ft_sdk::Connection,
     ft_sdk::Form(payload): ft_sdk::Form<CreateAccountPayload>,
     ft_sdk::Cookie(sid): ft_sdk::Cookie<{ft_sdk::auth::SESSION_KEY}>,
+    host: ft_sdk::Host,
 ) -> ft_sdk::form::Result {
     let account_meta = validate(payload, &mut conn)?;
 
@@ -255,5 +256,5 @@ pub fn create_account(
         return Err(e.into());
     }
 
-    Ok(ft_sdk::form::redirect("/")?.with_cookie((ft_sdk::auth::SESSION_KEY, sid)))
+    Ok(ft_sdk::form::redirect("/")?.with_cookie(auth::session_cookie(sid.as_str(), host)?))
 }
