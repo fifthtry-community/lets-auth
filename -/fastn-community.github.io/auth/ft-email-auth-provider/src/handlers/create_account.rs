@@ -223,12 +223,13 @@ struct CreateAccountPayload {
 pub fn create_account(
     mut conn: ft_sdk::Connection,
     ft_sdk::Form(payload): ft_sdk::Form<CreateAccountPayload>,
+    ft_sdk::Cookie(sid): ft_sdk::Cookie<{ft_sdk::auth::SESSION_KEY}>,
 ) -> ft_sdk::form::Result {
     let account_meta = validate(payload, &mut conn)?;
 
     let ft_sdk::auth::SessionID(sid) = auth_provider::create_user(
         &mut conn,
-        None,
+        sid.map(ft_sdk::auth::SessionID),
         auth::PROVIDER_ID,
         &account_meta.username,
         account_meta.to_provider_data(),
@@ -254,5 +255,5 @@ pub fn create_account(
         return Err(e.into());
     }
 
-    Ok(ft_sdk::form::redirect("/")?.with_cookie(("fastn_sid", sid)))
+    Ok(ft_sdk::form::redirect("/")?.with_cookie((ft_sdk::auth::SESSION_KEY, sid)))
 }
