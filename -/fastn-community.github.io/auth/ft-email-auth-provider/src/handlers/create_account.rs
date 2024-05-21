@@ -3,7 +3,7 @@ use validator::ValidateEmail;
 
 pub struct CreateAccount {
     email: String,
-    // TODO: move it behind a feature flag
+    #[cfg(feature = "username")]
     username: String,
     name: String,
     hashed_password: String,
@@ -13,8 +13,14 @@ pub struct CreateAccount {
 impl CreateAccount {
     fn to_provider_data(&self) -> ft_sdk::auth::ProviderData {
         ft_sdk::auth::ProviderData {
+            #[cfg(feature = "username")]
             identity: self.username.to_string(),
+            #[cfg(not(feature = "username"))]
+            identity: self.email.to_string(),
+            #[cfg(feature = "username")]
             username: Some(self.username.to_string()),
+            #[cfg(not(feature = "username"))]
+            username: None,
             name: Some(self.name.to_string()),
             emails: vec![self.email.clone()],
             verified_emails: vec![],
@@ -135,7 +141,12 @@ fn validate(
 
     if fastn_user::table
         .select(diesel::dsl::count_star())
-        .filter(fastn_user::identity.eq(&payload.username))
+        .filter(fastn_user::identity.eq({
+            #[cfg(feature = "username")]
+            { &payload.username }
+            #[cfg(not(feature = "username"))]
+            { &payload.email }
+        }))
         .get_result::<i64>(conn)?
         > 0
     {
@@ -204,6 +215,7 @@ fn validate(
         email: payload.email,
         name: payload.name,
         hashed_password,
+        #[cfg(feature = "username")]
         username: payload.username,
         email_confirmation_code: CreateAccount::generate_key(64),
     })
@@ -212,6 +224,7 @@ fn validate(
 #[derive(serde::Deserialize)]
 struct CreateAccountPayload {
     email: String,
+    #[cfg(feature = "username")]
     username: String,
     name: String,
     password: String,
