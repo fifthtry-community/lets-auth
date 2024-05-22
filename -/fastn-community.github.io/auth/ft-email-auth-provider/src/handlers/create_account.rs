@@ -73,9 +73,9 @@ impl CreateAccount {
         ft_sdk::Rng::generate_key(length)
     }
 
-    fn confirmation_link(&self) -> String {
+    fn confirmation_link(&self, ft_sdk::Host(host): &ft_sdk::Host) -> String {
         format!(
-            "{confirm_email_route}?code={key}",
+            "https://{host}{confirm_email_route}?code={key}",
             key = self.email_confirmation_code,
             confirm_email_route = auth::urls::Route::ConfirmEmail,
         )
@@ -248,7 +248,7 @@ pub fn create_account(
         account_meta.to_provider_data(),
     )?;
 
-    let conf_link = account_meta.confirmation_link();
+    let conf_link = account_meta.confirmation_link(&host);
 
     let (from_name, from_email) = CreateAccount::get_from_address_from_env();
 
