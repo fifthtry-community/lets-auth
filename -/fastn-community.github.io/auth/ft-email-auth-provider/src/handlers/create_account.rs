@@ -81,11 +81,11 @@ impl CreateAccount {
         )
     }
 
-    fn get_from_address_from_env() -> (String, String) {
-        let email = ft_sdk::env::var("FASTN_SMTP_SENDER_EMAIL".to_string()).unwrap();
-        let name = ft_sdk::env::var("FASTN_SMTP_SENDER_NAME".to_string()).unwrap();
+    fn get_from_address_from_env() -> Result<(String, String), EnvironmentVarError> {
+        let email = ft_sdk::env::var("FASTN_SMTP_SENDER_EMAIL".to_string()).ok_or(EnvironmentVarError::NotFound("FASTN_SMTP_SENDER_EMAIL".to_string()))?;
+        let name = ft_sdk::env::var("FASTN_SMTP_SENDER_NAME".to_string()).ok_or(EnvironmentVarError::NotFound("FASTN_SMTP_SENDER_NAME".to_string()))?;
 
-        (name, email)
+        Ok((name, email))
     }
 
     fn is_strong_password(password: &str, _email: &str, _name: &str) -> Option<String> {
@@ -100,6 +100,13 @@ impl CreateAccount {
     fn validate_email(email: &str) -> bool {
         email.validate_email()
     }
+}
+
+
+#[derive(Debug, thiserror::Error)]
+pub enum EnvironmentVarError {
+    #[error("`{0}` environment variable not found")]
+    NotFound(String)
 }
 
 fn validate(
@@ -240,6 +247,7 @@ pub fn create_account(
     host: ft_sdk::Host,
 ) -> ft_sdk::form::Result {
     let account_meta = validate(payload, &mut conn)?;
+    ft_sdk::println!("Account meta done for {}", account_meta.username);
 
     let ft_sdk::auth::SessionID(sid) = auth_provider::create_user(
         &mut conn,
@@ -247,10 +255,13 @@ pub fn create_account(
         auth::PROVIDER_ID,
         account_meta.to_provider_data(),
     )?;
+    ft_sdk::println!("Create User done for sid {sid}");
 
     let conf_link = account_meta.confirmation_link(&host);
+    ft_sdk::println!("Confirmation link added {conf_link}");
 
-    let (from_name, from_email) = CreateAccount::get_from_address_from_env();
+    let (from_name, from_email) = CreateAccount::get_from_address_from_env()?;
+    ft_sdk::println!("Found name and email: {from_name}, {from_email}");
 
     if let Err(e) = ft_sdk::send_email(
         &mut conn,
@@ -267,6 +278,7 @@ pub fn create_account(
         ft_sdk::println!("auth.wasm: failed to queue email: {:?}", e);
         return Err(e.into());
     }
+    ft_sdk::println!("Email added to the queue");
 
     Ok(ft_sdk::form::redirect("/")?.with_cookie(auth::session_cookie(sid.as_str(), host)?))
 }
