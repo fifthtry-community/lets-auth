@@ -82,8 +82,8 @@ impl CreateAccount {
     }
 
     fn get_from_address_from_env() -> Result<(String, String), EnvironmentVarError> {
-        let email = ft_sdk::env::var("FASTN_SMTP_SENDER_EMAIL".to_string()).unwrap_or("support@fifthtry.com".to_string());
-        let name = ft_sdk::env::var("FASTN_SMTP_SENDER_NAME".to_string()).unwrap_or("FifthTry Team".to_string());
+        let email = ft_sdk::env::var("FASTN_SMTP_SENDER_EMAIL".to_string()).unwrap_or_else(|| "support@fifthtry.com".to_string());
+        let name = ft_sdk::env::var("FASTN_SMTP_SENDER_NAME".to_string()).unwrap_or_else(|| "FifthTry Team".to_string());
 
         Ok((name, email))
     }
