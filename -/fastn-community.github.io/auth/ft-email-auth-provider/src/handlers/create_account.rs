@@ -81,11 +81,11 @@ impl CreateAccount {
         )
     }
 
-    fn get_from_address_from_env() -> Result<(String, String), EnvironmentVarError> {
+    fn get_from_address_from_env() -> (String, String) {
         let email = ft_sdk::env::var("FASTN_SMTP_SENDER_EMAIL".to_string()).unwrap_or_else(|| "support@fifthtry.com".to_string());
         let name = ft_sdk::env::var("FASTN_SMTP_SENDER_NAME".to_string()).unwrap_or_else(|| "FifthTry Team".to_string());
 
-        Ok((name, email))
+        (name, email)
     }
 
     fn is_strong_password(password: &str, _email: &str, _name: &str) -> Option<String> {
@@ -100,13 +100,6 @@ impl CreateAccount {
     fn validate_email(email: &str) -> bool {
         email.validate_email()
     }
-}
-
-
-#[derive(Debug, thiserror::Error)]
-pub enum EnvironmentVarError {
-    #[error("`{0}` environment variable not found")]
-    NotFound(String)
 }
 
 fn validate(
@@ -260,7 +253,7 @@ pub fn create_account(
     let conf_link = account_meta.confirmation_link(&host);
     ft_sdk::println!("Confirmation link added {conf_link}");
 
-    let (from_name, from_email) = CreateAccount::get_from_address_from_env()?;
+    let (from_name, from_email) = CreateAccount::get_from_address_from_env();
     ft_sdk::println!("Found name and email: {from_name}, {from_email}");
 
     if let Err(e) = ft_sdk::send_email(
