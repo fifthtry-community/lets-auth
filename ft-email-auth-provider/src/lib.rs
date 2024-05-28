@@ -17,3 +17,11 @@ pub fn session_cookie(sid: &str, host: ft_sdk::Host) -> Result<http::HeaderValue
 
     Ok(http::HeaderValue::from_str(cookie.to_string().as_str())?)
 }
+
+
+#[derive(serde::Serialize, serde::Deserialize)]
+pub(crate) struct Custom {
+    pub hashed_password: String,
+    pub email_confirmation_code: String
+}
+

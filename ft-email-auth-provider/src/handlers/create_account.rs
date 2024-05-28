@@ -1,5 +1,5 @@
 use ft_sdk::auth::provider as auth_provider;
-use validator::ValidateEmail;
+
 
 pub struct CreateAccount {
     email: String,
@@ -25,10 +25,14 @@ impl CreateAccount {
             emails: vec![self.email.clone()],
             verified_emails: vec![],
             profile_picture: None,
-            custom: serde_json::json!({
-                "hashed_password": self.hashed_password,
-                "email_confirmation_code": self.email_confirmation_code
-            }),
+            custom: serde_json::to_value(self.to_custom()).unwrap(),
+        }
+    }
+
+    fn to_custom(&self) -> auth::Custom {
+        auth::Custom {
+            hashed_password: self.hashed_password.to_string(),
+            email_confirmation_code: self.email_confirmation_code.to_string()
         }
     }
 
@@ -73,11 +77,17 @@ impl CreateAccount {
         ft_sdk::Rng::generate_key(length)
     }
 
-    fn confirmation_link(&self, ft_sdk::Host(host): &ft_sdk::Host) -> String {
+    fn confirmation_link(
+        &self,
+        ft_sdk::Host(host): &ft_sdk::Host,
+        ft_sdk::Mountpoint(mountpoint): &ft_sdk::Mountpoint,
+    ) -> String {
         format!(
-            "https://{host}{confirm_email_route}?code={key}",
+            "https://{host}{mountpoint}{confirm_email_route}?code={key}&email={email}",
             key = self.email_confirmation_code,
             confirm_email_route = auth::urls::Route::ConfirmEmail,
+            email = urlencoding::encode(self.email.as_str()),
+            mountpoint = mountpoint.trim_end_matches('/')
         )
     }
 
@@ -98,6 +108,8 @@ impl CreateAccount {
     }
 
     fn validate_email(email: &str) -> bool {
+        use validator::ValidateEmail;
+
         email.validate_email()
     }
 }
@@ -238,6 +250,7 @@ pub fn create_account(
     ft_sdk::Form(payload): ft_sdk::Form<CreateAccountPayload>,
     ft_sdk::Cookie(sid): ft_sdk::Cookie<{ ft_sdk::auth::SESSION_KEY }>,
     host: ft_sdk::Host,
+    mountpoint: ft_sdk::Mountpoint,
 ) -> ft_sdk::form::Result {
     let account_meta = validate(payload, &mut conn)?;
     ft_sdk::println!("Account meta done for {}", account_meta.username);
@@ -250,7 +263,7 @@ pub fn create_account(
     )?;
     ft_sdk::println!("Create User done for sid {sid}");
 
-    let conf_link = account_meta.confirmation_link(&host);
+    let conf_link = account_meta.confirmation_link(&host, &mountpoint);
     ft_sdk::println!("Confirmation link added {conf_link}");
 
     let (from_name, from_email) = CreateAccount::get_from_address_from_env();
