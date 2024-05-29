@@ -8,6 +8,7 @@ pub struct CreateAccount {
     name: String,
     hashed_password: String,
     email_confirmation_code: String,
+    user_id: Option<ft_sdk::UserId>,
 }
 
 impl CreateAccount {
@@ -82,8 +83,10 @@ impl CreateAccount {
     }
 
     fn get_from_address_from_env() -> (String, String) {
-        let email = ft_sdk::env::var("FASTN_SMTP_SENDER_EMAIL".to_string()).unwrap_or_else(|| "support@fifthtry.com".to_string());
-        let name = ft_sdk::env::var("FASTN_SMTP_SENDER_NAME".to_string()).unwrap_or_else(|| "FifthTry Team".to_string());
+        let email = ft_sdk::env::var("FASTN_SMTP_SENDER_EMAIL".to_string())
+            .unwrap_or_else(|| "support@fifthtry.com".to_string());
+        let name = ft_sdk::env::var("FASTN_SMTP_SENDER_NAME".to_string())
+            .unwrap_or_else(|| "FifthTry Team".to_string());
 
         (name, email)
     }
@@ -143,9 +146,13 @@ fn validate(
         .select(diesel::dsl::count_star())
         .filter(fastn_user::identity.eq({
             #[cfg(feature = "username")]
-            { &payload.username }
+            {
+                &payload.username
+            }
             #[cfg(not(feature = "username"))]
-            { &payload.email }
+            {
+                &payload.email
+            }
         }))
         .get_result::<i64>(conn)?
         > 0
@@ -161,7 +168,7 @@ fn validate(
         WHERE
             EXISTS (
                 SELECT 1
-                FROM json_each(data -> 'email' -> 'verified_emails' )
+                FROM json_each(data -> 'email' -> 'verified_emails')
                 WHERE value = $1
             )
     "#,
@@ -174,10 +181,17 @@ fn validate(
         return Err(ft_sdk::single_error("email", "email already exists").into());
     }
 
-    if diesel::sql_query(
+    #[derive(diesel::QueryableByName)]
+    #[diesel(table_name = fastn_user)]
+    struct Identity {
+        identity: String,
+        id: i64,
+    }
+
+    let identity = diesel::sql_query(
         r#"
         SELECT
-            COUNT(*) AS count
+            id, identity
         FROM fastn_user
         WHERE
             EXISTS (
@@ -188,10 +202,9 @@ fn validate(
     "#,
     )
     .bind::<diesel::sql_types::Text, _>(&payload.email)
-    .get_result::<ft_sdk::auth::Counter>(conn)?
-    .count
-        > 0
-    {
+    .get_result::<Identity>(conn)?;
+
+    if !identity.identity.is_empty() {
         return Err(ft_sdk::single_error("email", "email already exists").into());
     }
 
@@ -218,6 +231,11 @@ fn validate(
         #[cfg(feature = "username")]
         username: payload.username,
         email_confirmation_code: CreateAccount::generate_key(64),
+        user_id: if identity.identity.is_empty() {
+            None
+        } else {
+            Some(ft_sdk::UserId(identity.id))
+        },
     })
 }
 
@@ -232,6 +250,19 @@ struct CreateAccountPayload {
     accept_terms: bool,
 }
 
+/// Create account handler, this is available on /create_account/ route
+///
+/// If a user does not exist for the given username and email, we create it.
+///
+/// It can happen that a user exists for the given email, but has no identity
+/// (identity is empty string). This can happen if you have imported email
+/// subscribers to the user table.
+///
+/// When importing, make sure that only unverified email is added in the
+/// email provider data, nothing else. E.g. `data -> 'email'` should only
+/// contain `{ "emails": ["email@being-imported.com"] }`, all other
+/// subscriber data, e.g. if there is double opt-in, or the `name` of user,
+/// `tags` for the user should be stored in any other `data` key.
 #[ft_sdk::form]
 pub fn create_account(
     mut conn: ft_sdk::Connection,
@@ -242,12 +273,27 @@ pub fn create_account(
     let account_meta = validate(payload, &mut conn)?;
     ft_sdk::println!("Account meta done for {}", account_meta.username);
 
-    let ft_sdk::auth::SessionID(sid) = auth_provider::create_user(
-        &mut conn,
-        sid.map(ft_sdk::auth::SessionID),
-        auth::PROVIDER_ID,
-        account_meta.to_provider_data(),
-    )?;
+    let uid = match account_meta.user_id.clone() {
+        Some(uid) => {
+            auth_provider::update_user(
+                &mut conn,
+                auth::PROVIDER_ID,
+                &uid,
+                account_meta.to_provider_data(),
+                true,
+            )?;
+            uid
+        },
+        None => auth_provider::create_user(
+            &mut conn,
+            auth::PROVIDER_ID,
+            account_meta.to_provider_data(),
+        )?,
+    };
+
+    let ft_sdk::auth::SessionID(sid) =
+        auth_provider::login(&mut conn, &uid, sid.map(ft_sdk::auth::SessionID))?;
+
     ft_sdk::println!("Create User done for sid {sid}");
 
     let conf_link = account_meta.confirmation_link(&host);
