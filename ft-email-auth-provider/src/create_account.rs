@@ -111,52 +111,10 @@ fn validate(
 ) -> Result<CreateAccount, ft_sdk::Error> {
     let mut errors = std::collections::HashMap::new();
 
-    payload.validate(&mut errors);
-
-    if !CreateAccount::validate_email(&payload.email) {
-        errors.insert("email".to_string(), "invalid email format".to_string());
-    }
-
-    if payload.password != payload.password2 {
-        errors.insert(
-            "password2".to_string(),
-            "password and confirm password field do not match".to_string(),
-        );
-    }
-
-    if let Some(message) =
-        CreateAccount::is_strong_password(&payload.password, &payload.email, &payload.name)
-    {
-        errors.insert("password".to_string(), message);
-    }
-
-    if !payload.accept_terms {
-        errors.insert(
-            "accept_terms".to_string(),
-            "you must accept the terms and conditions".to_string(),
-        );
-    }
+    payload.validate(conn, &mut errors)?;
 
     if !errors.is_empty() {
         return Err(ft_sdk::SpecialError::Multi(errors).into());
-    }
-
-    if fastn_user::table
-        .select(diesel::dsl::count_star())
-        .filter(fastn_user::identity.eq({
-            #[cfg(feature = "username")]
-            {
-                &payload.username
-            }
-            #[cfg(not(feature = "username"))]
-            {
-                &payload.email
-            }
-        }))
-        .get_result::<i64>(conn)?
-        > 0
-    {
-        return Err(ft_sdk::single_error("username", "username already exists").into());
     }
 
     if diesel::sql_query(
@@ -220,22 +178,11 @@ fn validate(
         return Err(ft_sdk::single_error("email", "email already exists").into());
     }
 
-    let salt = argon2::password_hash::SaltString::generate(&mut ft_sdk::Rng {});
-
-    let argon2 = argon2::Argon2::default();
-
-    let hashed_password = argon2::password_hash::PasswordHasher::hash_password(
-        &argon2,
-        payload.password.as_bytes(),
-        &salt,
-    )
-    .unwrap()
-    .to_string();
 
     Ok(CreateAccount {
+        hashed_password: payload.hashed_password(),
         email: payload.email,
         name: payload.name,
-        hashed_password,
         #[cfg(feature = "username")]
         username: payload.username,
         email_confirmation_code: CreateAccount::generate_key(64),
@@ -255,7 +202,7 @@ pub(crate) struct CreateAccountPayload {
 }
 
 impl CreateAccountPayload {
-    pub(crate) fn validate(&self, errors: &mut std::collections::HashMap::HashMap<String, String>) {
+    pub(crate) fn validate(&self, conn: &mut ft_sdk::Connection, errors: &mut std::collections::HashMap<String, String>) -> Result<(), ft_sdk::Error> {
         if !self.email.validate_email() {
             errors.insert("email".to_string(), "invalid email format".to_string());
         }
@@ -280,6 +227,29 @@ impl CreateAccountPayload {
             );
         }
 
+        #[cfg(feature = "username")]
+        {
+            validate_identity(
+                "username",
+                &self.username,
+                conn,
+                errors,
+            )?;
+        }
+
+        #[cfg(not(feature = "username"))]
+        {
+            crate::create_account::validate_identity(
+                "email",
+                &self.email,
+                conn,
+                errors,
+            )?;
+        }
+
+        validate_verified_email(self.email.as_str(), conn, errors)?;
+
+        Ok(())
     }
 
     pub(crate) fn hashed_password(&self) -> String {
@@ -293,6 +263,48 @@ impl CreateAccountPayload {
         .unwrap()
         .to_string()
     }
+}
+
+fn validate_identity(field: &str, identity: &str, conn: &mut ft_sdk::Connection, errors: &mut std::collections::HashMap<String, String>) -> Result<(), ft_sdk::Error> {
+    if fastn_user::table
+        .select(diesel::dsl::count_star())
+        .filter(fastn_user::identity.eq(identity))
+        .get_result::<i64>(conn)?
+        > 0
+    {
+        errors.insert(field.to_string(), "username already exists".to_string());
+    }
+
+    Ok(())
+}
+
+fn validate_verified_email(
+    email: &str,
+    conn: &mut ft_sdk::Connection,
+    errors: &mut std::collections::HashMap<String, String>
+) -> Result<(), ft_sdk::Error> {
+    if diesel::sql_query(
+        r#"
+        SELECT
+            COUNT(*) AS count
+        FROM fastn_user
+        WHERE
+            EXISTS (
+                SELECT 1
+                FROM json_each(data -> 'email' -> 'verified_emails')
+                WHERE value = $1
+            )
+    "#,
+    )
+        .bind::<diesel::sql_types::Text, _>(email)
+        .get_result::<ft_sdk::auth::Counter>(conn)?
+        .count
+        > 0
+    {
+        errors.insert("email".to_string(), "email already exists".to_string());
+    }
+
+    Ok(())
 }
 
 /// Create account handler, this is available on /create_account/ route

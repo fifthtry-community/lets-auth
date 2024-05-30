@@ -27,8 +27,7 @@ impl CreateAccount {
             verified_emails: vec![],
             profile_picture: None,
             custom: serde_json::json!({
-                "hashed_password": self.hashed_password,
-                "email_confirmation_code": self.email_confirmation_code
+                "hashed_password": self.hashed_password
             }),
         }
     }
@@ -54,29 +53,10 @@ fn validate(
 ) -> Result<CreateAccount, ft_sdk::Error> {
     let mut errors = std::collections::HashMap::new();
 
-    payload.validate(&mut errors)?;
-    // ensure code exists in db
-
-
+    payload.validate(conn, &mut errors)?;
     if !errors.is_empty() {
         return Err(ft_sdk::SpecialError::Multi(errors).into());
     }
-
-    validate_identity(
-        {
-            #[cfg(feature = "username")]
-            {
-                &payload.username
-            }
-            #[cfg(not(feature = "username"))]
-            {
-                &payload.email
-            }
-        },
-        conn,
-    )?;
-
-    validate_verified_email(payload.email.as_str(), conn)?;
 
     #[derive(diesel::QueryableByName)]
     #[diesel(table_name = fastn_user)]
@@ -117,53 +97,14 @@ fn validate(
     Ok(CreateAccount {
         email: payload.email,
         name: payload.name,
-        hashed_password,
+        hashed_password: payload.hashed_password(),
         #[cfg(feature = "username")]
         username: payload.username,
         user_id,
     })
 }
 
-fn validate_verified_email(
-    email: &str,
-    conn: &mut ft_sdk::Connection,
-) -> Result<(), ft_sdk::Error> {
-    if diesel::sql_query(
-        r#"
-        SELECT
-            COUNT(*) AS count
-        FROM fastn_user
-        WHERE
-            EXISTS (
-                SELECT 1
-                FROM json_each(data -> 'email' -> 'verified_emails')
-                WHERE value = $1
-            )
-    "#,
-    )
-    .bind::<diesel::sql_types::Text, _>(email)
-    .get_result::<ft_sdk::auth::Counter>(conn)?
-    .count
-        > 0
-    {
-        return Err(ft_sdk::single_error("email", "email already exists").into());
-    }
 
-    Ok(())
-}
-
-fn validate_identity(identity: &str, conn: &mut ft_sdk::Connection) -> Result<(), ft_sdk::Error> {
-    if fastn_user::table
-        .select(diesel::dsl::count_star())
-        .filter(fastn_user::identity.eq(identity))
-        .get_result::<i64>(conn)?
-        > 0
-    {
-        return Err(ft_sdk::single_error("username", "username already exists").into());
-    }
-
-    Ok(())
-}
 
 /// create-verified-account handler to create account for already verified emails
 ///
