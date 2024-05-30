@@ -52,8 +52,6 @@ impl CreateAccount {
                 </body>
             </html>
             "#,
-            name = name,
-            link = link,
         )
     }
 
@@ -62,7 +60,8 @@ impl CreateAccount {
             r#"
             Hi {name},
 
-            Click the link below to confirm your account
+            Click the link below to confirm your account:
+
             {link}
 
             In case you can't click the link, copy and paste it in your browser.
@@ -191,9 +190,8 @@ fn validate(
     // Check if the email is already present in `data -> 'email' -> 'emails'` then
     // check if identity is already created which means user has already an account with the email.
     // If identity is not created this means email is stored because of subscription or other apps.
-    let user_id =
-        match diesel::sql_query(
-    r#"
+    let user_id = match diesel::sql_query(
+        r#"
             SELECT
                 id, identity
             FROM fastn_user
@@ -204,18 +202,19 @@ fn validate(
                     WHERE value = $1
                 )
         "#,
-        )
-        .bind::<diesel::sql_types::Text, _>(&payload.email)
-        .get_result::<Identity>(conn) {
-            Ok(identity) => {
-                if !identity.identity.is_empty() {
-                    return Err(ft_sdk::single_error("email", "email already exists").into());
-                }
-                Some(identity.id)
-            },
-            Err(diesel::result::Error::NotFound) => None,
-            Err(e) => return Err(e.into())
-        };
+    )
+    .bind::<diesel::sql_types::Text, _>(&payload.email)
+    .get_result::<Identity>(conn)
+    {
+        Ok(identity) => {
+            if !identity.identity.is_empty() {
+                return Err(ft_sdk::single_error("email", "email already exists").into());
+            }
+            Some(identity.id)
+        }
+        Err(diesel::result::Error::NotFound) => None,
+        Err(e) => return Err(e.into()),
+    };
 
     if auth_provider::user_data_by_identity(conn, auth::PROVIDER_ID, &payload.email).is_ok() {
         return Err(ft_sdk::single_error("email", "email already exists").into());
@@ -288,7 +287,7 @@ pub fn create_account(
                 true,
             )?;
             uid
-        },
+        }
         None => auth_provider::create_user(
             &mut conn,
             auth::PROVIDER_ID,
