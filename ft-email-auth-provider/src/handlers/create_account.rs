@@ -188,25 +188,34 @@ fn validate(
         id: i64,
     }
 
-    let identity = diesel::sql_query(
-        r#"
-        SELECT
-            id, identity
-        FROM fastn_user
-        WHERE
-            EXISTS (
-                SELECT 1
-                FROM json_each(data -> 'email' -> 'emails' )
-                WHERE value = $1
-            )
-    "#,
-    )
-    .bind::<diesel::sql_types::Text, _>(&payload.email)
-    .get_result::<Identity>(conn)?;
-
-    if !identity.identity.is_empty() {
-        return Err(ft_sdk::single_error("email", "email already exists").into());
-    }
+    // Check if the email is already present in `data -> 'email' -> 'emails'` then
+    // check if identity is already created which means user has already an account with the email.
+    // If identity is not created this means email is stored because of subscription or other apps.
+    let user_id =
+        match diesel::sql_query(
+    r#"
+            SELECT
+                id, identity
+            FROM fastn_user
+            WHERE
+                EXISTS (
+                    SELECT 1
+                    FROM json_each(data -> 'email' -> 'emails' )
+                    WHERE value = $1
+                )
+        "#,
+        )
+        .bind::<diesel::sql_types::Text, _>(&payload.email)
+        .get_result::<Identity>(conn) {
+            Ok(identity) => {
+                if !identity.identity.is_empty() {
+                    return Err(ft_sdk::single_error("email", "email already exists").into());
+                }
+                Some(identity.id)
+            },
+            Err(diesel::result::Error::NotFound) => None,
+            Err(e) => return Err(e.into())
+        };
 
     if auth_provider::user_data_by_identity(conn, auth::PROVIDER_ID, &payload.email).is_ok() {
         return Err(ft_sdk::single_error("email", "email already exists").into());
@@ -231,11 +240,7 @@ fn validate(
         #[cfg(feature = "username")]
         username: payload.username,
         email_confirmation_code: CreateAccount::generate_key(64),
-        user_id: if identity.identity.is_empty() {
-            None
-        } else {
-            Some(ft_sdk::UserId(identity.id))
-        },
+        user_id: user_id.map(ft_sdk::UserId),
     })
 }
 
