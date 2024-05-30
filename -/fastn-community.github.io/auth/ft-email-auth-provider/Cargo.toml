@@ -19,7 +19,7 @@ http = "1"
 bytes = "1"
 diesel = "2"
 thiserror = "1"
-argon2 = { version = "0.5" }
+argon2 = "0.5"
 chrono = { version = "0.4", default-features = false, features = ["serde"] }
 include_dir = "0.7"
 validator = "0.18"
