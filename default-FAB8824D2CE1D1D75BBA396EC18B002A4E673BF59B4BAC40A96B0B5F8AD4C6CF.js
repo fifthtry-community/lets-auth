@@ -116,6 +116,7 @@ const fastn = (function (fastn) {
         #property;
         #formula;
         #inherited;
+
         constructor(func, execute = true) {
             if (execute) {
                 this.#cached_value = func();
@@ -126,9 +127,11 @@ const fastn = (function (fastn) {
         get() {
             return this.#cached_value;
         }
+
         getFormula() {
             return this.#formula;
         }
+
         addNodeProperty(node, property, inherited) {
             this.#node = node;
             this.#property = property;
@@ -137,13 +140,16 @@ const fastn = (function (fastn) {
 
             return this;
         }
+
         update() {
             this.#cached_value = this.#formula();
             this.updateUi();
         }
+
         getNode() {
             return this.#node;
         }
+
         updateUi() {
             if (
                 !this.#node ||
@@ -167,6 +173,7 @@ const fastn = (function (fastn) {
         #old_closure;
         #closures;
         #closureInstance;
+
         constructor(val) {
             this.#value = null;
             this.#old_closure = null;
@@ -176,6 +183,11 @@ const fastn = (function (fastn) {
             );
             this.set(val);
         }
+
+        closures() {
+            return this.#closures;
+        }
+
         get(key) {
             if (
                 !fastn_utils.isNull(key) &&
@@ -187,6 +199,7 @@ const fastn = (function (fastn) {
             }
             return this.#value;
         }
+
         setWithoutUpdate(value) {
             if (this.#old_closure) {
                 this.#value.removeClosure(this.#old_closure);
@@ -213,23 +226,28 @@ const fastn = (function (fastn) {
                 this.#old_closure = null;
             }
         }
+
         set(value) {
             this.setWithoutUpdate(value);
 
             this.#closureInstance.update();
         }
+
         // we have to unlink all nodes, else they will be kept in memory after the node is removed from DOM
         unlinkNode(node) {
             this.#closures = this.#closures.filter(
                 (closure) => closure.getNode() !== node,
             );
         }
+
         addClosure(closure) {
             this.#closures.push(closure);
         }
+
         removeClosure(closure) {
             this.#closures = this.#closures.filter((c) => c !== closure);
         }
+
         equalMutable(other) {
             if (!fastn_utils.deepEqual(this.get(), other.get())) {
                 return false;
@@ -239,6 +257,7 @@ const fastn = (function (fastn) {
 
             return thisClosures === otherClosures;
         }
+
         getClone() {
             return new Mutable(fastn_utils.clone(this.#value));
         }
@@ -249,6 +268,7 @@ const fastn = (function (fastn) {
         #cached_value;
         #closures;
         #closureInstance;
+
         constructor(targets, differentiator) {
             this.#differentiator = differentiator;
             this.#cached_value = this.#differentiator().get();
@@ -265,15 +285,19 @@ const fastn = (function (fastn) {
                 targets[idx].addClosure(this);
             }
         }
+
         addClosure(closure) {
             this.#closures.push(closure);
         }
+
         removeClosure(closure) {
             this.#closures = this.#closures.filter((c) => c !== closure);
         }
+
         update() {
             this.#cached_value = this.#differentiator().get();
         }
+
         get(key) {
             if (
                 !!key &&
@@ -285,6 +309,7 @@ const fastn = (function (fastn) {
             }
             return this.#cached_value;
         }
+
         set(value) {
             // Todo: Optimization removed. Reuse optimization later again
             /*if (fastn_utils.deepEqual(this.#cached_value, value)) {
@@ -298,6 +323,7 @@ const fastn = (function (fastn) {
         #list;
         #watchers;
         #closures;
+
         constructor(list) {
             this.#list = [];
             for (let idx in list) {
@@ -309,31 +335,38 @@ const fastn = (function (fastn) {
             this.#watchers = [];
             this.#closures = [];
         }
+
         addClosure(closure) {
             this.#closures.push(closure);
         }
+
         unlinkNode(node) {
             this.#closures = this.#closures.filter(
                 (closure) => closure.getNode() !== node,
             );
         }
+
         forLoop(root, dom_constructor) {
             let l = fastn_dom.forLoop(root, dom_constructor, this);
             this.#watchers.push(l);
             return l;
         }
+
         getList() {
             return this.#list;
         }
+
         getLength() {
             return this.#list.length;
         }
+
         get(idx) {
             if (fastn_utils.isNull(idx)) {
                 return this.getList();
             }
             return this.#list[idx];
         }
+
         set(index, value) {
             if (value === undefined) {
                 value = index;
@@ -360,6 +393,7 @@ const fastn = (function (fastn) {
 
             this.#closures.forEach((closure) => closure.update());
         }
+
         insertAt(index, value) {
             index = fastn_utils.getFlattenStaticValue(index);
             let mutable = fastn.wrapMutable(value);
@@ -377,9 +411,11 @@ const fastn = (function (fastn) {
             }
             this.#closures.forEach((closure) => closure.update());
         }
+
         push(value) {
             this.insertAt(this.#list.length, value);
         }
+
         deleteAt(index) {
             index = fastn_utils.getFlattenStaticValue(index);
             this.#list.splice(index, 1);
@@ -394,6 +430,7 @@ const fastn = (function (fastn) {
             }
             this.#closures.forEach((closure) => closure.update());
         }
+
         clearAll() {
             this.#list = [];
             for (let i in this.#watchers) {
@@ -401,9 +438,11 @@ const fastn = (function (fastn) {
             }
             this.#closures.forEach((closure) => closure.update());
         }
+
         pop() {
             this.deleteAt(this.#list.length - 1);
         }
+
         getClone() {
             let current_list = this.#list;
             let new_list = [];
@@ -466,6 +505,7 @@ const fastn = (function (fastn) {
     class RecordInstance {
         #fields;
         #closures;
+
         constructor(obj) {
             this.#fields = {};
             this.#closures = [];
@@ -479,9 +519,11 @@ const fastn = (function (fastn) {
                 }
             }
         }
+
         getAllFields() {
             return this.#fields;
         }
+
         getClonedFields() {
             let clonedFields = {};
             for (let key in this.#fields) {
@@ -498,17 +540,21 @@ const fastn = (function (fastn) {
             }
             return clonedFields;
         }
+
         addClosure(closure) {
             this.#closures.push(closure);
         }
+
         unlinkNode(node) {
             this.#closures = this.#closures.filter(
                 (closure) => closure.getNode() !== node,
             );
         }
+
         get(key) {
             return this.#fields[key];
         }
+
         set(key, value) {
             if (value === undefined) {
                 value = key;
@@ -528,10 +574,12 @@ const fastn = (function (fastn) {
             }
             this.#closures.forEach((closure) => closure.update());
         }
+
         setAndReturn(key, value) {
             this.set(key, value);
             return this;
         }
+
         replace(obj) {
             for (let key in this.#fields) {
                 if (!(key in obj.#fields)) {
@@ -545,6 +593,7 @@ const fastn = (function (fastn) {
             }
             this.#closures.forEach((closure) => closure.update());
         }
+
         toObject() {
             return Object.fromEntries(
                 Object.entries(this.#fields).map(([key, value]) => [
@@ -553,6 +602,7 @@ const fastn = (function (fastn) {
                 ]),
             );
         }
+
         getClone() {
             let current_fields = this.#fields;
             let cloned_fields = {};
@@ -570,6 +620,7 @@ const fastn = (function (fastn) {
     class Module {
         #name;
         #global;
+
         constructor(name, global) {
             this.#name = name;
             this.#global = global;
@@ -665,6 +716,7 @@ fastn_dom.propertyMap = {
     "text-shadow": "tsh",
     cursor: "cur",
     display: "d",
+    download: "dw",
     "flex-wrap": "fw",
     "font-style": "fst",
     "font-weight": "fwt",
@@ -890,31 +942,32 @@ fastn_dom.PropertyKind = {
         MetaOGImage: 97,
         MetaTwitterImage: 98,
         MetaThemeColor: 99,
-        MetaFacebookDomainVerification: 123,
+        MetaFacebookDomainVerification: 100,
     },
-    Shadow: 100,
-    CodeTheme: 101,
-    CodeLanguage: 102,
-    CodeShowLineNumber: 103,
-    Css: 104,
-    Js: 105,
-    LinkRel: 106,
-    InputMaxLength: 107,
-    Favicon: 108,
-    Fit: 109,
-    VideoSrc: 110,
-    Autoplay: 111,
-    Poster: 112,
-    LoopVideo: 113,
-    Controls: 114,
-    Muted: 115,
-    LinkColor: 116,
-    TextShadow: 117,
-    Selectable: 118,
-    BackdropFilter: 119,
-    Mask: 120,
-    TextInputValue: 121,
-    FetchPriority: 122,
+    Shadow: 101,
+    CodeTheme: 102,
+    CodeLanguage: 103,
+    CodeShowLineNumber: 104,
+    Css: 105,
+    Js: 106,
+    LinkRel: 107,
+    InputMaxLength: 108,
+    Favicon: 109,
+    Fit: 110,
+    VideoSrc: 111,
+    Autoplay: 112,
+    Poster: 113,
+    LoopVideo: 114,
+    Controls: 115,
+    Muted: 116,
+    LinkColor: 117,
+    TextShadow: 118,
+    Selectable: 119,
+    BackdropFilter: 120,
+    Mask: 121,
+    TextInputValue: 122,
+    FetchPriority: 123,
+    Download: 124,
 };
 
 fastn_dom.Loading = {
@@ -2985,6 +3038,11 @@ class Node2 {
                     break;
             }
             this.updateTextInputValue();
+        } else if (kind === fastn_dom.PropertyKind.Download) {
+            if (fastn_utils.isNull(staticValue)) {
+                return;
+            }
+            this.attachAttribute("download", staticValue);
         } else if (kind === fastn_dom.PropertyKind.Link) {
             // Changing node type to `a` for link
             // todo: needs fix for image links
@@ -4849,6 +4907,14 @@ const ftd = (function () {
         );
     };
 
+    exports.string_field_with_default_js = function (name, default_value) {
+        let r = fastn.recordInstance();
+        r.set("name", fastn_utils.getFlattenStaticValue(name));
+        r.set("value", fastn_utils.getFlattenStaticValue(default_value));
+        r.set("error", null);
+        return r;
+    };
+
     exports.append = function (list, item) {
         list.push(item);
     };
@@ -5162,6 +5228,9 @@ const ftd = (function () {
 
         for (let i = 0, len = args.length; i < len; i += 1) {
             let obj = args[i];
+            if (obj instanceof fastn.mutableClass) {
+                obj = obj.get();
+            }
             console.assert(obj instanceof fastn.recordInstanceClass);
             let name = obj.get("name").get();
             arg_map[name] = obj;
@@ -5173,6 +5242,7 @@ const ftd = (function () {
             method: "POST",
             redirect: "error",
             // TODO: set credentials?
+            credentials: "same-origin",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(data),
         };
@@ -5490,6 +5560,17 @@ ftd.toggle = function (args) {
     if (!fastn_utils.setter(__args__.a, fastn_utils_val___args___a)) {
       __args__.a = fastn_utils_val___args___a;
     }
+  } finally {
+    __fastn_package_name__ = __fastn_super_package_name__;
+  }
+}
+ftd.string_field_with_default = function (args) {
+  let __fastn_super_package_name__ = __fastn_package_name__;
+  __fastn_package_name__ = "fastn_community_github_io_auth";
+  try {
+    let __args__ = fastn_utils.getArgs({
+    }, args);
+    return (ftd.string_field_with_default_js(__args__.name, __args__.default));
   } finally {
     __fastn_package_name__ = __fastn_super_package_name__;
   }
