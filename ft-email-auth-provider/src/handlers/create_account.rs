@@ -9,6 +9,7 @@ pub struct CreateAccount {
     hashed_password: String,
     email_confirmation_code: String,
     user_id: Option<ft_sdk::UserId>,
+    email_confirmation_sent_at: chrono::DateTime<chrono::Utc>,
 }
 
 impl CreateAccount {
@@ -28,12 +29,13 @@ impl CreateAccount {
             profile_picture: None,
             custom: serde_json::json!({
                 "hashed_password": self.hashed_password,
-                "email_confirmation_code": self.email_confirmation_code
+                crate::EMAIL_CONF_SENT_AT: self.email_confirmation_sent_at,
+                crate::EMAIL_CONF_CODE_KEY: self.email_confirmation_code,
             }),
         }
     }
 
-    fn confirm_account_html(name: &str, link: &str) -> String {
+    pub fn confirm_account_html(name: &str, link: &str) -> String {
         // TODO: until we figure out email templates, this has to do
         format!(
             r#"
@@ -57,7 +59,7 @@ impl CreateAccount {
         )
     }
 
-    fn confirm_account_text(name: &str, link: &str) -> String {
+    pub fn confirm_account_text(name: &str, link: &str) -> String {
         format!(
             r#"
             Hi {name},
@@ -70,19 +72,19 @@ impl CreateAccount {
         )
     }
 
-    fn generate_key(length: usize) -> String {
+    pub fn generate_key(length: usize) -> String {
         ft_sdk::Rng::generate_key(length)
     }
 
-    fn confirmation_link(&self, ft_sdk::Host(host): &ft_sdk::Host) -> String {
+    /// TODO: get mount point of this wasm
+    pub fn confirmation_link(key: &str, email: &str, ft_sdk::Host(host): &ft_sdk::Host) -> String {
         format!(
-            "https://{host}{confirm_email_route}?code={key}",
-            key = self.email_confirmation_code,
+            "https://{host}{confirm_email_route}?code={key}?email={email}",
             confirm_email_route = auth::urls::Route::ConfirmEmail,
         )
     }
 
-    fn get_from_address_from_env() -> (String, String) {
+    pub fn get_from_address_from_env() -> (String, String) {
         let email = ft_sdk::env::var("FASTN_SMTP_SENDER_EMAIL".to_string())
             .unwrap_or_else(|| "support@fifthtry.com".to_string());
         let name = ft_sdk::env::var("FASTN_SMTP_SENDER_NAME".to_string())
@@ -284,7 +286,7 @@ pub fn create_account(
                 true,
             )?;
             uid
-        },
+        }
         None => auth_provider::create_user(
             &mut conn,
             auth::PROVIDER_ID,
@@ -297,11 +299,11 @@ pub fn create_account(
 
     ft_sdk::println!("Create User done for sid {sid}");
 
-    let conf_link = account_meta.confirmation_link(&host);
+    let conf_link = CreateAccount::confirmation_link(&account_meta.email_confirmation_code, &account_meta.email, &host);
     ft_sdk::println!("Confirmation link added {conf_link}");
 
     let (from_name, from_email) = CreateAccount::get_from_address_from_env();
-    ft_sdk::println!("Found name and email: {from_name}, {from_email}");
+    ft_sdk::println!("Found email sender: {from_name}, {from_email}");
 
     if let Err(e) = ft_sdk::send_email(
         &mut conn,
@@ -313,7 +315,7 @@ pub fn create_account(
         None,
         None,
         None,
-        "auth_confirm_account",
+        "auth_confirm_account_request",
     ) {
         ft_sdk::println!("auth.wasm: failed to queue email: {:?}", e);
         return Err(e.into());

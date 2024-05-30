@@ -4,7 +4,8 @@ mod handlers;
 mod urls;
 
 pub const PROVIDER_ID: &str = "email";
-pub const DEFAULT_REDIRECT_ROUTE: &str = "/";
+pub const EMAIL_CONF_CODE_KEY: &str = "email_confirmation_code";
+pub const EMAIL_CONF_SENT_AT: &str = "email_conf_sent_at";
 
 pub fn session_cookie(sid: &str, host: ft_sdk::Host) -> Result<http::HeaderValue, ft_sdk::Error> {
     // DO NOT CHANGE THINGS HERE, consult logout code in fastn.
