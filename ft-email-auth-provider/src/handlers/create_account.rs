@@ -181,7 +181,7 @@ fn validate(
         return Err(ft_sdk::single_error("email", "email already exists").into());
     }
 
-    #[derive(diesel::QueryableByName)]
+    #[derive(diesel::QueryableByName, Clone)]
     #[diesel(table_name = fastn_user)]
     struct Identity {
         identity: String,
@@ -199,12 +199,14 @@ fn validate(
                 FROM json_each(data -> 'email' -> 'emails' )
                 WHERE value = $1
             )
+        LIMIT 1
     "#,
     )
     .bind::<diesel::sql_types::Text, _>(&payload.email)
-    .get_result::<Identity>(conn)?;
+    .get_result::<Identity>(conn)
+    .optional()?;
 
-    if !identity.identity.is_empty() {
+    if identity.is_some() && !identity.clone().unwrap().identity.is_empty() {
         return Err(ft_sdk::single_error("email", "email already exists").into());
     }
 
@@ -224,6 +226,8 @@ fn validate(
     .unwrap()
     .to_string();
 
+    let user_id = identity.map(|i| ft_sdk::UserId(i.id));
+
     Ok(CreateAccount {
         email: payload.email,
         name: payload.name,
@@ -231,11 +235,8 @@ fn validate(
         #[cfg(feature = "username")]
         username: payload.username,
         email_confirmation_code: CreateAccount::generate_key(64),
-        user_id: if identity.identity.is_empty() {
-            None
-        } else {
-            Some(ft_sdk::UserId(identity.id))
-        },
+        email_confirmation_sent_at: ft_sdk::env::now(),
+        user_id,
     })
 }
 
@@ -250,7 +251,7 @@ struct CreateAccountPayload {
     accept_terms: bool,
 }
 
-/// Create account handler, this is available on /create_account/ route
+/// Create account handler, this is available on /create-account/ route
 ///
 /// If a user does not exist for the given username and email, we create it.
 ///

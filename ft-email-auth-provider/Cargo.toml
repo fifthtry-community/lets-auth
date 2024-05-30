@@ -28,5 +28,5 @@ cookie = "0.18"
 
 [dependencies.ft-sdk]
 version = "0.1.4"
-# path = "../../ft-sdk/ft-sdk"
+path = "../../ft-sdk/ft-sdk/"
 features = ["sqlite-default", "auth-provider", "field-extractors"]
