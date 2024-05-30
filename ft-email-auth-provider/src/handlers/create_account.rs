@@ -54,8 +54,6 @@ impl CreateAccount {
                 </body>
             </html>
             "#,
-            name = name,
-            link = link,
         )
     }
 
@@ -64,7 +62,8 @@ impl CreateAccount {
             r#"
             Hi {name},
 
-            Click the link below to confirm your account
+            Click the link below to confirm your account:
+
             {link}
 
             In case you can't click the link, copy and paste it in your browser.
@@ -183,34 +182,41 @@ fn validate(
         return Err(ft_sdk::single_error("email", "email already exists").into());
     }
 
-    #[derive(diesel::QueryableByName, Clone)]
+    #[derive(diesel::QueryableByName)]
     #[diesel(table_name = fastn_user)]
     struct Identity {
         identity: String,
         id: i64,
     }
 
-    let identity = diesel::sql_query(
+    // Check if the email is already present in `data -> 'email' -> 'emails'` then
+    // check if identity is already created which means user has already an account with the email.
+    // If identity is not created this means email is stored because of subscription or other apps.
+    let user_id = match diesel::sql_query(
         r#"
-        SELECT
-            id, identity
-        FROM fastn_user
-        WHERE
-            EXISTS (
-                SELECT 1
-                FROM json_each(data -> 'email' -> 'emails' )
-                WHERE value = $1
-            )
-        LIMIT 1
-    "#,
+            SELECT
+                id, identity
+            FROM fastn_user
+            WHERE
+                EXISTS (
+                    SELECT 1
+                    FROM json_each(data -> 'email' -> 'emails' )
+                    WHERE value = $1
+                )
+        "#,
     )
     .bind::<diesel::sql_types::Text, _>(&payload.email)
     .get_result::<Identity>(conn)
-    .optional()?;
-
-    if identity.is_some() && !identity.clone().unwrap().identity.is_empty() {
-        return Err(ft_sdk::single_error("email", "email already exists").into());
-    }
+    {
+        Ok(identity) => {
+            if !identity.identity.is_empty() {
+                return Err(ft_sdk::single_error("email", "email already exists").into());
+            }
+            Some(identity.id)
+        }
+        Err(diesel::result::Error::NotFound) => None,
+        Err(e) => return Err(e.into()),
+    };
 
     if auth_provider::user_data_by_identity(conn, auth::PROVIDER_ID, &payload.email).is_ok() {
         return Err(ft_sdk::single_error("email", "email already exists").into());
@@ -228,8 +234,6 @@ fn validate(
     .unwrap()
     .to_string();
 
-    let user_id = identity.map(|i| ft_sdk::UserId(i.id));
-
     Ok(CreateAccount {
         email: payload.email,
         name: payload.name,
@@ -238,7 +242,7 @@ fn validate(
         username: payload.username,
         email_confirmation_code: CreateAccount::generate_key(64),
         email_confirmation_sent_at: ft_sdk::env::now(),
-        user_id,
+        user_id: user_id.map(ft_sdk::UserId),
     })
 }
 
@@ -265,7 +269,7 @@ struct CreateAccountPayload {
 /// email provider data, nothing else. E.g. `data -> 'email'` should only
 /// contain `{ "emails": ["email@being-imported.com"] }`, all other
 /// subscriber data, e.g. if there is double opt-in, or the `name` of user,
-/// `tags` for the user should be stored in any other `data` key.
+/// `tags` for the user should be stored in any other `data` key (`data -> 'subscriptions')
 #[ft_sdk::form]
 pub fn create_account(
     mut conn: ft_sdk::Connection,
