@@ -262,7 +262,7 @@ struct CreateAccountPayload {
 /// email provider data, nothing else. E.g. `data -> 'email'` should only
 /// contain `{ "emails": ["email@being-imported.com"] }`, all other
 /// subscriber data, e.g. if there is double opt-in, or the `name` of user,
-/// `tags` for the user should be stored in any other `data` key.
+/// `tags` for the user should be stored in any other `data` key (`data -> 'subscriptions')
 #[ft_sdk::form]
 pub fn create_account(
     mut conn: ft_sdk::Connection,
