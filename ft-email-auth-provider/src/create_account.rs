@@ -1,7 +1,8 @@
-use ft_sdk::auth::provider as auth_provider;
+use diesel::prelude::*;
+use ft_sdk::auth::{fastn_user, provider as auth_provider};
 use validator::ValidateEmail;
 
-pub struct CreateAccount {
+struct CreateAccount {
     email: String,
     #[cfg(feature = "username")]
     username: String,
@@ -110,6 +111,8 @@ fn validate(
 ) -> Result<CreateAccount, ft_sdk::Error> {
     let mut errors = std::collections::HashMap::new();
 
+    payload.validate(&mut errors);
+
     if !CreateAccount::validate_email(&payload.email) {
         errors.insert("email".to_string(), "invalid email format".to_string());
     }
@@ -137,9 +140,6 @@ fn validate(
     if !errors.is_empty() {
         return Err(ft_sdk::SpecialError::Multi(errors).into());
     }
-
-    use diesel::prelude::*;
-    use ft_sdk::auth::fastn_user;
 
     if fastn_user::table
         .select(diesel::dsl::count_star())
@@ -244,14 +244,55 @@ fn validate(
 }
 
 #[derive(serde::Deserialize)]
-struct CreateAccountPayload {
-    email: String,
+pub(crate) struct CreateAccountPayload {
+    pub(crate) email: String,
     #[cfg(feature = "username")]
-    username: String,
-    name: String,
-    password: String,
-    password2: String,
-    accept_terms: bool,
+    pub(crate) username: String,
+    pub(crate) name: String,
+    pub(crate) password: String,
+    pub(crate) password2: String,
+    pub(crate) accept_terms: bool,
+}
+
+impl CreateAccountPayload {
+    pub(crate) fn validate(&self, errors: &mut std::collections::HashMap::HashMap<String, String>) {
+        if !self.email.validate_email() {
+            errors.insert("email".to_string(), "invalid email format".to_string());
+        }
+
+        if self.password != self.password2 {
+            errors.insert(
+                "password2".to_string(),
+                "password and confirm password field do not match".to_string(),
+            );
+        }
+
+        if let Some(message) =
+            CreateAccount::is_strong_password(&self.password, &self.email, &self.name)
+        {
+            errors.insert("password".to_string(), message);
+        }
+
+        if !self.accept_terms {
+            errors.insert(
+                "accept_terms".to_string(),
+                "you must accept the terms and conditions".to_string(),
+            );
+        }
+
+    }
+
+    pub(crate) fn hashed_password(&self) -> String {
+        let salt = argon2::password_hash::SaltString::generate(&mut ft_sdk::Rng {});
+        let argon2 = argon2::Argon2::default();
+        argon2::password_hash::PasswordHasher::hash_password(
+            &argon2,
+            self.password.as_bytes(),
+            &salt,
+        )
+        .unwrap()
+        .to_string()
+    }
 }
 
 /// Create account handler, this is available on /create_account/ route
@@ -268,7 +309,7 @@ struct CreateAccountPayload {
 /// subscriber data, e.g. if there is double opt-in, or the `name` of user,
 /// `tags` for the user should be stored in any other `data` key (`data -> 'subscriptions')
 #[ft_sdk::form]
-pub fn create_account(
+fn create_account(
     mut conn: ft_sdk::Connection,
     ft_sdk::Form(payload): ft_sdk::Form<CreateAccountPayload>,
     ft_sdk::Cookie(sid): ft_sdk::Cookie<{ ft_sdk::auth::SESSION_KEY }>,

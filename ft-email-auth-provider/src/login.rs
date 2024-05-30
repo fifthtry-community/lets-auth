@@ -1,6 +1,6 @@
 use ft_sdk::auth::provider as auth_provider;
 
-pub struct Login {
+struct Login {
     user_id: ft_sdk::auth::UserId,
 }
 
@@ -86,7 +86,7 @@ struct LoginPayload {
 }
 
 #[ft_sdk::form]
-pub fn login(
+fn login(
     mut conn: ft_sdk::Connection,
     ft_sdk::Form(payload): ft_sdk::Form<LoginPayload>,
     ft_sdk::Cookie(sid): ft_sdk::Cookie<{ ft_sdk::auth::SESSION_KEY }>,

@@ -1,6 +1,8 @@
 extern crate self as auth;
 
-mod handlers;
+mod create_account;
+mod create_verified_account;
+mod login;
 mod urls;
 
 pub const PROVIDER_ID: &str = "email";
