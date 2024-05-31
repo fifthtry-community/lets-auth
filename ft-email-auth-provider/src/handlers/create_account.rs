@@ -183,7 +183,7 @@ fn validate(
     #[derive(diesel::QueryableByName)]
     #[diesel(table_name = fastn_user)]
     struct Identity {
-        identity: String,
+        identity: Option<String>,
         id: i64,
     }
 
@@ -207,7 +207,7 @@ fn validate(
     .get_result::<Identity>(conn)
     {
         Ok(identity) => {
-            if !identity.identity.is_empty() {
+            if identity.identity.is_some() {
                 return Err(ft_sdk::single_error("email", "email already exists").into());
             }
             Some(identity.id)
