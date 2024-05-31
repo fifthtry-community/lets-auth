@@ -68,7 +68,7 @@ fn validate(
     // Check if the email is already present in `data -> 'email' -> 'emails'` then
     // check if identity is already created which means user has already an account with the email.
     // If identity is not created this means email is stored because of subscription or other apps.
-    let user_id = match diesel::sql_query(
+    let identity = diesel::sql_query(
         r#"
             SELECT
                 id, identity
@@ -82,25 +82,19 @@ fn validate(
         "#,
     )
     .bind::<diesel::sql_types::Text, _>(&payload.email)
-    .get_result::<Identity>(conn)
-    {
-        Ok(identity) => {
-            if !identity.identity.is_empty() {
-                return Err(ft_sdk::single_error("email", "email already exists").into());
-            }
-            Some(identity.id)
-        }
-        Err(diesel::result::Error::NotFound) => None,
-        Err(e) => return Err(e.into()),
-    };
+    .get_result::<Identity>(conn)?;
+
+    if !identity.identity.is_empty() {
+        return Err(ft_sdk::single_error("email", "email already exists").into());
+    }
 
     Ok(CreateAccount {
+        hashed_password: payload.hashed_password(),
         email: payload.email,
         name: payload.name,
-        hashed_password: payload.hashed_password(),
         #[cfg(feature = "username")]
         username: payload.username,
-        user_id,
+        user_id: ft_sdk::UserId(identity.id),
     })
 }
 
