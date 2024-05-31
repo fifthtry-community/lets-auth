@@ -61,7 +61,7 @@ fn validate(
     #[derive(diesel::QueryableByName)]
     #[diesel(table_name = fastn_user)]
     struct Identity {
-        identity: String,
+        identity: Option<String>,
         id: i64,
     }
 
@@ -84,7 +84,7 @@ fn validate(
     .bind::<diesel::sql_types::Text, _>(&payload.email)
     .get_result::<Identity>(conn)?;
 
-    if !identity.identity.is_empty() {
+    if identity.identity.is_some() {
         return Err(ft_sdk::single_error("email", "email already exists").into());
     }
 
