@@ -1,5 +1,6 @@
 use ft_sdk::auth::provider as auth_provider;
 
+#[derive(Debug)]
 pub struct Login {
     user_id: ft_sdk::auth::UserId,
 }
@@ -79,7 +80,7 @@ fn validate(conn: &mut ft_sdk::Connection, payload: LoginPayload) -> Result<Logi
     Ok(Login { user_id })
 }
 
-#[derive(serde::Deserialize)]
+#[derive(serde::Deserialize, Debug)]
 struct LoginPayload {
     username: String,
     password: String,

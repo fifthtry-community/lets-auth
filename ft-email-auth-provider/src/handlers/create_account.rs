@@ -198,7 +198,7 @@ fn validate(
             WHERE
                 EXISTS (
                     SELECT 1
-                    FROM json_each(data -> 'email' -> 'emails' )
+                    FROM json_each ( data -> 'email' -> 'emails' )
                     WHERE value = $1
                 )
         "#,
@@ -215,10 +215,6 @@ fn validate(
         Err(diesel::result::Error::NotFound) => None,
         Err(e) => return Err(e.into()),
     };
-
-    if auth_provider::user_data_by_identity(conn, auth::PROVIDER_ID, &payload.email).is_ok() {
-        return Err(ft_sdk::single_error("email", "email already exists").into());
-    }
 
     let salt = argon2::password_hash::SaltString::generate(&mut ft_sdk::Rng {});
 
