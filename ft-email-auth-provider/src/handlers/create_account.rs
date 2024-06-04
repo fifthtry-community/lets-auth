@@ -1,7 +1,8 @@
+use ft_sdk::auth::fastn_user;
 use ft_sdk::auth::provider as auth_provider;
 use validator::ValidateEmail;
 
-pub struct CreateAccount {
+struct CreateAccount {
     email: String,
     #[cfg(feature = "username")]
     username: String,
@@ -91,19 +92,6 @@ impl CreateAccount {
 
         (name, email)
     }
-
-    fn is_strong_password(password: &str, _email: &str, _name: &str) -> Option<String> {
-        // TODO: better password validation
-        if password.len() < 4 {
-            return Some("password is too short".to_string());
-        }
-
-        None
-    }
-
-    fn validate_email(email: &str) -> bool {
-        email.validate_email()
-    }
 }
 
 fn validate(
@@ -112,75 +100,17 @@ fn validate(
 ) -> Result<CreateAccount, ft_sdk::Error> {
     let mut errors = std::collections::HashMap::new();
 
-    if !CreateAccount::validate_email(&payload.email) {
-        errors.insert("email".to_string(), "invalid email format".to_string());
-    }
-
-    if payload.password != payload.password2 {
-        errors.insert(
-            "password2".to_string(),
-            "password and confirm password field do not match".to_string(),
-        );
-    }
-
-    if let Some(message) =
-        CreateAccount::is_strong_password(&payload.password, &payload.email, &payload.name)
-    {
-        errors.insert("password".to_string(), message);
-    }
-
-    if !payload.accept_terms {
-        errors.insert(
-            "accept_terms".to_string(),
-            "you must accept the terms and conditions".to_string(),
-        );
-    }
+    payload.validate(conn, &mut errors)?;
 
     if !errors.is_empty() {
         return Err(ft_sdk::SpecialError::Multi(errors).into());
     }
 
+    // Check if the email is already present in `data -> 'email' -> 'emails'` then
+    // check if identity is already created which means user has already an account with the email.
+    // If identity is not created this means email is stored because of subscription or other apps.
+
     use diesel::prelude::*;
-    use ft_sdk::auth::fastn_user;
-
-    if fastn_user::table
-        .select(diesel::dsl::count_star())
-        .filter(fastn_user::identity.eq({
-            #[cfg(feature = "username")]
-            {
-                &payload.username
-            }
-            #[cfg(not(feature = "username"))]
-            {
-                &payload.email
-            }
-        }))
-        .get_result::<i64>(conn)?
-        > 0
-    {
-        return Err(ft_sdk::single_error("username", "username already exists").into());
-    }
-
-    if diesel::sql_query(
-        r#"
-        SELECT
-            COUNT(*) AS count
-        FROM fastn_user
-        WHERE
-            EXISTS (
-                SELECT 1
-                FROM json_each(data -> 'email' -> 'verified_emails')
-                WHERE value = $1
-            )
-    "#,
-    )
-    .bind::<diesel::sql_types::Text, _>(&payload.email)
-    .get_result::<ft_sdk::auth::Counter>(conn)?
-    .count
-        > 0
-    {
-        return Err(ft_sdk::single_error("email", "email already exists").into());
-    }
 
     #[derive(diesel::QueryableByName)]
     #[diesel(table_name = fastn_user)]
@@ -189,9 +119,6 @@ fn validate(
         id: i64,
     }
 
-    // Check if the email is already present in `data -> 'email' -> 'emails'` then
-    // check if identity is already created which means user has already an account with the email.
-    // If identity is not created this means email is stored because of subscription or other apps.
     let user_id = match diesel::sql_query(
         r#"
             SELECT
@@ -210,51 +137,24 @@ fn validate(
     {
         Ok(identity) => {
             if identity.identity.is_some() {
-                return Err(ft_sdk::single_error("email", "email already exists").into());
+                errors.insert("email".to_string(), "email already exists".to_string());
             }
-            Some(identity.id)
+            Some(ft_sdk::auth::UserId(identity.id))
         }
         Err(diesel::result::Error::NotFound) => None,
         Err(e) => return Err(e.into()),
     };
 
-    if auth_provider::user_data_by_identity(conn, auth::PROVIDER_ID, &payload.email).is_ok() {
-        return Err(ft_sdk::single_error("email", "email already exists").into());
-    }
-
-    let salt = argon2::password_hash::SaltString::generate(&mut ft_sdk::Rng {});
-
-    let argon2 = argon2::Argon2::default();
-
-    let hashed_password = argon2::password_hash::PasswordHasher::hash_password(
-        &argon2,
-        payload.password.as_bytes(),
-        &salt,
-    )
-    .unwrap()
-    .to_string();
-
     Ok(CreateAccount {
+        user_id,
+        hashed_password: payload.hashed_password(),
         email: payload.email,
         name: payload.name,
-        hashed_password,
         #[cfg(feature = "username")]
         username: payload.username,
         email_confirmation_code: CreateAccount::generate_key(64),
         email_confirmation_sent_at: ft_sdk::env::now(),
-        user_id: user_id.map(ft_sdk::UserId),
     })
-}
-
-#[derive(serde::Deserialize)]
-struct CreateAccountPayload {
-    email: String,
-    #[cfg(feature = "username")]
-    username: String,
-    name: String,
-    password: String,
-    password2: String,
-    accept_terms: bool,
 }
 
 /// Create account handler, this is available on /create-account/ route
@@ -303,7 +203,11 @@ pub fn create_account(
 
     ft_sdk::println!("Create User done for sid {sid}");
 
-    let conf_link = CreateAccount::confirmation_link(&account_meta.email_confirmation_code, &account_meta.email, &host);
+    let conf_link = CreateAccount::confirmation_link(
+        &account_meta.email_confirmation_code,
+        &account_meta.email,
+        &host,
+    );
     ft_sdk::println!("Confirmation link added {conf_link}");
 
     let (from_name, from_email) = CreateAccount::get_from_address_from_env();
@@ -327,4 +231,137 @@ pub fn create_account(
     ft_sdk::println!("Email added to the queue");
 
     Ok(ft_sdk::form::redirect("/")?.with_cookie(auth::session_cookie(sid.as_str(), host)?))
+}
+
+#[derive(serde::Deserialize)]
+struct CreateAccountPayload {
+    email: String,
+    #[cfg(feature = "username")]
+    username: String,
+    name: String,
+    password: String,
+    password2: String,
+    accept_terms: bool,
+}
+
+impl CreateAccountPayload {
+    pub(crate) fn validate(
+        &self,
+        conn: &mut ft_sdk::Connection,
+        errors: &mut std::collections::HashMap<String, String>,
+    ) -> Result<(), ft_sdk::Error> {
+        if !CreateAccountPayload::validate_email(&self.email) {
+            errors.insert("email".to_string(), "invalid email format".to_string());
+        }
+
+        if self.password != self.password2 {
+            errors.insert(
+                "password2".to_string(),
+                "password and confirm password field do not match".to_string(),
+            );
+        }
+
+        if let Some(message) =
+            CreateAccountPayload::is_strong_password(&self.password, &self.email, &self.name)
+        {
+            errors.insert("password".to_string(), message);
+        }
+
+        if !self.accept_terms {
+            errors.insert(
+                "accept_terms".to_string(),
+                "you must accept the terms and conditions".to_string(),
+            );
+        }
+
+        #[cfg(feature = "username")]
+        {
+            validate_identity("username", &self.username, conn, errors)?;
+        }
+
+        #[cfg(not(feature = "username"))]
+        {
+            validate_identity("email", &self.email, conn, errors)?;
+        }
+
+        validate_verified_email(&self.email, conn, errors)?;
+
+        Ok(())
+    }
+
+    pub(crate) fn hashed_password(&self) -> String {
+        let salt = argon2::password_hash::SaltString::generate(&mut ft_sdk::Rng {});
+        let argon2 = argon2::Argon2::default();
+        argon2::password_hash::PasswordHasher::hash_password(
+            &argon2,
+            self.password.as_bytes(),
+            &salt,
+        )
+        .unwrap()
+        .to_string()
+    }
+
+    pub(crate) fn is_strong_password(password: &str, _email: &str, _name: &str) -> Option<String> {
+        // TODO: better password validation
+        if password.len() < 4 {
+            return Some("password is too short".to_string());
+        }
+
+        None
+    }
+
+    pub(crate) fn validate_email(email: &str) -> bool {
+        email.validate_email()
+    }
+}
+
+fn validate_identity(
+    field: &str,
+    identity: &str,
+    conn: &mut ft_sdk::Connection,
+    errors: &mut std::collections::HashMap<String, String>,
+) -> Result<(), ft_sdk::Error> {
+    use diesel::prelude::*;
+
+    if fastn_user::table
+        .select(diesel::dsl::count_star())
+        .filter(fastn_user::identity.eq(identity))
+        .get_result::<i64>(conn)?
+        > 0
+    {
+        errors.insert(field.to_string(), "username already exists".to_string());
+    }
+
+    Ok(())
+}
+
+fn validate_verified_email(
+    email: &str,
+    conn: &mut ft_sdk::Connection,
+    errors: &mut std::collections::HashMap<String, String>,
+) -> Result<(), ft_sdk::Error> {
+    use diesel::prelude::*;
+
+    if diesel::sql_query(
+        r#"
+        SELECT
+            COUNT(*) AS count
+        FROM fastn_user
+        WHERE
+            EXISTS (
+                SELECT 1
+                FROM json_each(data -> 'email' -> 'verified_emails')
+                WHERE value = $1
+            )
+    "#,
+    )
+    .bind::<diesel::sql_types::Text, _>(email)
+    .get_result::<ft_sdk::auth::Counter>(conn)?
+    .count
+        > 0
+    {
+        errors.insert("email".to_string(), "email already exists".to_string());
+    }
+
+    Ok(())
 }
