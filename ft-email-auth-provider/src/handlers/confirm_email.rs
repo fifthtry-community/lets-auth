@@ -49,9 +49,6 @@ pub fn confirm_email(
         .expect("custom is a json object")
         .remove(crate::EMAIL_CONF_CODE_KEY);
 
-    // remove email from unverified emails
-    data.emails = data.emails.into_iter().filter(|e| *e != email).collect();
-
     ft_sdk::auth::provider::update_user(&mut conn, crate::PROVIDER_ID, &id, data, false)?;
 
     ft_sdk::form::redirect("/")
