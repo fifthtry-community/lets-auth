@@ -35,63 +35,6 @@ impl CreateAccount {
             }),
         }
     }
-
-    pub fn confirm_account_html(name: &str, link: &str) -> String {
-        // TODO: until we figure out email templates, this has to do
-        format!(
-            r#"
-            <html>
-                <head>
-                    <title>Confirm your account</title>
-                </head>
-                <body>
-                    <h1>Hi {name},</h1>
-                    <p>Click the link below to confirm your account</p>
-                    <a href="{link}">Confirm your account</a>
-
-                    In case you can't click the link, copy and paste the following link in your browser:
-                    <br>
-                    <a href="{link}">{link}</a>
-                </body>
-            </html>
-            "#,
-        )
-    }
-
-    pub fn confirm_account_text(name: &str, link: &str) -> String {
-        format!(
-            r#"
-            Hi {name},
-
-            Click the link below to confirm your account:
-
-            {link}
-
-            In case you can't click the link, copy and paste it in your browser.
-            "#,
-        )
-    }
-
-    pub fn generate_key(length: usize) -> String {
-        ft_sdk::Rng::generate_key(length)
-    }
-
-    /// TODO: get mount point of this wasm
-    pub fn confirmation_link(key: &str, email: &str, ft_sdk::Host(host): &ft_sdk::Host) -> String {
-        format!(
-            "https://{host}{confirm_email_route}?code={key}?email={email}",
-            confirm_email_route = auth::urls::Route::ConfirmEmail,
-        )
-    }
-
-    pub fn get_from_address_from_env() -> (String, String) {
-        let email = ft_sdk::env::var("FASTN_SMTP_SENDER_EMAIL".to_string())
-            .unwrap_or_else(|| "support@fifthtry.com".to_string());
-        let name = ft_sdk::env::var("FASTN_SMTP_SENDER_NAME".to_string())
-            .unwrap_or_else(|| "FifthTry Team".to_string());
-
-        (name, email)
-    }
 }
 
 fn validate(
@@ -152,7 +95,7 @@ fn validate(
         name: payload.name,
         #[cfg(feature = "username")]
         username: payload.username,
-        email_confirmation_code: CreateAccount::generate_key(64),
+        email_confirmation_code: generate_key(64),
         email_confirmation_sent_at: ft_sdk::env::now(),
     })
 }
@@ -176,6 +119,7 @@ pub fn create_account(
     ft_sdk::Form(payload): ft_sdk::Form<CreateAccountPayload>,
     ft_sdk::Cookie(sid): ft_sdk::Cookie<{ ft_sdk::auth::SESSION_KEY }>,
     host: ft_sdk::Host,
+    mountpoint: ft_sdk::Mountpoint,
 ) -> ft_sdk::form::Result {
     let account_meta = validate(payload, &mut conn)?;
     ft_sdk::println!("Account meta done for {}", account_meta.username);
@@ -203,14 +147,15 @@ pub fn create_account(
 
     ft_sdk::println!("Create User done for sid {sid}");
 
-    let conf_link = CreateAccount::confirmation_link(
+    let conf_link = confirmation_link(
         &account_meta.email_confirmation_code,
         &account_meta.email,
         &host,
+        &mountpoint,
     );
     ft_sdk::println!("Confirmation link added {conf_link}");
 
-    let (from_name, from_email) = CreateAccount::get_from_address_from_env();
+    let (from_name, from_email) = email_from_address_from_env();
     ft_sdk::println!("Found email sender: {from_name}, {from_email}");
 
     if let Err(e) = ft_sdk::send_email(
@@ -218,8 +163,8 @@ pub fn create_account(
         (&from_name, &from_email),
         vec![(&account_meta.name, &account_meta.email)],
         "Confirm you account",
-        &CreateAccount::confirm_account_html(&account_meta.name, &conf_link),
-        &CreateAccount::confirm_account_text(&account_meta.name, &conf_link),
+        &confirm_account_html_template(&account_meta.name, &conf_link),
+        &confirm_account_text_template(&account_meta.name, &conf_link),
         None,
         None,
         None,
@@ -364,4 +309,67 @@ fn validate_verified_email(
     }
 
     Ok(())
+}
+
+pub fn confirm_account_html_template(name: &str, link: &str) -> String {
+    // TODO: until we figure out email templates, this has to do
+    format!(
+        r#"
+            <html>
+                <head>
+                    <title>Confirm your account</title>
+                </head>
+                <body>
+                    <h1>Hi {name},</h1>
+                    <p>Click the link below to confirm your account</p>
+                    <a href="{link}">Confirm your account</a>
+
+                    In case you can't click the link, copy and paste the following link in your browser:
+                    <br>
+                    <a href="{link}">{link}</a>
+                </body>
+            </html>
+            "#,
+    )
+}
+
+pub fn confirm_account_text_template(name: &str, link: &str) -> String {
+    format!(
+        r#"
+            Hi {name},
+
+            Click the link below to confirm your account:
+
+            {link}
+
+            In case you can't click the link, copy and paste it in your browser.
+            "#,
+    )
+}
+
+pub fn generate_key(length: usize) -> String {
+    ft_sdk::Rng::generate_key(length)
+}
+
+/// TODO: get mount point of this wasm
+pub fn confirmation_link(
+    key: &str,
+    email: &str,
+    ft_sdk::Host(host): &ft_sdk::Host,
+    ft_sdk::Mountpoint(mountpoint): &ft_sdk::Mountpoint,
+) -> String {
+    format!(
+        "https://{host}{mountpoint}{confirm_email_route}?code={key}&email={email}",
+        confirm_email_route = auth::urls::Route::ConfirmEmail,
+        mountpoint = mountpoint.trim_end_matches('/'),
+    )
+}
+
+pub fn email_from_address_from_env() -> (String, String) {
+    let email = ft_sdk::env::var("FASTN_SMTP_SENDER_EMAIL".to_string())
+        .unwrap_or_else(|| "support@fifthtry.com".to_string());
+    let name = ft_sdk::env::var("FASTN_SMTP_SENDER_NAME".to_string())
+        .unwrap_or_else(|| "FifthTry Team".to_string());
+
+    (name, email)
 }

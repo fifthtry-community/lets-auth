@@ -1,4 +1,7 @@
-use crate::handlers::create_account::CreateAccount;
+use crate::handlers::create_account::{
+    confirm_account_html_template, confirm_account_text_template, confirmation_link,
+    email_from_address_from_env, generate_key,
+};
 use validator::ValidateEmail;
 
 #[ft_sdk::form]
@@ -7,6 +10,7 @@ pub fn resend_confirmation_email(
     mut conn: ft_sdk::Connection,
     ft_sdk::Query(email): ft_sdk::Query<"email">,
     host: ft_sdk::Host,
+    mountpoint: ft_sdk::Mountpoint,
 ) -> ft_sdk::form::Result {
     if !email.validate_email() {
         return Err(ft_sdk::single_error("email", "invalid email format").into());
@@ -17,9 +21,9 @@ pub fn resend_confirmation_email(
 
     let mut data = data;
 
-    let key = CreateAccount::generate_key(64);
+    let key = generate_key(64);
 
-    let conf_link = CreateAccount::confirmation_link(&key, &email, &host);
+    let conf_link = confirmation_link(&key, &email, &host, &mountpoint);
     ft_sdk::println!("Confirmation link added {conf_link}");
 
     // update user probably does not merge the data. Even if it does, I don't want to a construct a
@@ -42,7 +46,7 @@ pub fn resend_confirmation_email(
         false,
     )?;
 
-    let (from_name, from_email) = CreateAccount::get_from_address_from_env();
+    let (from_name, from_email) = email_from_address_from_env();
 
     ft_sdk::println!("Found email sender: {from_name}, {from_email}");
 
@@ -53,8 +57,8 @@ pub fn resend_confirmation_email(
         (&from_name, &from_email),
         vec![(&name, &email)],
         "Confirm you account",
-        &CreateAccount::confirm_account_html(&name, &conf_link),
-        &CreateAccount::confirm_account_text(&name, &conf_link),
+        &confirm_account_html_template(&name, &conf_link),
+        &confirm_account_text_template(&name, &conf_link),
         None,
         None,
         None,
@@ -67,4 +71,3 @@ pub fn resend_confirmation_email(
 
     ft_sdk::form::redirect("/")
 }
-
