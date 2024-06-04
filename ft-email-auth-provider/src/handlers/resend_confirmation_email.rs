@@ -19,6 +19,31 @@ pub fn resend_confirmation_email(
     let (user_id, data) =
         ft_sdk::auth::provider::user_data_by_email(&mut conn, crate::PROVIDER_ID, &email)?;
 
+    let conf_link = generate_new_confirmation_key(
+        data.clone(),
+        &user_id,
+        &email,
+        &host,
+        &mountpoint,
+        &mut conn,
+    )?;
+
+    let name = data.name.unwrap_or("User".to_string());
+
+    send_confirmation_email(&mut conn, &email, &name, &conf_link)?;
+
+    ft_sdk::form::redirect("/")
+}
+
+/// Generate a new confirmation key for a given email and update the user table
+pub fn generate_new_confirmation_key(
+    data: ft_sdk::auth::ProviderData,
+    user_id: &ft_sdk::auth::UserId,
+    email: &str,
+    host: &ft_sdk::Host,
+    mountpoint: &ft_sdk::Mountpoint,
+    conn: &mut ft_sdk::Connection,
+) -> Result<String, ft_sdk::Error> {
     let mut data = data;
 
     let key = generate_key(64);
@@ -38,22 +63,23 @@ pub fn resend_confirmation_email(
         serde_json::Value::String(ft_sdk::env::now().to_rfc3339()),
     );
 
-    ft_sdk::auth::provider::update_user(
-        &mut conn,
-        crate::PROVIDER_ID,
-        &user_id,
-        data.clone(),
-        false,
-    )?;
+    ft_sdk::auth::provider::update_user(conn, crate::PROVIDER_ID, &user_id, data.clone(), false)?;
 
+    Ok(conf_link)
+}
+
+pub fn send_confirmation_email(
+    conn: &mut ft_sdk::Connection,
+    email: &str,
+    name: &str,
+    conf_link: &str,
+) -> Result<(), ft_sdk::Error> {
     let (from_name, from_email) = email_from_address_from_env();
 
     ft_sdk::println!("Found email sender: {from_name}, {from_email}");
 
-    let name = data.name.unwrap_or("User".to_string());
-
     if let Err(e) = ft_sdk::send_email(
-        &mut conn,
+        conn,
         (&from_name, &from_email),
         vec![(&name, &email)],
         "Confirm you account",
@@ -67,7 +93,8 @@ pub fn resend_confirmation_email(
         ft_sdk::println!("auth.wasm: failed to queue email: {:?}", e);
         return Err(e.into());
     }
+
     ft_sdk::println!("Email added to the queue");
 
-    ft_sdk::form::redirect("/")
+    Ok(())
 }

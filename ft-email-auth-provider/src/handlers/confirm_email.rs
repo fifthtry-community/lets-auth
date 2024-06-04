@@ -1,3 +1,6 @@
+use crate::handlers::resend_confirmation_email::{
+    generate_new_confirmation_key, send_confirmation_email,
+};
 use validator::ValidateEmail;
 
 #[ft_sdk::form]
@@ -5,12 +8,14 @@ pub fn confirm_email(
     mut conn: ft_sdk::Connection,
     ft_sdk::Query(code): ft_sdk::Query<"code">,
     ft_sdk::Query(email): ft_sdk::Query<"email">,
+    host: ft_sdk::Host,
+    mountpoint: ft_sdk::Mountpoint,
 ) -> ft_sdk::form::Result {
     if !email.validate_email() {
         return Err(ft_sdk::single_error("email", "invalid email format").into());
     }
 
-    let (id, data) = ft_sdk::auth::provider::user_data_by_custom_attribute(
+    let (user_id, data) = ft_sdk::auth::provider::user_data_by_custom_attribute(
         &mut conn,
         crate::PROVIDER_ID,
         crate::EMAIL_CONF_CODE_KEY,
@@ -29,7 +34,24 @@ pub fn confirm_email(
         .expect("chrono parse must work");
 
     if key_expired(sent_at) {
-        return Err(ft_sdk::single_error("code", "confirmation code expired").into());
+        let conf_link = generate_new_confirmation_key(
+            data.clone(),
+            &user_id,
+            &email,
+            &host,
+            &mountpoint,
+            &mut conn,
+        )?;
+
+        let name = data.name.unwrap_or("User".to_string());
+
+        send_confirmation_email(&mut conn, &email, &name, &conf_link)?;
+
+        return Err(ft_sdk::single_error(
+            "code",
+            "Confirmation code expired. A new link has been sent to your email address.",
+        )
+        .into());
     }
 
     let email = data
@@ -48,7 +70,7 @@ pub fn confirm_email(
         .expect("custom is a json object")
         .remove(crate::EMAIL_CONF_CODE_KEY);
 
-    ft_sdk::auth::provider::update_user(&mut conn, crate::PROVIDER_ID, &id, data, false)?;
+    ft_sdk::auth::provider::update_user(&mut conn, crate::PROVIDER_ID, &user_id, data, false)?;
 
     ft_sdk::form::redirect("/")
 }
