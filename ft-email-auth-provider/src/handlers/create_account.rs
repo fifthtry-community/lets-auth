@@ -70,7 +70,7 @@ fn validate(
             WHERE
                 EXISTS (
                     SELECT 1
-                    FROM json_each(data -> 'email' -> 'emails' )
+                    FROM json_each ( data -> 'email' -> 'emails' )
                     WHERE value = $1
                 )
         "#,
@@ -80,7 +80,7 @@ fn validate(
     {
         Ok(identity) => {
             if identity.identity.is_some() {
-                errors.insert("email".to_string(), "email already exists".to_string());
+                return Err(ft_sdk::single_error("email", "email already exists").into());
             }
             Some(ft_sdk::auth::UserId(identity.id))
         }
