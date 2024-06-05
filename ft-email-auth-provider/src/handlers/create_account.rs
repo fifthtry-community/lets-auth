@@ -179,14 +179,14 @@ pub fn create_account(
 }
 
 #[derive(serde::Deserialize)]
-struct CreateAccountPayload {
-    email: String,
+pub struct CreateAccountPayload {
+    pub(crate) email: String,
     #[cfg(feature = "username")]
-    username: String,
-    name: String,
-    password: String,
-    password2: String,
-    accept_terms: bool,
+    pub(crate) username: String,
+    pub(crate) name: String,
+    pub(crate) password: String,
+    pub(crate) password2: String,
+    pub(crate) accept_terms: bool,
 }
 
 impl CreateAccountPayload {
