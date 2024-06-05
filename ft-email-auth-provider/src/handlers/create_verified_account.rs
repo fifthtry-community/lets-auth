@@ -48,7 +48,7 @@ fn validate(
     // PROVIDER_ID should be SUBSCRIPTION_ID as we are expecting a imported user
     let (user_id, data) = ft_sdk::auth::provider::user_data_by_custom_attribute(
         conn,
-        crate::SUBSCRIPTION_PROVIDER,
+        crate::SUBSCRIPTION_PROVIDER_ID,
         // WARN: this matches the key defined in `luma-import.py`
         "confirmation-code",
         code,
