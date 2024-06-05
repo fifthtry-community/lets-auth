@@ -1,7 +1,7 @@
 use crate::handlers::create_account::CreateAccountPayload;
-use ft_sdk::auth::{fastn_user, provider as auth_provider};
+use ft_sdk::auth::provider as auth_provider;
 
-struct CreateAccount {
+struct CreateVerifiedAccount {
     email: String,
     #[cfg(feature = "username")]
     username: String,
@@ -10,11 +10,11 @@ struct CreateAccount {
     user_id: ft_sdk::UserId,
 }
 
-impl CreateAccount {
+impl CreateVerifiedAccount {
     fn to_provider_data(&self) -> ft_sdk::auth::ProviderData {
         ft_sdk::auth::ProviderData {
             #[cfg(feature = "username")]
-            identity: self.username.to_string(),
+            identity: Some(self.username.to_string()),
             #[cfg(not(feature = "username"))]
             identity: self.email.to_string(),
             #[cfg(feature = "username")]
@@ -30,76 +30,46 @@ impl CreateAccount {
             }),
         }
     }
-
-    fn generate_key(length: usize) -> String {
-        ft_sdk::Rng::generate_key(length)
-    }
-
-    fn is_strong_password(password: &str, _email: &str, _name: &str) -> Option<String> {
-        // TODO: better password validation
-        if password.len() < 4 {
-            return Some("password is too short".to_string());
-        }
-
-        None
-    }
 }
 
 fn validate(
-    ft_sdk::Query(code): ft_sdk::Query<"code">,
+    code: &str,
     payload: CreateAccountPayload,
     conn: &mut ft_sdk::Connection,
-) -> Result<CreateAccount, ft_sdk::Error> {
-    use diesel::prelude::*;
-
+) -> Result<CreateVerifiedAccount, ft_sdk::Error> {
     let mut errors = std::collections::HashMap::new();
 
     payload.validate(conn, &mut errors)?;
+
     if !errors.is_empty() {
         return Err(ft_sdk::SpecialError::Multi(errors).into());
     }
 
-    #[derive(diesel::QueryableByName)]
-    #[diesel(table_name = fastn_user)]
-    struct Identity {
-        identity: Option<String>,
-        id: i64,
-    }
+    // PROVIDER_ID should be SUBSCRIPTION_ID as we are expecting a imported user
+    let (user_id, data) = ft_sdk::auth::provider::user_data_by_custom_attribute(
+        conn,
+        crate::SUBSCRIPTION_PROVIDER,
+        // WARN: this matches the key defined in `luma-import.py`
+        "confirmation-code",
+        code,
+    )?;
 
     // Check if the email is already present in `data -> 'email' -> 'emails'` then
     // check if identity is already created which means user has already an account with the email.
     // If identity is not created this means email is stored because of subscription or other apps.
-    let identity = diesel::sql_query(
-        r#"
-            SELECT
-                id, identity
-            FROM fastn_user
-            WHERE
-                EXISTS (
-                    SELECT 1
-                    FROM json_each(data -> 'email' -> 'emails' )
-                    WHERE value = $1
-                )
-        "#,
-    )
-    .bind::<diesel::sql_types::Text, _>(&payload.email)
-    .get_result::<Identity>(conn)?;
-
-    if identity.identity.is_some() {
+    if data.identity.is_some() {
         return Err(ft_sdk::single_error("email", "email already exists").into());
     }
 
-    Ok(CreateAccount {
+    Ok(CreateVerifiedAccount {
         hashed_password: payload.hashed_password(),
         email: payload.email,
         name: payload.name,
         #[cfg(feature = "username")]
         username: payload.username,
-        user_id: ft_sdk::UserId(identity.id),
+        user_id,
     })
 }
-
-
 
 /// create-verified-account handler to create account for already verified emails
 ///
@@ -109,16 +79,18 @@ fn validate(
 /// subscription to account. This handler is for that.
 ///
 /// The journey should start with an email we send to the user, with a link to
-/// this handler, which includes a verification code.
+/// this handler, which includes a verification code. The link will render a page
+/// which will fetch user's email from this provider (TODO: add link to handler) and pre-fill the
+/// form
 #[ft_sdk::form]
 pub fn create_verified_account(
     mut conn: ft_sdk::Connection,
-    code: ft_sdk::Query<"code">,
+    ft_sdk::Query(code): ft_sdk::Query<"code">,
     ft_sdk::Form(payload): ft_sdk::Form<CreateAccountPayload>,
     ft_sdk::Cookie(sid): ft_sdk::Cookie<{ ft_sdk::auth::SESSION_KEY }>,
     host: ft_sdk::Host,
 ) -> ft_sdk::form::Result {
-    let account_meta = validate(code, payload, &mut conn)?;
+    let account_meta = validate(&code, payload, &mut conn)?;
     ft_sdk::println!("Account meta done for {}", account_meta.username);
 
     auth_provider::update_user(
@@ -136,5 +108,6 @@ pub fn create_verified_account(
     )?;
 
     ft_sdk::println!("update User done for sid {sid}");
+
     Ok(ft_sdk::form::redirect("/")?.with_cookie(auth::session_cookie(sid.as_str(), host)?))
 }

@@ -17,9 +17,9 @@ impl CreateAccount {
     fn to_provider_data(&self) -> ft_sdk::auth::ProviderData {
         ft_sdk::auth::ProviderData {
             #[cfg(feature = "username")]
-            identity: self.username.to_string(),
+            identity: Some(self.username.to_string()),
             #[cfg(not(feature = "username"))]
-            identity: self.email.to_string(),
+            identity: Some(self.email.to_string()),
             #[cfg(feature = "username")]
             username: Some(self.username.to_string()),
             #[cfg(not(feature = "username"))]
