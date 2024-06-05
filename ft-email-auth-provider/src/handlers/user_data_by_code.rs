@@ -9,12 +9,38 @@ fn user_data_by_code(
     mut conn: ft_sdk::Connection,
     ft_sdk::Query(code): ft_sdk::Query<"code">,
 ) -> ft_sdk::data::Result {
-    let (_, data) = ft_sdk::auth::provider::user_data_by_custom_attribute(
-        &mut conn,
-        crate::SUBSCRIPTION_PROVIDER_ID,
-        "confirmation-code",
-        &code,
-    )?;
+    use diesel::prelude::*;
+
+    #[derive(diesel::QueryableByName)]
+    #[diesel(table_name = ft_sdk::auth::fastn_user)]
+    struct UD {
+        data: String,
+    }
+
+    let data = match diesel::sql_query(
+        r#"
+            SELECT
+                data -> 'email' as data
+            FROM fastn_user
+            WHERE
+                EXISTS (
+                    SELECT 1
+                    FROM json_each ( data -> 'subscription' -> 'subscription' -> 'confirmation-code')
+                    WHERE value = $1
+                )
+        "#,
+    )
+    .bind::<diesel::sql_types::Text, _>(&code)
+    .get_result::<UD>(&mut conn)
+    {
+        Ok(ud) => ud.data,
+        Err(diesel::result::Error::NotFound) => {
+            return Err(ft_sdk::single_error("email", "").into());
+        }
+        Err(e) => return Err(e.into()),
+    };
+
+    let data: ft_sdk::auth::ProviderData = serde_json::from_str(&data)?;
 
     ft_sdk::println!("got data for pre filling: {:?}", data);
 
@@ -23,7 +49,7 @@ fn user_data_by_code(
             .emails
             .first()
             .cloned()
-            .expect("at least one email must exist for imported users"),
+            .expect("imported data must have one email"),
     };
 
     ft_sdk::data::json(resp)
