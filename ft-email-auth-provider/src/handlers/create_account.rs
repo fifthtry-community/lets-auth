@@ -205,9 +205,7 @@ impl CreateAccountPayload {
             );
         }
 
-        if let Some(message) =
-            CreateAccountPayload::is_strong_password(&self.password, &self.email, &self.name)
-        {
+        if let Some(message) = self.is_strong_password() {
             errors.insert("password".to_string(), message);
         }
 
@@ -245,9 +243,9 @@ impl CreateAccountPayload {
         .to_string()
     }
 
-    pub(crate) fn is_strong_password(password: &str, _email: &str, _name: &str) -> Option<String> {
+    pub(crate) fn is_strong_password(&self) -> Option<String> {
         // TODO: better password validation
-        if password.len() < 4 {
+        if self.password.len() < 4 {
             return Some("password is too short".to_string());
         }
 
