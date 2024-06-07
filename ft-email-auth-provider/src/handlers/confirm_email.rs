@@ -38,7 +38,7 @@ pub fn confirm_email(
             &mut conn,
         )?;
 
-        let name = data.name.unwrap_or("User".to_string());
+        let name = data.name.unwrap_or_else(|| "User".to_string());
 
         auth::handlers::resend_confirmation_email::send_confirmation_email(
             &mut conn, &email, &name, &conf_link,

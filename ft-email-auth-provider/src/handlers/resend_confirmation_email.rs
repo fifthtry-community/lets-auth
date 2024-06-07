@@ -27,7 +27,7 @@ pub fn resend_confirmation_email(
         &mut conn,
     )?;
 
-    let name = data.name.unwrap_or("User".to_string());
+    let name = data.name.unwrap_or_else(|| "User".to_string());
 
     send_confirmation_email(&mut conn, &email, &name, &conf_link)?;
 
