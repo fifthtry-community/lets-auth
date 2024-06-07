@@ -72,7 +72,7 @@ pub fn confirm_email(
     ft_sdk::form::redirect("/")
 }
 
-/// check if it has been 90 days since the verification code was sent. The thresold can be
+/// check if it has been 90 days since the verification code was sent. The threshold can be
 /// configured using EMAIL_CONFIRMATION_EXPIRE_DAYS env variable
 fn key_expired(sent_at: chrono::DateTime<chrono::Utc>) -> bool {
     let expiry_limit_in_days: u64 = ft_sdk::env::var("EMAIL_CONFIRMATION_EXPIRE_DAYS".to_string())
