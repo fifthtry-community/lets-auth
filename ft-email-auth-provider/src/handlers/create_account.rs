@@ -30,8 +30,8 @@ impl CreateAccount {
             profile_picture: None,
             custom: serde_json::json!({
                 "hashed_password": self.hashed_password,
-                crate::EMAIL_CONF_SENT_AT: self.email_confirmation_sent_at,
-                crate::EMAIL_CONF_CODE_KEY: self.email_confirmation_code,
+                auth::EMAIL_CONF_SENT_AT: self.email_confirmation_sent_at,
+                auth::EMAIL_CONF_CODE_KEY: self.email_confirmation_code,
             }),
         }
     }

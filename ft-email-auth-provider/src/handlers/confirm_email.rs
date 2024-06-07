@@ -1,8 +1,3 @@
-use crate::handlers::resend_confirmation_email::{
-    generate_new_confirmation_key, send_confirmation_email,
-};
-use validator::ValidateEmail;
-
 #[ft_sdk::form]
 pub fn confirm_email(
     mut conn: ft_sdk::Connection,
@@ -11,14 +6,14 @@ pub fn confirm_email(
     host: ft_sdk::Host,
     mountpoint: ft_sdk::Mountpoint,
 ) -> ft_sdk::form::Result {
-    if !email.validate_email() {
+    if !validator::ValidateEmail::validate_email(&email) {
         return Err(ft_sdk::single_error("email", "invalid email format").into());
     }
 
     let (user_id, data) = ft_sdk::auth::provider::user_data_by_custom_attribute(
         &mut conn,
-        crate::PROVIDER_ID,
-        crate::EMAIL_CONF_CODE_KEY,
+        auth::PROVIDER_ID,
+        auth::EMAIL_CONF_CODE_KEY,
         &code,
     )?;
 
@@ -26,7 +21,7 @@ pub fn confirm_email(
         .custom
         .as_object()
         .expect("custom is a json object")
-        .get(crate::EMAIL_CONF_SENT_AT)
+        .get(auth::EMAIL_CONF_SENT_AT)
         .expect("email_conf_sent_at should exists if the account was found")
         .as_str()
         .expect("value must be a datetime string")
@@ -34,7 +29,7 @@ pub fn confirm_email(
         .expect("chrono parse must work");
 
     if key_expired(sent_at) {
-        let conf_link = generate_new_confirmation_key(
+        let conf_link = auth::handlers::resend_confirmation_email::generate_new_confirmation_key(
             data.clone(),
             &user_id,
             &email,
@@ -45,7 +40,9 @@ pub fn confirm_email(
 
         let name = data.name.unwrap_or("User".to_string());
 
-        send_confirmation_email(&mut conn, &email, &name, &conf_link)?;
+        auth::handlers::resend_confirmation_email::send_confirmation_email(
+            &mut conn, &email, &name, &conf_link,
+        )?;
 
         return Err(ft_sdk::single_error(
             "code",
@@ -68,9 +65,9 @@ pub fn confirm_email(
     data.custom
         .as_object_mut()
         .expect("custom is a json object")
-        .remove(crate::EMAIL_CONF_CODE_KEY);
+        .remove(auth::EMAIL_CONF_CODE_KEY);
 
-    ft_sdk::auth::provider::update_user(&mut conn, crate::PROVIDER_ID, &user_id, data, false)?;
+    ft_sdk::auth::provider::update_user(&mut conn, auth::PROVIDER_ID, &user_id, data, false)?;
 
     ft_sdk::form::redirect("/")
 }

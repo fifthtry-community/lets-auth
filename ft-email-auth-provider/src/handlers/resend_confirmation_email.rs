@@ -1,8 +1,7 @@
-use crate::handlers::create_account::{
+use auth::handlers::create_account::{
     confirm_account_html_template, confirm_account_text_template, confirmation_link,
     email_from_address_from_env, generate_key,
 };
-use validator::ValidateEmail;
 
 #[ft_sdk::form]
 // TODO: add a rate limit to this endpoint
@@ -12,12 +11,12 @@ pub fn resend_confirmation_email(
     host: ft_sdk::Host,
     mountpoint: ft_sdk::Mountpoint,
 ) -> ft_sdk::form::Result {
-    if !email.validate_email() {
+    if !validator::ValidateEmail::validate_email(&email) {
         return Err(ft_sdk::single_error("email", "invalid email format").into());
     }
 
     let (user_id, data) =
-        ft_sdk::auth::provider::user_data_by_email(&mut conn, crate::PROVIDER_ID, &email)?;
+        ft_sdk::auth::provider::user_data_by_email(&mut conn, auth::PROVIDER_ID, &email)?;
 
     let conf_link = generate_new_confirmation_key(
         data.clone(),
@@ -54,16 +53,16 @@ pub fn generate_new_confirmation_key(
     // update user probably does not merge the data. Even if it does, I don't want to a construct a
     // whole ProviderData just to insert some custom key values
     data.custom.as_object_mut().unwrap().insert(
-        crate::EMAIL_CONF_CODE_KEY.to_string(),
+        auth::EMAIL_CONF_CODE_KEY.to_string(),
         serde_json::Value::String(key),
     );
 
     data.custom.as_object_mut().unwrap().insert(
-        crate::EMAIL_CONF_SENT_AT.to_string(),
+        auth::EMAIL_CONF_SENT_AT.to_string(),
         serde_json::Value::String(ft_sdk::env::now().to_rfc3339()),
     );
 
-    ft_sdk::auth::provider::update_user(conn, crate::PROVIDER_ID, &user_id, data.clone(), false)?;
+    ft_sdk::auth::provider::update_user(conn, auth::PROVIDER_ID, &user_id, data.clone(), false)?;
 
     Ok(conf_link)
 }
