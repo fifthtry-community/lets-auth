@@ -7,7 +7,7 @@ pub fn resend_confirmation_email(
     mountpoint: ft_sdk::Mountpoint,
 ) -> ft_sdk::form::Result {
     if !validator::ValidateEmail::validate_email(&email) {
-        return Err(ft_sdk::single_error("email", "invalid email format").into());
+        return Err(ft_sdk::single_error("email", "Incorrect email format.").into());
     }
 
     let (user_id, data) =

@@ -56,7 +56,7 @@ fn validate(conn: &mut ft_sdk::Connection, payload: LoginPayload) -> Result<Logi
                         ft_sdk::println!("username not found");
                         return Err(ft_sdk::single_error(
                             "username",
-                            "incorrect username/password",
+                            "Incorrect username/password.",
                         )
                         .into());
                     }
@@ -73,7 +73,7 @@ fn validate(conn: &mut ft_sdk::Connection, payload: LoginPayload) -> Result<Logi
         // we intentionally send the error against username to avoid leaking the fact that the
         // username exists
         ft_sdk::println!("incorrect password");
-        return Err(ft_sdk::single_error("username", "incorrect username/password").into());
+        return Err(ft_sdk::single_error("username", "Incorrect username/password.").into());
     }
 
     Ok(Login { user_id })

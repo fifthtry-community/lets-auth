@@ -76,7 +76,7 @@ fn validate(
     {
         Ok(identity) => {
             if identity.identity.is_some() {
-                return Err(ft_sdk::single_error("email", "email already exists").into());
+                return Err(ft_sdk::single_error("email", "Email already exists.").into());
             }
             Some(ft_sdk::auth::UserId(identity.id))
         }
@@ -192,13 +192,13 @@ impl CreateAccountPayload {
         errors: &mut std::collections::HashMap<String, String>,
     ) -> Result<(), ft_sdk::Error> {
         if !validator::ValidateEmail::validate_email(&self.email) {
-            errors.insert("email".to_string(), "invalid email format".to_string());
+            errors.insert("email".to_string(), "Invalid email format.".to_string());
         }
 
         if self.password != self.password2 {
             errors.insert(
                 "password2".to_string(),
-                "password and confirm password field do not match".to_string(),
+                "Password and Confirm password field do not match.".to_string(),
             );
         }
 
@@ -209,7 +209,7 @@ impl CreateAccountPayload {
         if !self.accept_terms {
             errors.insert(
                 "accept_terms".to_string(),
-                "you must accept the terms and conditions".to_string(),
+                "You must accept the terms and conditions.".to_string(),
             );
         }
 
@@ -264,7 +264,7 @@ fn validate_identity(
         .get_result::<i64>(conn)?
         > 0
     {
-        errors.insert(field.to_string(), "username already exists".to_string());
+        errors.insert(field.to_string(), "Username already exists.".to_string());
     }
 
     Ok(())
@@ -295,7 +295,7 @@ fn validate_verified_email(
     .count
         > 0
     {
-        errors.insert("email".to_string(), "email already exists".to_string());
+        errors.insert("email".to_string(), "Email already exists.".to_string());
     }
 
     Ok(())

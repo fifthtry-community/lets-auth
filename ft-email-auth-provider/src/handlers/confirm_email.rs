@@ -7,7 +7,7 @@ pub fn confirm_email(
     mountpoint: ft_sdk::Mountpoint,
 ) -> ft_sdk::form::Result {
     if !validator::ValidateEmail::validate_email(&email) {
-        return Err(ft_sdk::single_error("email", "invalid email format").into());
+        return Err(ft_sdk::single_error("email", "Invalid email format.").into());
     }
 
     let (user_id, data) = ft_sdk::auth::provider::user_data_by_custom_attribute(
@@ -55,7 +55,7 @@ pub fn confirm_email(
         .emails
         .iter()
         .find(|e| **e == email)
-        .ok_or_else(|| ft_sdk::single_error("email", "provided email not found for this user"))?
+        .ok_or_else(|| ft_sdk::single_error("email", "Provided email not found for this user."))?
         .clone();
 
     let data = {
