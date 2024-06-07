@@ -1,6 +1,5 @@
 use ft_sdk::auth::fastn_user;
 use ft_sdk::auth::provider as auth_provider;
-use validator::ValidateEmail;
 
 struct CreateAccount {
     email: String,
@@ -195,7 +194,7 @@ impl CreateAccountPayload {
         conn: &mut ft_sdk::Connection,
         errors: &mut std::collections::HashMap<String, String>,
     ) -> Result<(), ft_sdk::Error> {
-        if !CreateAccountPayload::validate_email(&self.email) {
+        if !validator::ValidateEmail::validate_email(&self.email) {
             errors.insert("email".to_string(), "invalid email format".to_string());
         }
 
@@ -253,10 +252,6 @@ impl CreateAccountPayload {
         }
 
         None
-    }
-
-    pub(crate) fn validate_email(email: &str) -> bool {
-        email.validate_email()
     }
 }
 

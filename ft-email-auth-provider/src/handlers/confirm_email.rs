@@ -52,20 +52,22 @@ pub fn confirm_email(
     }
 
     let email = data
-        .clone()
         .emails
-        .into_iter()
-        .find(|e| *e == email)
-        .ok_or_else(|| ft_sdk::single_error("email", "provided email not found for this user"))?;
+        .iter()
+        .find(|e| **e == email)
+        .ok_or_else(|| ft_sdk::single_error("email", "provided email not found for this user"))?
+        .clone();
 
-    let mut data = data;
+    let data = {
+        let mut data = data;
+        data.verified_emails.push(email.clone());
+        data.custom
+            .as_object_mut()
+            .expect("custom is a json object")
+            .remove(auth::EMAIL_CONF_CODE_KEY);
 
-    data.verified_emails.push(email.clone());
-
-    data.custom
-        .as_object_mut()
-        .expect("custom is a json object")
-        .remove(auth::EMAIL_CONF_CODE_KEY);
+        data
+    };
 
     ft_sdk::auth::provider::update_user(&mut conn, auth::PROVIDER_ID, &user_id, data, false)?;
 
