@@ -1,8 +1,3 @@
-use auth::handlers::create_account::{
-    confirm_account_html_template, confirm_account_text_template, confirmation_link,
-    email_from_address_from_env, generate_key,
-};
-
 #[ft_sdk::form]
 // TODO: add a rate limit to this endpoint
 pub fn resend_confirmation_email(
@@ -43,9 +38,11 @@ pub fn generate_new_confirmation_key(
     mountpoint: &ft_sdk::Mountpoint,
     conn: &mut ft_sdk::Connection,
 ) -> Result<String, ft_sdk::Error> {
-    let key = generate_key(64);
+    let key = auth::handlers::create_account::generate_key(64);
 
-    let conf_link = confirmation_link(&key, &email, &host, &mountpoint);
+    let conf_link =
+        auth::handlers::create_account::confirmation_link(&key, &email, &host, &mountpoint);
+
     ft_sdk::println!("Confirmation link added {conf_link}");
 
     // update user probably does not merge the data. Even if it does, I don't want to a construct a
@@ -71,7 +68,7 @@ pub fn send_confirmation_email(
     name: &str,
     conf_link: &str,
 ) -> Result<(), ft_sdk::Error> {
-    let (from_name, from_email) = email_from_address_from_env();
+    let (from_name, from_email) = auth::handlers::create_account::email_from_address_from_env();
 
     ft_sdk::println!("Found email sender: {from_name}, {from_email}");
 
@@ -80,8 +77,8 @@ pub fn send_confirmation_email(
         (&from_name, &from_email),
         vec![(&name, &email)],
         "Confirm you account",
-        &confirm_account_html_template(&name, &conf_link),
-        &confirm_account_text_template(&name, &conf_link),
+        &auth::handlers::create_account::confirm_account_html_template(&name, &conf_link),
+        &auth::handlers::create_account::confirm_account_text_template(&name, &conf_link),
         None,
         None,
         None,

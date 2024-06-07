@@ -1,5 +1,3 @@
-use ft_sdk::auth::provider as auth_provider;
-
 #[derive(Debug)]
 pub struct Login {
     user_id: ft_sdk::auth::UserId,
@@ -44,10 +42,11 @@ impl Login {
 
 fn validate(conn: &mut ft_sdk::Connection, payload: LoginPayload) -> Result<Login, ft_sdk::Error> {
     let (user_id, user_data) = if payload.username.contains('@') {
-        match auth_provider::user_data_by_email(conn, auth::PROVIDER_ID, &payload.username) {
+        match ft_sdk::auth::provider::user_data_by_email(conn, auth::PROVIDER_ID, &payload.username)
+        {
             Ok(v) => v,
             Err(ft_sdk::auth::UserDataError::NoDataFound) => {
-                match auth_provider::user_data_by_verified_email(
+                match ft_sdk::auth::provider::user_data_by_verified_email(
                     conn,
                     auth::PROVIDER_ID,
                     &payload.username,
@@ -67,7 +66,7 @@ fn validate(conn: &mut ft_sdk::Connection, payload: LoginPayload) -> Result<Logi
             Err(e) => return Err(e.into()),
         }
     } else {
-        auth_provider::user_data_by_identity(conn, auth::PROVIDER_ID, &payload.username)?
+        ft_sdk::auth::provider::user_data_by_identity(conn, auth::PROVIDER_ID, &payload.username)?
     };
 
     if !Login::match_password(&user_data, &payload.password)? {
@@ -95,7 +94,7 @@ pub fn login(
 ) -> ft_sdk::form::Result {
     let login_meta = validate(&mut conn, payload)?;
 
-    let ft_sdk::auth::SessionID(sid) = auth_provider::login(
+    let ft_sdk::auth::SessionID(sid) = ft_sdk::auth::provider::login(
         &mut conn,
         &login_meta.user_id,
         sid.map(ft_sdk::auth::SessionID),

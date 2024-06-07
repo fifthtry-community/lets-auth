@@ -1,6 +1,3 @@
-use ft_sdk::auth::fastn_user;
-use ft_sdk::auth::provider as auth_provider;
-
 struct CreateAccount {
     email: String,
     #[cfg(feature = "username")]
@@ -55,7 +52,7 @@ fn validate(
     use diesel::prelude::*;
 
     #[derive(diesel::QueryableByName)]
-    #[diesel(table_name = fastn_user)]
+    #[diesel(table_name = ft_sdk::auth::fastn_user)]
     struct Identity {
         identity: Option<String>,
         id: i64,
@@ -125,7 +122,7 @@ pub fn create_account(
 
     let uid = match account_meta.user_id.clone() {
         Some(uid) => {
-            auth_provider::update_user(
+            ft_sdk::auth::provider::update_user(
                 &mut conn,
                 auth::PROVIDER_ID,
                 &uid,
@@ -134,7 +131,7 @@ pub fn create_account(
             )?;
             uid
         }
-        None => auth_provider::create_user(
+        None => ft_sdk::auth::provider::create_user(
             &mut conn,
             auth::PROVIDER_ID,
             account_meta.to_provider_data(),
@@ -142,7 +139,7 @@ pub fn create_account(
     };
 
     let ft_sdk::auth::SessionID(sid) =
-        auth_provider::login(&mut conn, &uid, sid.map(ft_sdk::auth::SessionID))?;
+        ft_sdk::auth::provider::login(&mut conn, &uid, sid.map(ft_sdk::auth::SessionID))?;
 
     ft_sdk::println!("Create User done for sid {sid}");
 
@@ -261,9 +258,9 @@ fn validate_identity(
 ) -> Result<(), ft_sdk::Error> {
     use diesel::prelude::*;
 
-    if fastn_user::table
+    if ft_sdk::auth::fastn_user::table
         .select(diesel::dsl::count_star())
-        .filter(fastn_user::identity.eq(identity))
+        .filter(ft_sdk::auth::fastn_user::identity.eq(identity))
         .get_result::<i64>(conn)?
         > 0
     {
