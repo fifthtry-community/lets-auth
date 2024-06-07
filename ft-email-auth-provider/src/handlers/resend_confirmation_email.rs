@@ -36,15 +36,13 @@ pub fn resend_confirmation_email(
 
 /// Generate a new confirmation key for a given email and update the user table
 pub fn generate_new_confirmation_key(
-    data: ft_sdk::auth::ProviderData,
+    mut data: ft_sdk::auth::ProviderData,
     user_id: &ft_sdk::auth::UserId,
     email: &str,
     host: &ft_sdk::Host,
     mountpoint: &ft_sdk::Mountpoint,
     conn: &mut ft_sdk::Connection,
 ) -> Result<String, ft_sdk::Error> {
-    let mut data = data;
-
     let key = generate_key(64);
 
     let conf_link = confirmation_link(&key, &email, &host, &mountpoint);
