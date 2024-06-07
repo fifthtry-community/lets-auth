@@ -11,6 +11,11 @@ struct CreateAccount {
 
 impl CreateAccount {
     fn to_provider_data(&self) -> ft_sdk::auth::ProviderData {
+        let email_sent_at_in_nanos = self
+            .email_confirmation_sent_at
+            .timestamp_nanos_opt()
+            .expect("unexpected out of range datetime");
+
         ft_sdk::auth::ProviderData {
             #[cfg(feature = "username")]
             identity: self.username.to_string(),
@@ -26,7 +31,7 @@ impl CreateAccount {
             profile_picture: None,
             custom: serde_json::json!({
                 "hashed_password": self.hashed_password,
-                auth::EMAIL_CONF_SENT_AT: self.email_confirmation_sent_at,
+                auth::EMAIL_CONF_SENT_AT: email_sent_at_in_nanos,
                 auth::EMAIL_CONF_CODE_KEY: self.email_confirmation_code,
             }),
         }

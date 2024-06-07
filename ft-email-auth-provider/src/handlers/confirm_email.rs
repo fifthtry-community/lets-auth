@@ -23,10 +23,9 @@ pub fn confirm_email(
         .expect("custom is a json object")
         .get(auth::EMAIL_CONF_SENT_AT)
         .expect("email_conf_sent_at should exists if the account was found")
-        .as_str()
-        .expect("value must be a datetime string")
-        .parse::<chrono::DateTime<chrono::Utc>>()
-        .expect("chrono parse must work");
+        .as_i64()
+        .expect("value must be an i64 datetime in nanoseconds");
+    let sent_at = chrono::DateTime::from_timestamp_nanos(sent_at);
 
     if key_expired(sent_at) {
         let conf_link = auth::handlers::resend_confirmation_email::generate_new_confirmation_key(
