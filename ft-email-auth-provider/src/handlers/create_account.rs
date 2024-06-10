@@ -1,7 +1,3 @@
-use ft_sdk::auth::fastn_user;
-use ft_sdk::auth::provider as auth_provider;
-use validator::ValidateEmail;
-
 struct CreateAccount {
     email: String,
     #[cfg(feature = "username")]
@@ -16,6 +12,11 @@ struct CreateAccount {
 
 impl CreateAccount {
     fn to_provider_data(&self) -> ft_sdk::auth::ProviderData {
+        let email_sent_at_in_nanos = self
+            .email_confirmation_sent_at
+            .timestamp_nanos_opt()
+            .expect("unexpected out of range datetime");
+
         let mut res = ft_sdk::auth::ProviderData {
             #[cfg(feature = "username")]
             identity: self.username.to_string(),
@@ -37,7 +38,7 @@ impl CreateAccount {
         if !self.pre_verified {
             res.custom = serde_json::json!({
                 "hashed_password": self.hashed_password,
-                crate::EMAIL_CONF_SENT_AT: self.email_confirmation_sent_at,
+                crate::EMAIL_CONF_SENT_AT: email_sent_at_in_nanos,
                 crate::EMAIL_CONF_CODE_KEY: self.email_confirmation_code,
             });
             res.verified_emails = vec![];
@@ -63,7 +64,7 @@ fn validate(
     use diesel::prelude::*;
 
     #[derive(diesel::QueryableByName)]
-    #[diesel(table_name = fastn_user)]
+    #[diesel(table_name = ft_sdk::auth::fastn_user)]
     struct Identity {
         identity: Option<String>,
         id: i64,
@@ -88,8 +89,7 @@ fn validate(
     {
         Ok(identity) => {
             if identity.identity.is_some() {
-                // this should never happen as the imported user should not have identity
-                return Err(ft_sdk::single_error("email", "email already exists").into());
+                return Err(ft_sdk::single_error("email", "Email already exists.").into());
             }
             Some(ft_sdk::auth::UserId(identity.id))
         }
@@ -142,7 +142,7 @@ pub fn create_account(
 
     let uid = match account_meta.user_id.clone() {
         Some(uid) => {
-            auth_provider::update_user(
+            ft_sdk::auth::provider::update_user(
                 &mut conn,
                 auth::PROVIDER_ID,
                 &uid,
@@ -151,7 +151,7 @@ pub fn create_account(
             )?;
             uid
         }
-        None => auth_provider::create_user(
+        None => ft_sdk::auth::provider::create_user(
             &mut conn,
             auth::PROVIDER_ID,
             account_meta.to_provider_data(),
@@ -159,7 +159,7 @@ pub fn create_account(
     };
 
     let ft_sdk::auth::SessionID(sid) =
-        auth_provider::login(&mut conn, &uid, sid.map(ft_sdk::auth::SessionID))?;
+        ft_sdk::auth::provider::login(&mut conn, &uid, sid.map(ft_sdk::auth::SessionID))?;
 
     ft_sdk::println!("Create User done for sid {sid}");
 
@@ -217,27 +217,25 @@ impl CreateAccountPayload {
         conn: &mut ft_sdk::Connection,
         errors: &mut std::collections::HashMap<String, String>,
     ) -> Result<(), ft_sdk::Error> {
-        if !CreateAccountPayload::validate_email(&self.email) {
-            errors.insert("email".to_string(), "invalid email format".to_string());
+        if !validator::ValidateEmail::validate_email(&self.email) {
+            errors.insert("email".to_string(), "Invalid email format.".to_string());
         }
 
         if self.password != self.password2 {
             errors.insert(
                 "password2".to_string(),
-                "password and confirm password field do not match".to_string(),
+                "Password and Confirm password field do not match.".to_string(),
             );
         }
 
-        if let Some(message) =
-            CreateAccountPayload::is_strong_password(&self.password, &self.email, &self.name)
-        {
+        if let Some(message) = self.is_strong_password() {
             errors.insert("password".to_string(), message);
         }
 
         if !self.accept_terms {
             errors.insert(
                 "accept_terms".to_string(),
-                "you must accept the terms and conditions".to_string(),
+                "You must accept the terms and conditions.".to_string(),
             );
         }
 
@@ -268,17 +266,13 @@ impl CreateAccountPayload {
         .to_string()
     }
 
-    pub(crate) fn is_strong_password(password: &str, _email: &str, _name: &str) -> Option<String> {
+    pub(crate) fn is_strong_password(&self) -> Option<String> {
         // TODO: better password validation
-        if password.len() < 4 {
+        if self.password.len() < 4 {
             return Some("password is too short".to_string());
         }
 
         None
-    }
-
-    pub(crate) fn validate_email(email: &str) -> bool {
-        email.validate_email()
     }
 }
 
@@ -290,13 +284,13 @@ fn validate_identity(
 ) -> Result<(), ft_sdk::Error> {
     use diesel::prelude::*;
 
-    if fastn_user::table
+    if ft_sdk::auth::fastn_user::table
         .select(diesel::dsl::count_star())
-        .filter(fastn_user::identity.eq(identity))
+        .filter(ft_sdk::auth::fastn_user::identity.eq(identity))
         .get_result::<i64>(conn)?
         > 0
     {
-        errors.insert(field.to_string(), "username already exists".to_string());
+        errors.insert(field.to_string(), "Username already exists.".to_string());
     }
 
     Ok(())
@@ -327,7 +321,7 @@ fn validate_verified_email(
     .count
         > 0
     {
-        errors.insert("email".to_string(), "email already exists".to_string());
+        errors.insert("email".to_string(), "Email already exists.".to_string());
     }
 
     Ok(())
