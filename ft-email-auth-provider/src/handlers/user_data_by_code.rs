@@ -25,7 +25,7 @@ fn user_data_by_code(
             WHERE
                 EXISTS (
                     SELECT 1
-                    FROM json_each ( data -> 'subscription' -> 'subscription' -> 'confirmation-code')
+                    FROM json_each ( data -> 'subscription' -> 'confirmation-code')
                     WHERE value = $1
                 )
         "#,
