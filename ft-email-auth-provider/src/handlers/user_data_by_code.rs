@@ -35,7 +35,7 @@ fn user_data_by_code(
     {
         Ok(ud) => ud.data,
         Err(diesel::result::Error::NotFound) => {
-            return Err(ft_sdk::single_error("email", "").into());
+            return Err(ft_sdk::single_error("code", "No user found with this code.").into());
         }
         Err(e) => return Err(e.into()),
     };
