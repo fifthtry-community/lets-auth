@@ -21,7 +21,7 @@ impl CreateAccount {
             #[cfg(feature = "username")]
             identity: self.username.to_string(),
             #[cfg(not(feature = "username"))]
-            identity: Some(self.email.to_string()),
+            identity: self.email.to_string(),
             #[cfg(feature = "username")]
             username: Some(self.username.to_string()),
             #[cfg(not(feature = "username"))]
@@ -138,7 +138,7 @@ pub fn create_account(
     mountpoint: ft_sdk::Mountpoint,
 ) -> ft_sdk::form::Result {
     let account_meta = validate(payload, &mut conn, &code)?;
-    ft_sdk::println!("Account meta done for {}", account_meta.username);
+    ft_sdk::println!("Account meta done for {}", account_meta.name);
 
     let uid = match account_meta.user_id.clone() {
         Some(uid) => {
