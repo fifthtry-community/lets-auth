@@ -346,7 +346,6 @@ pub fn generate_key(length: usize) -> String {
     ft_sdk::Rng::generate_key(length)
 }
 
-/// TODO: get mount point of this wasm
 pub fn confirmation_link(
     key: &str,
     email: &str,
