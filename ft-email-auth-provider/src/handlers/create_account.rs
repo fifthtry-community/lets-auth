@@ -94,7 +94,7 @@ struct CreateAccount {
     user_id: Option<ft_sdk::UserId>,
     email_confirmation_sent_at: chrono::DateTime<chrono::Utc>,
     /// do not send a confirmation email or set a confirmation key in db if the user is
-    /// `pre_verified`
+    /// `pre_verified`. This can be set by apps like subscription app.
     pre_verified: bool,
 }
 
