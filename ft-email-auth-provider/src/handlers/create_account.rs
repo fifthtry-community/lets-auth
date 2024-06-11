@@ -1,3 +1,89 @@
+/// Create account handler, this is available on /create-account/ route
+///
+/// If a user does not exist for the given username and email, we create it.
+///
+/// It can happen that a user exists for the given email, but has no identity
+/// (identity is empty string). This can happen if you have imported email
+/// subscribers to the user table.
+///
+/// When importing, make sure that only unverified email is added in the
+/// email provider data, nothing else. E.g. `data -> 'email'` should only
+/// contain `{ "emails": ["email@being-imported.com"] }`, all other
+/// subscriber data, e.g. if there is double opt-in, or the `name` of user,
+/// `tags` for the user should be stored in any other `data` key (`data -> 'subscriptions')
+#[ft_sdk::form]
+pub fn create_account(
+    mut conn: ft_sdk::Connection,
+    ft_sdk::Form(payload): ft_sdk::Form<CreateAccountPayload>,
+    ft_sdk::Cookie(sid): ft_sdk::Cookie<{ ft_sdk::auth::SESSION_KEY }>,
+    // code can be invalid. eg: xyz
+    ft_sdk::Query(code): ft_sdk::Query<"code">,
+    host: ft_sdk::Host,
+    mountpoint: ft_sdk::Mountpoint,
+) -> ft_sdk::form::Result {
+    let account_meta = validate(payload, &mut conn, &code)?;
+    ft_sdk::println!("Account meta done for {}", account_meta.name);
+
+    let uid = match account_meta.user_id.clone() {
+        Some(uid) => {
+            ft_sdk::auth::provider::update_user(
+                &mut conn,
+                auth::PROVIDER_ID,
+                &uid,
+                account_meta.to_provider_data(),
+                true,
+            )?;
+            uid
+        }
+        None => ft_sdk::auth::provider::create_user(
+            &mut conn,
+            auth::PROVIDER_ID,
+            account_meta.to_provider_data(),
+        )?,
+    };
+
+    let ft_sdk::auth::SessionID(sid) =
+        ft_sdk::auth::provider::login(&mut conn, &uid, sid.map(ft_sdk::auth::SessionID))?;
+
+    ft_sdk::println!("Create User done for sid {sid}");
+
+    if account_meta.pre_verified {
+        return Ok(
+            ft_sdk::form::redirect("/")?.with_cookie(auth::session_cookie(sid.as_str(), host)?)
+        );
+    }
+
+    let conf_link = confirmation_link(
+        &account_meta.email_confirmation_code,
+        &account_meta.email,
+        &host,
+        &mountpoint,
+    );
+    ft_sdk::println!("Confirmation link added {conf_link}");
+
+    let (from_name, from_email) = email_from_address_from_env();
+    ft_sdk::println!("Found email sender: {from_name}, {from_email}");
+
+    if let Err(e) = ft_sdk::send_email(
+        &mut conn,
+        (&from_name, &from_email),
+        vec![(&account_meta.name, &account_meta.email)],
+        "Confirm you account",
+        &confirm_account_html_template(&account_meta.name, &conf_link),
+        &confirm_account_text_template(&account_meta.name, &conf_link),
+        None,
+        None,
+        None,
+        "auth_confirm_account_request",
+    ) {
+        ft_sdk::println!("auth.wasm: failed to queue email: {:?}", e);
+        return Err(e.into());
+    }
+    ft_sdk::println!("Email added to the queue");
+
+    Ok(ft_sdk::form::redirect("/")?.with_cookie(auth::session_cookie(sid.as_str(), host)?))
+}
+
 struct CreateAccount {
     email: String,
     #[cfg(feature = "username")]
@@ -115,92 +201,6 @@ fn validate(
         email_confirmation_code: generate_key(64),
         email_confirmation_sent_at: ft_sdk::env::now(),
     })
-}
-
-/// Create account handler, this is available on /create-account/ route
-///
-/// If a user does not exist for the given username and email, we create it.
-///
-/// It can happen that a user exists for the given email, but has no identity
-/// (identity is empty string). This can happen if you have imported email
-/// subscribers to the user table.
-///
-/// When importing, make sure that only unverified email is added in the
-/// email provider data, nothing else. E.g. `data -> 'email'` should only
-/// contain `{ "emails": ["email@being-imported.com"] }`, all other
-/// subscriber data, e.g. if there is double opt-in, or the `name` of user,
-/// `tags` for the user should be stored in any other `data` key (`data -> 'subscriptions')
-#[ft_sdk::form]
-pub fn create_account(
-    mut conn: ft_sdk::Connection,
-    ft_sdk::Form(payload): ft_sdk::Form<CreateAccountPayload>,
-    ft_sdk::Cookie(sid): ft_sdk::Cookie<{ ft_sdk::auth::SESSION_KEY }>,
-    // code can be invaild. eg: xyz
-    ft_sdk::Query(code): ft_sdk::Query<"code">,
-    host: ft_sdk::Host,
-    mountpoint: ft_sdk::Mountpoint,
-) -> ft_sdk::form::Result {
-    let account_meta = validate(payload, &mut conn, &code)?;
-    ft_sdk::println!("Account meta done for {}", account_meta.name);
-
-    let uid = match account_meta.user_id.clone() {
-        Some(uid) => {
-            ft_sdk::auth::provider::update_user(
-                &mut conn,
-                auth::PROVIDER_ID,
-                &uid,
-                account_meta.to_provider_data(),
-                true,
-            )?;
-            uid
-        }
-        None => ft_sdk::auth::provider::create_user(
-            &mut conn,
-            auth::PROVIDER_ID,
-            account_meta.to_provider_data(),
-        )?,
-    };
-
-    let ft_sdk::auth::SessionID(sid) =
-        ft_sdk::auth::provider::login(&mut conn, &uid, sid.map(ft_sdk::auth::SessionID))?;
-
-    ft_sdk::println!("Create User done for sid {sid}");
-
-    if account_meta.pre_verified {
-        return Ok(
-            ft_sdk::form::redirect("/")?.with_cookie(auth::session_cookie(sid.as_str(), host)?)
-        );
-    }
-
-    let conf_link = confirmation_link(
-        &account_meta.email_confirmation_code,
-        &account_meta.email,
-        &host,
-        &mountpoint,
-    );
-    ft_sdk::println!("Confirmation link added {conf_link}");
-
-    let (from_name, from_email) = email_from_address_from_env();
-    ft_sdk::println!("Found email sender: {from_name}, {from_email}");
-
-    if let Err(e) = ft_sdk::send_email(
-        &mut conn,
-        (&from_name, &from_email),
-        vec![(&account_meta.name, &account_meta.email)],
-        "Confirm you account",
-        &confirm_account_html_template(&account_meta.name, &conf_link),
-        &confirm_account_text_template(&account_meta.name, &conf_link),
-        None,
-        None,
-        None,
-        "auth_confirm_account_request",
-    ) {
-        ft_sdk::println!("auth.wasm: failed to queue email: {:?}", e);
-        return Err(e.into());
-    }
-    ft_sdk::println!("Email added to the queue");
-
-    Ok(ft_sdk::form::redirect("/")?.with_cookie(auth::session_cookie(sid.as_str(), host)?))
 }
 
 #[derive(serde::Deserialize)]
