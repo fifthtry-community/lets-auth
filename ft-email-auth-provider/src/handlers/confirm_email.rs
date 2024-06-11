@@ -1,11 +1,12 @@
-#[ft_sdk::form]
+#[ft_sdk::processor]
 pub fn confirm_email(
     mut conn: ft_sdk::Connection,
     ft_sdk::Query(code): ft_sdk::Query<"code">,
     ft_sdk::Query(email): ft_sdk::Query<"email">,
+    ft_sdk::Query(next): ft_sdk::Query<"email", Option<String>>,
     host: ft_sdk::Host,
     mountpoint: ft_sdk::Mountpoint,
-) -> ft_sdk::form::Result {
+) -> ft_sdk::processor::Result {
     if !validator::ValidateEmail::validate_email(&email) {
         return Err(ft_sdk::single_error("email", "Invalid email format.").into());
     }
@@ -70,7 +71,8 @@ pub fn confirm_email(
 
     ft_sdk::auth::provider::update_user(&mut conn, auth::PROVIDER_ID, &user_id, data, false)?;
 
-    ft_sdk::form::redirect("/")
+    let next = next.unwrap_or_else(|| "/".to_string());
+    ft_sdk::processor::temporary_redirect(next)
 }
 
 /// check if it has been 90 days since the verification code was sent. The threshold can be
