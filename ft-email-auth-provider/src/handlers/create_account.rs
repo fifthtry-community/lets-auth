@@ -7,6 +7,8 @@ struct CreateAccount {
     email_confirmation_code: String,
     user_id: Option<ft_sdk::UserId>,
     email_confirmation_sent_at: chrono::DateTime<chrono::Utc>,
+    /// do not send a confirmation email or set a confirmation key in db if the user is
+    /// `pre_verified`
     pre_verified: bool,
 }
 
@@ -71,6 +73,7 @@ fn validate(
     }
 
     // check if the code is associated with a subscriber that is creating an account
+    // if we find a user_id, it means the user is pre_verified
     let user_id = match diesel::sql_query(
         r#"
             SELECT
