@@ -17,7 +17,7 @@ pub fn create_account(
     ft_sdk::Form(payload): ft_sdk::Form<CreateAccountPayload>,
     ft_sdk::Cookie(sid): ft_sdk::Cookie<{ ft_sdk::auth::SESSION_KEY }>,
     // code can be invalid. eg: xyz
-    ft_sdk::Query(code): ft_sdk::Query<"code">,
+    ft_sdk::Query(code): ft_sdk::Query<"code", Option<String>>,
     host: ft_sdk::Host,
     mountpoint: ft_sdk::Mountpoint,
 ) -> ft_sdk::form::Result {
@@ -139,7 +139,7 @@ impl CreateAccount {
 fn validate(
     payload: CreateAccountPayload,
     conn: &mut ft_sdk::Connection,
-    code: &str,
+    code: &Option<String>,
 ) -> Result<CreateAccount, ft_sdk::Error> {
     let mut errors = std::collections::HashMap::new();
 
@@ -160,8 +160,9 @@ fn validate(
 
     // check if the code is associated with a subscriber that is creating an account
     // if we find a user_id, it means the user is pre_verified
-    let user_id = match diesel::sql_query(
-        r#"
+    let user_id = match code {
+        Some(code) => match diesel::sql_query(
+            r#"
             SELECT
                 id, identity
             FROM fastn_user
@@ -172,20 +173,22 @@ fn validate(
                     WHERE value = $1
                 )
         "#,
-    )
-    .bind::<diesel::sql_types::Text, _>(code)
-    .get_result::<Identity>(conn)
-    {
-        Ok(identity) => {
-            if identity.identity.is_some() {
-                return Err(ft_sdk::single_error("email", "Email already exists.").into());
+        )
+            .bind::<diesel::sql_types::Text, _>(code)
+            .get_result::<Identity>(conn)
+        {
+            Ok(identity) => {
+                if identity.identity.is_some() {
+                    return Err(ft_sdk::single_error("email", "Email already exists.").into());
+                }
+                Some(ft_sdk::auth::UserId(identity.id))
             }
-            Some(ft_sdk::auth::UserId(identity.id))
-        }
-        Err(diesel::result::Error::NotFound) => None,
-        Err(e) => {
+            Err(diesel::result::Error::NotFound) => None,
+            Err(e) => {
                 return Err(e.into());
+            }
         }
+        None => None
     };
 
     let pre_verified = user_id.is_some();
