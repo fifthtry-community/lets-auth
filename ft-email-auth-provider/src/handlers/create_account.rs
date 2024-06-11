@@ -1,106 +1,3 @@
-struct CreateAccount {
-    email: String,
-    #[cfg(feature = "username")]
-    username: String,
-    name: String,
-    hashed_password: String,
-    email_confirmation_code: String,
-    user_id: Option<ft_sdk::UserId>,
-    email_confirmation_sent_at: chrono::DateTime<chrono::Utc>,
-}
-
-impl CreateAccount {
-    fn to_provider_data(&self) -> ft_sdk::auth::ProviderData {
-        let email_sent_at_in_nanos = self
-            .email_confirmation_sent_at
-            .timestamp_nanos_opt()
-            .expect("unexpected out of range datetime");
-
-        ft_sdk::auth::ProviderData {
-            #[cfg(feature = "username")]
-            identity: self.username.to_string(),
-            #[cfg(not(feature = "username"))]
-            identity: self.email.to_string(),
-            #[cfg(feature = "username")]
-            username: Some(self.username.to_string()),
-            #[cfg(not(feature = "username"))]
-            username: None,
-            name: Some(self.name.to_string()),
-            emails: vec![self.email.clone()],
-            verified_emails: vec![],
-            profile_picture: None,
-            custom: serde_json::json!({
-                "hashed_password": self.hashed_password,
-                auth::EMAIL_CONF_SENT_AT: email_sent_at_in_nanos,
-                auth::EMAIL_CONF_CODE_KEY: self.email_confirmation_code,
-            }),
-        }
-    }
-}
-
-fn validate(
-    payload: CreateAccountPayload,
-    conn: &mut ft_sdk::Connection,
-) -> Result<CreateAccount, ft_sdk::Error> {
-    let mut errors = std::collections::HashMap::new();
-
-    payload.validate(conn, &mut errors)?;
-
-    if !errors.is_empty() {
-        return Err(ft_sdk::SpecialError::Multi(errors).into());
-    }
-
-    // Check if the email is already present in `data -> 'email' -> 'emails'` then
-    // check if identity is already created which means user has already an account with the email.
-    // If identity is not created this means email is stored because of subscription or other apps.
-
-    use diesel::prelude::*;
-
-    #[derive(diesel::QueryableByName)]
-    #[diesel(table_name = ft_sdk::auth::fastn_user)]
-    struct Identity {
-        identity: Option<String>,
-        id: i64,
-    }
-
-    let user_id = match diesel::sql_query(
-        r#"
-            SELECT
-                id, identity
-            FROM fastn_user
-            WHERE
-                EXISTS (
-                    SELECT 1
-                    FROM json_each ( data -> 'email' -> 'emails' )
-                    WHERE value = $1
-                )
-        "#,
-    )
-    .bind::<diesel::sql_types::Text, _>(&payload.email)
-    .get_result::<Identity>(conn)
-    {
-        Ok(identity) => {
-            if identity.identity.is_some() {
-                return Err(ft_sdk::single_error("email", "Email already exists.").into());
-            }
-            Some(ft_sdk::auth::UserId(identity.id))
-        }
-        Err(diesel::result::Error::NotFound) => None,
-        Err(e) => return Err(e.into()),
-    };
-
-    Ok(CreateAccount {
-        user_id,
-        hashed_password: payload.hashed_password(),
-        email: payload.email,
-        name: payload.name,
-        #[cfg(feature = "username")]
-        username: payload.username,
-        email_confirmation_code: generate_key(64),
-        email_confirmation_sent_at: ft_sdk::env::now(),
-    })
-}
-
 /// Create account handler, this is available on /create-account/ route
 ///
 /// If a user does not exist for the given username and email, we create it.
@@ -119,11 +16,13 @@ pub fn create_account(
     mut conn: ft_sdk::Connection,
     ft_sdk::Form(payload): ft_sdk::Form<CreateAccountPayload>,
     ft_sdk::Cookie(sid): ft_sdk::Cookie<{ ft_sdk::auth::SESSION_KEY }>,
+    // code can be invalid. eg: xyz
+    ft_sdk::Query(code): ft_sdk::Query<"code", Option<String>>,
     host: ft_sdk::Host,
     mountpoint: ft_sdk::Mountpoint,
 ) -> ft_sdk::form::Result {
-    let account_meta = validate(payload, &mut conn)?;
-    ft_sdk::println!("Account meta done for {}", account_meta.username);
+    let account_meta = validate(payload, &mut conn, &code)?;
+    ft_sdk::println!("Account meta done for {}", account_meta.name);
 
     let uid = match account_meta.user_id.clone() {
         Some(uid) => {
@@ -147,6 +46,12 @@ pub fn create_account(
         ft_sdk::auth::provider::login(&mut conn, &uid, sid.map(ft_sdk::auth::SessionID))?;
 
     ft_sdk::println!("Create User done for sid {sid}");
+
+    if account_meta.pre_verified {
+        return Ok(
+            ft_sdk::form::redirect("/")?.with_cookie(auth::session_cookie(sid.as_str(), host)?)
+        );
+    }
 
     let conf_link = confirmation_link(
         &account_meta.email_confirmation_code,
@@ -179,15 +84,137 @@ pub fn create_account(
     Ok(ft_sdk::form::redirect("/")?.with_cookie(auth::session_cookie(sid.as_str(), host)?))
 }
 
-#[derive(serde::Deserialize)]
-struct CreateAccountPayload {
+struct CreateAccount {
     email: String,
     #[cfg(feature = "username")]
     username: String,
     name: String,
-    password: String,
-    password2: String,
-    accept_terms: bool,
+    hashed_password: String,
+    email_confirmation_code: String,
+    user_id: Option<ft_sdk::UserId>,
+    email_confirmation_sent_at: chrono::DateTime<chrono::Utc>,
+    /// do not send a confirmation email or set a confirmation key in db if the user is
+    /// `pre_verified`. This can be set by apps like subscription app.
+    pre_verified: bool,
+}
+
+impl CreateAccount {
+    fn to_provider_data(&self) -> ft_sdk::auth::ProviderData {
+        let email_sent_at_in_nanos = self
+            .email_confirmation_sent_at
+            .timestamp_nanos_opt()
+            .expect("unexpected out of range datetime");
+
+        let mut res = ft_sdk::auth::ProviderData {
+            #[cfg(feature = "username")]
+            identity: self.username.to_string(),
+            #[cfg(not(feature = "username"))]
+            identity: self.email.to_string(),
+            #[cfg(feature = "username")]
+            username: Some(self.username.to_string()),
+            #[cfg(not(feature = "username"))]
+            username: None,
+            name: Some(self.name.to_string()),
+            emails: vec![self.email.clone()],
+            verified_emails: vec![self.email.clone()],
+            profile_picture: None,
+            custom: serde_json::json!({
+                "hashed_password": self.hashed_password,
+            }),
+        };
+
+        if !self.pre_verified {
+            res.custom = serde_json::json!({
+                "hashed_password": self.hashed_password,
+                crate::EMAIL_CONF_SENT_AT: email_sent_at_in_nanos,
+                crate::EMAIL_CONF_CODE_KEY: self.email_confirmation_code,
+            });
+            res.verified_emails = vec![];
+        }
+
+        res
+    }
+}
+
+fn validate(
+    payload: CreateAccountPayload,
+    conn: &mut ft_sdk::Connection,
+    code: &Option<String>,
+) -> Result<CreateAccount, ft_sdk::Error> {
+    let mut errors = std::collections::HashMap::new();
+
+    payload.validate(conn, &mut errors)?;
+
+    if !errors.is_empty() {
+        return Err(ft_sdk::SpecialError::Multi(errors).into());
+    }
+
+    use diesel::prelude::*;
+
+    #[derive(diesel::QueryableByName)]
+    #[diesel(table_name = ft_sdk::auth::fastn_user)]
+    struct Identity {
+        identity: Option<String>,
+        id: i64,
+    }
+
+    // check if the code is associated with a subscriber that is creating an account
+    // if we find a user_id, it means the user is pre_verified
+    let user_id = match code {
+        Some(code) => match diesel::sql_query(
+            r#"
+            SELECT
+                id, identity
+            FROM fastn_user
+            WHERE
+                EXISTS (
+                    SELECT 1
+                    FROM json_each ( data -> 'subscription' -> 'confirmation-code')
+                    WHERE value = $1
+                )
+        "#,
+        )
+            .bind::<diesel::sql_types::Text, _>(code)
+            .get_result::<Identity>(conn)
+        {
+            Ok(identity) => {
+                if identity.identity.is_some() {
+                    return Err(ft_sdk::single_error("email", "Email already exists.").into());
+                }
+                Some(ft_sdk::auth::UserId(identity.id))
+            }
+            Err(diesel::result::Error::NotFound) => None,
+            Err(e) => {
+                return Err(e.into());
+            }
+        }
+        None => None
+    };
+
+    let pre_verified = user_id.is_some();
+
+    Ok(CreateAccount {
+        pre_verified,
+        user_id,
+        hashed_password: payload.hashed_password(),
+        email: payload.email,
+        name: payload.name,
+        #[cfg(feature = "username")]
+        username: payload.username,
+        email_confirmation_code: generate_key(64),
+        email_confirmation_sent_at: ft_sdk::env::now(),
+    })
+}
+
+#[derive(serde::Deserialize)]
+pub struct CreateAccountPayload {
+    pub(crate) email: String,
+    #[cfg(feature = "username")]
+    pub(crate) username: String,
+    pub(crate) name: String,
+    pub(crate) password: String,
+    pub(crate) password2: String,
+    pub(crate) accept_terms: bool,
 }
 
 impl CreateAccountPayload {
