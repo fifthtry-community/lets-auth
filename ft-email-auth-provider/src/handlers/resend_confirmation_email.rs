@@ -41,7 +41,7 @@ pub fn generate_new_confirmation_key(
     let key = auth::handlers::create_account::generate_key(64);
 
     let conf_link =
-        auth::handlers::create_account::confirmation_link(&key, &email, &host, &mountpoint);
+        auth::handlers::create_account::confirmation_link(&key, email, host, mountpoint);
 
     ft_sdk::println!("Confirmation link added {conf_link}");
 
@@ -57,7 +57,7 @@ pub fn generate_new_confirmation_key(
         serde_json::Value::String(ft_sdk::env::now().to_rfc3339()),
     );
 
-    ft_sdk::auth::provider::update_user(conn, auth::PROVIDER_ID, &user_id, data.clone(), false)?;
+    ft_sdk::auth::provider::update_user(conn, auth::PROVIDER_ID, user_id, data.clone(), false)?;
 
     Ok(conf_link)
 }
@@ -75,10 +75,10 @@ pub fn send_confirmation_email(
     if let Err(e) = ft_sdk::send_email(
         conn,
         (&from_name, &from_email),
-        vec![(&name, &email)],
+        vec![(name, email)],
         "Confirm you account",
-        &auth::handlers::create_account::confirm_account_html_template(&name, &conf_link),
-        &auth::handlers::create_account::confirm_account_text_template(&name, &conf_link),
+        &auth::handlers::create_account::confirm_account_html_template(name, conf_link),
+        &auth::handlers::create_account::confirm_account_text_template(name, conf_link),
         None,
         None,
         None,
