@@ -158,9 +158,10 @@ fn validate(
         id: i64,
     }
 
-    let (q, o, pre_verified) = match code {
+    let (query_result, pre_verified) = match code {
         Some(code) => (
-            r#"
+            diesel::sql_query(
+                r#"
             SELECT
                 id, identity
             FROM fastn_user
@@ -170,12 +171,22 @@ fn validate(
                     FROM json_each ( data -> 'subscription' -> 'confirmation-code')
                     WHERE value = $1
                 )
+                AND
+                EXISTS (
+                    SELECT 1
+                    FROM json_each ( data -> 'email' -> 'emails')
+                    WHERE value = $2
+                )
             "#,
-            code,
+            )
+            .bind::<diesel::sql_types::Text, _>(code)
+            .bind::<diesel::sql_types::Text, _>(&payload.email)
+            .get_result::<Identity>(conn),
             true,
         ),
         None => (
-            r#"
+            diesel::sql_query(
+                r#"
             SELECT
                 id, identity
             FROM fastn_user
@@ -186,17 +197,16 @@ fn validate(
                     WHERE value = $1
                 )
             "#,
-            &payload.email,
+            )
+            .bind::<diesel::sql_types::Text, _>(&payload.email)
+            .get_result::<Identity>(conn),
             false,
         ),
     };
 
     // check if the code is associated with a subscriber that is creating an account
     // if we find a user_id, it means the user is pre_verified
-    let (user_id, pre_verified) = match diesel::sql_query(q)
-        .bind::<diesel::sql_types::Text, _>(o)
-        .get_result::<Identity>(conn)
-    {
+    let (user_id, pre_verified) = match query_result {
         Ok(identity) => {
             if identity.identity.is_some() {
                 return Err(ft_sdk::single_error("email", "Email already exists.").into());
