@@ -8,9 +8,9 @@ description = "Email auth provider"
 crate-type = ["cdylib"]
 
 [features]
-default = ["username"]
+default = ["username", "ft-sdk/sqlite-default"]
 username = []
-
+test = ["diesel/sqlite", "diesel/postgres", "ft-sdk/test"]
 
 [dependencies]
 serde = {  version = "1", features = ["derive"] }
@@ -27,5 +27,6 @@ cookie = "0.18"
 
 [dependencies.ft-sdk]
 version = "0.1.11"
-#path = "../../ft-sdk/ft-sdk"
-features = ["sqlite-default", "auth-provider", "field-extractors"]
+path = "../../ft-sdk/ft-sdk"
+default-features = false
+features = ["auth-provider", "field-extractors"]

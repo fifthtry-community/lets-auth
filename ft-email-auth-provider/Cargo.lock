@@ -178,7 +178,10 @@ dependencies = [
  "chrono",
  "diesel_derives",
  "itoa",
+ "libsqlite3-sys",
+ "pq-sys",
  "serde_json",
+ "time",
 ]
 
 [[package]]
@@ -231,8 +234,6 @@ dependencies = [
 [[package]]
 name = "ft-derive"
 version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bfc24346b72c3679550da38039e01517e5ada5c96ce12b1af9fb2e37934d4fdb"
 dependencies = [
  "quote",
  "syn 1.0.109",
@@ -241,8 +242,6 @@ dependencies = [
 [[package]]
 name = "ft-sdk"
 version = "0.1.11"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ef789a86acbb7a565bc9ce9e7aac504cbb9425133b263497698049e042801cc2"
 dependencies = [
  "anyhow",
  "bytes",
@@ -264,8 +263,6 @@ dependencies = [
 [[package]]
 name = "ft-sys"
 version = "0.1.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5ead1d7ecd7cef261e45beae1852f541e435911f1bd79b471a836dd387cdb755"
 dependencies = [
  "bytes",
  "chrono",
@@ -281,8 +278,6 @@ dependencies = [
 [[package]]
 name = "ft-sys-shared"
 version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "17b6e98f0cddfaef0a84ea01d30089744a25e73fad0428a0d7dfdf3f8b17a05d"
 dependencies = [
  "bytes",
  "chrono",
@@ -403,6 +398,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97b3888a4aecf77e811145cadf6eef5901f4782c53886191b2f693f24761847c"
 
 [[package]]
+name = "libsqlite3-sys"
+version = "0.28.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0c10584274047cb335c23d3e61bcef8e323adae7c5c8c760540f73610177fc3f"
+dependencies = [
+ "pkg-config",
+ "vcpkg",
+]
+
+[[package]]
 name = "log"
 version = "0.4.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -453,10 +458,25 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e3148f5046208a5d56bcfc03053e3ca6334e51da8dfb19b6cdc8b306fae3283e"
 
 [[package]]
+name = "pkg-config"
+version = "0.3.30"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d231b230927b5e4ad203db57bbcbee2802f6bce620b1e4a9024a07d94e2907ec"
+
+[[package]]
 name = "powerfmt"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "439ee305def115ba05938db6eb1644ff94165c5ab5e9420d1c1bcedbba909391"
+
+[[package]]
+name = "pq-sys"
+version = "0.4.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "31c0052426df997c0cbd30789eb44ca097e3541717a7b8fa36b1c464ee7edebd"
+dependencies = [
+ "vcpkg",
+]
 
 [[package]]
 name = "proc-macro2"
@@ -712,6 +732,12 @@ dependencies = [
  "serde_json",
  "url",
 ]
+
+[[package]]
+name = "vcpkg"
+version = "0.2.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "accd4ea62f7bb7a82fe23066fb0957d48ef677f6eeb8215f372f52e48bb32426"
 
 [[package]]
 name = "version_check"

@@ -2,6 +2,8 @@ extern crate self as auth;
 
 mod handlers;
 mod urls;
+#[cfg(test)]
+mod test;
 
 pub const PROVIDER_ID: &str = "email";
 pub const SUBSCRIPTION_PROVIDER_ID: &str = "subscription";
