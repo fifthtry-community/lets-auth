@@ -3,7 +3,7 @@ pub fn confirm_email(
     mut conn: ft_sdk::Connection,
     ft_sdk::Query(code): ft_sdk::Query<"code">,
     ft_sdk::Query(email): ft_sdk::Query<"email">,
-    ft_sdk::Query(next): ft_sdk::Query<"email", Option<String>>,
+    ft_sdk::Query(next): ft_sdk::Query<"next", Option<String>>,
     host: ft_sdk::Host,
     mountpoint: ft_sdk::Mountpoint,
 ) -> ft_sdk::processor::Result {
@@ -11,12 +11,21 @@ pub fn confirm_email(
         return Err(ft_sdk::single_error("email", "Invalid email format.").into());
     }
 
-    let (user_id, data) = ft_sdk::auth::provider::user_data_by_custom_attribute(
+    let next = next.unwrap_or_else(|| "/".to_string());
+    let (user_id, data) = match ft_sdk::auth::provider::user_data_by_custom_attribute(
         &mut conn,
         auth::PROVIDER_ID,
         auth::EMAIL_CONF_CODE_KEY,
         &code,
-    )?;
+    ) {
+        Ok(value) => value,
+        Err(ft_sdk::auth::UserDataError::NoDataFound) => return ft_sdk::processor::temporary_redirect(next),
+        Err(e) => return Err(e.into())
+    };
+
+    if data.verified_emails.contains(&email) {
+        return ft_sdk::processor::temporary_redirect(next);
+    }
 
     let sent_at = data
         .custom
@@ -70,8 +79,6 @@ pub fn confirm_email(
     };
 
     ft_sdk::auth::provider::update_user(&mut conn, auth::PROVIDER_ID, &user_id, data, false)?;
-
-    let next = next.unwrap_or_else(|| "/".to_string());
     ft_sdk::processor::temporary_redirect(next)
 }
 
