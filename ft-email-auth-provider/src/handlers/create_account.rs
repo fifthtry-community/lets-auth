@@ -158,10 +158,8 @@ fn validate(
         id: i64,
     }
 
-    // check if the code is associated with a subscriber that is creating an account
-    // if we find a user_id, it means the user is pre_verified
-    let user_id = match code {
-        Some(code) => match diesel::sql_query(
+    let (q, o, pre_verified) = match code {
+        Some(code) => (
             r#"
             SELECT
                 id, identity
@@ -172,26 +170,44 @@ fn validate(
                     FROM json_each ( data -> 'subscription' -> 'confirmation-code')
                     WHERE value = $1
                 )
-        "#,
-        )
-            .bind::<diesel::sql_types::Text, _>(code)
-            .get_result::<Identity>(conn)
-        {
-            Ok(identity) => {
-                if identity.identity.is_some() {
-                    return Err(ft_sdk::single_error("email", "Email already exists.").into());
-                }
-                Some(ft_sdk::auth::UserId(identity.id))
-            }
-            Err(diesel::result::Error::NotFound) => None,
-            Err(e) => {
-                return Err(e.into());
-            }
-        }
-        None => None
+            "#,
+            code,
+            true,
+        ),
+        None => (
+            r#"
+            SELECT
+                id, identity
+            FROM fastn_user
+            WHERE
+                EXISTS (
+                    SELECT 1
+                    FROM json_each ( data -> 'email' -> 'emails')
+                    WHERE value = $1
+                )
+            "#,
+            &payload.email,
+            false,
+        ),
     };
 
-    let pre_verified = user_id.is_some();
+    // check if the code is associated with a subscriber that is creating an account
+    // if we find a user_id, it means the user is pre_verified
+    let (user_id, pre_verified) = match diesel::sql_query(q)
+        .bind::<diesel::sql_types::Text, _>(o)
+        .get_result::<Identity>(conn)
+    {
+        Ok(identity) => {
+            if identity.identity.is_some() {
+                return Err(ft_sdk::single_error("email", "Email already exists.").into());
+            }
+            (Some(ft_sdk::auth::UserId(identity.id)), pre_verified)
+        }
+        Err(diesel::result::Error::NotFound) => (None, false),
+        Err(e) => {
+            return Err(e.into());
+        }
+    };
 
     Ok(CreateAccount {
         pre_verified,

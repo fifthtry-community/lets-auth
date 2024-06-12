@@ -19,8 +19,10 @@ pub fn confirm_email(
         &code,
     ) {
         Ok(value) => value,
-        Err(ft_sdk::auth::UserDataError::NoDataFound) => return ft_sdk::processor::temporary_redirect(next),
-        Err(e) => return Err(e.into())
+        Err(ft_sdk::auth::UserDataError::NoDataFound) => {
+            return ft_sdk::processor::temporary_redirect(next)
+        }
+        Err(e) => return Err(e.into()),
     };
 
     if data.verified_emails.contains(&email) {
