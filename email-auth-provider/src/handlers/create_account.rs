@@ -28,7 +28,7 @@ pub fn create_account(
         Some(uid) => {
             ft_sdk::auth::provider::update_user(
                 &mut conn,
-                auth::PROVIDER_ID,
+                email_auth::PROVIDER_ID,
                 &uid,
                 account_meta.to_provider_data(),
                 true,
@@ -37,7 +37,7 @@ pub fn create_account(
         }
         None => ft_sdk::auth::provider::create_user(
             &mut conn,
-            auth::PROVIDER_ID,
+            email_auth::PROVIDER_ID,
             account_meta.to_provider_data(),
         )?,
     };
@@ -49,7 +49,7 @@ pub fn create_account(
 
     if account_meta.pre_verified {
         return Ok(
-            ft_sdk::form::redirect("/")?.with_cookie(auth::session_cookie(sid.as_str(), host)?)
+            ft_sdk::form::redirect("/")?.with_cookie(common::session_cookie(sid.as_str(), host)?)
         );
     }
 
@@ -81,7 +81,7 @@ pub fn create_account(
     }
     ft_sdk::println!("Email added to the queue");
 
-    Ok(ft_sdk::form::redirect("/")?.with_cookie(auth::session_cookie(sid.as_str(), host)?))
+    Ok(ft_sdk::form::redirect("/")?.with_cookie(common::session_cookie(sid.as_str(), host)?))
 }
 
 struct CreateAccount {
@@ -126,8 +126,8 @@ impl CreateAccount {
         if !self.pre_verified {
             res.custom = serde_json::json!({
                 "hashed_password": self.hashed_password,
-                crate::EMAIL_CONF_SENT_AT: email_sent_at_in_nanos,
-                crate::EMAIL_CONF_CODE_KEY: self.email_confirmation_code,
+                email_auth::EMAIL_CONF_SENT_AT: email_sent_at_in_nanos,
+                email_auth::EMAIL_CONF_CODE_KEY: self.email_confirmation_code,
             });
             res.verified_emails = vec![];
         }
@@ -273,12 +273,12 @@ impl CreateAccountPayload {
 
         #[cfg(feature = "username")]
         {
-            validate_identity("username", &self.username, conn, errors)?;
+            common::validate_identity("username", &self.username, conn, errors)?;
         }
 
         #[cfg(not(feature = "username"))]
         {
-            validate_identity("email", &self.email, conn, errors)?;
+            common::validate_identity("email", &self.email, conn, errors)?;
         }
 
         validate_verified_email(&self.email, conn, errors)?;
@@ -306,26 +306,6 @@ impl CreateAccountPayload {
 
         None
     }
-}
-
-fn validate_identity(
-    field: &str,
-    identity: &str,
-    conn: &mut ft_sdk::Connection,
-    errors: &mut std::collections::HashMap<String, String>,
-) -> Result<(), ft_sdk::Error> {
-    use diesel::prelude::*;
-
-    if ft_sdk::auth::fastn_user::table
-        .select(diesel::dsl::count_star())
-        .filter(ft_sdk::auth::fastn_user::identity.eq(identity))
-        .get_result::<i64>(conn)?
-        > 0
-    {
-        errors.insert(field.to_string(), "Username already exists.".to_string());
-    }
-
-    Ok(())
 }
 
 fn validate_verified_email(
@@ -407,7 +387,7 @@ pub fn confirmation_link(
 ) -> String {
     format!(
         "https://{host}{mountpoint}{confirm_email_route}?code={key}&email={email}",
-        confirm_email_route = auth::urls::Route::ConfirmEmail,
+        confirm_email_route = email_auth::urls::Route::ConfirmEmail,
         mountpoint = mountpoint.trim_end_matches('/'),
     )
 }

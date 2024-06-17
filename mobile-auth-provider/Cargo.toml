@@ -1,9 +1,8 @@
 [package]
-name = "email_auth_provider"
+name = "mobile_auth_provider"
 version = "0.1.0"
 edition.workspace = true
-authors.workspace = true
-description = "Email auth provider"
+description = "Mobile auth provider"
 
 [lib]
 crate-type = ["cdylib"]
@@ -25,4 +24,5 @@ chrono.workspace = true
 validator.workspace = true
 cookie.workspace = true
 ft-sdk.workspace = true
+regex.workspace = true
 common.workspace = true

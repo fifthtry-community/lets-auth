@@ -42,13 +42,13 @@ impl Login {
 
 fn validate(conn: &mut ft_sdk::Connection, payload: LoginPayload) -> Result<Login, ft_sdk::Error> {
     let (user_id, user_data) = if payload.username.contains('@') {
-        match ft_sdk::auth::provider::user_data_by_email(conn, auth::PROVIDER_ID, &payload.username)
+        match ft_sdk::auth::provider::user_data_by_email(conn, email_auth::PROVIDER_ID, &payload.username)
         {
             Ok(v) => v,
             Err(ft_sdk::auth::UserDataError::NoDataFound) => {
                 match ft_sdk::auth::provider::user_data_by_verified_email(
                     conn,
-                    auth::PROVIDER_ID,
+                    email_auth::PROVIDER_ID,
                     &payload.username,
                 ) {
                     Ok(v) => v,
@@ -66,7 +66,7 @@ fn validate(conn: &mut ft_sdk::Connection, payload: LoginPayload) -> Result<Logi
             Err(e) => return Err(e.into()),
         }
     } else {
-        ft_sdk::auth::provider::user_data_by_identity(conn, auth::PROVIDER_ID, &payload.username)?
+        ft_sdk::auth::provider::user_data_by_identity(conn, email_auth::PROVIDER_ID, &payload.username)?
     };
 
     if !Login::match_password(&user_data, &payload.password)? {
@@ -100,5 +100,5 @@ pub fn login(
         sid.map(ft_sdk::auth::SessionID),
     )?;
 
-    Ok(ft_sdk::form::redirect("/")?.with_cookie(auth::session_cookie(sid.as_str(), host)?))
+    Ok(ft_sdk::form::redirect("/")?.with_cookie(common::session_cookie(sid.as_str(), host)?))
 }

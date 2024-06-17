@@ -1,5 +1,5 @@
 [workspace]
-members = ["email-auth-provider"]
+members = [ "common","email-auth-provider", "mobile-auth-provider"]
 resolver = "2"
 
 
@@ -28,3 +28,5 @@ validator = "0.18"
 cookie = "0.18"
 #ft-sdk = { version = "0.1.11", path = "../../ft-sdk/ft-sdk", features = ["sqlite-default", "auth-provider", "field-extractors"] }
 ft-sdk = { version = "0.1.11", features = ["sqlite-default", "auth-provider", "field-extractors"] }
+regex = "1"
+common = { path = "common" }

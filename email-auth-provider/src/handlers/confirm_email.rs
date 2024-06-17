@@ -14,8 +14,8 @@ pub fn confirm_email(
     let next = next.unwrap_or_else(|| "/".to_string());
     let (user_id, data) = match ft_sdk::auth::provider::user_data_by_custom_attribute(
         &mut conn,
-        auth::PROVIDER_ID,
-        auth::EMAIL_CONF_CODE_KEY,
+        email_auth::PROVIDER_ID,
+        email_auth::EMAIL_CONF_CODE_KEY,
         &code,
     ) {
         Ok(value) => value,
@@ -33,14 +33,14 @@ pub fn confirm_email(
         .custom
         .as_object()
         .expect("custom is a json object")
-        .get(auth::EMAIL_CONF_SENT_AT)
+        .get(email_auth::EMAIL_CONF_SENT_AT)
         .expect("email_conf_sent_at should exists if the account was found")
         .as_i64()
         .expect("value must be an i64 datetime in nanoseconds");
     let sent_at = chrono::DateTime::from_timestamp_nanos(sent_at);
 
     if key_expired(sent_at) {
-        let conf_link = auth::handlers::resend_confirmation_email::generate_new_confirmation_key(
+        let conf_link = email_auth::handlers::resend_confirmation_email::generate_new_confirmation_key(
             data.clone(),
             &user_id,
             &email,
@@ -51,7 +51,7 @@ pub fn confirm_email(
 
         let name = data.name.unwrap_or_else(|| "User".to_string());
 
-        auth::handlers::resend_confirmation_email::send_confirmation_email(
+        email_auth::handlers::resend_confirmation_email::send_confirmation_email(
             &mut conn, &email, &name, &conf_link,
         )?;
 
@@ -75,12 +75,12 @@ pub fn confirm_email(
         data.custom
             .as_object_mut()
             .expect("custom is a json object")
-            .remove(auth::EMAIL_CONF_CODE_KEY);
+            .remove(email_auth::EMAIL_CONF_CODE_KEY);
 
         data
     };
 
-    ft_sdk::auth::provider::update_user(&mut conn, auth::PROVIDER_ID, &user_id, data, false)?;
+    ft_sdk::auth::provider::update_user(&mut conn, email_auth::PROVIDER_ID, &user_id, data, false)?;
     ft_sdk::processor::temporary_redirect(next)
 }
 
