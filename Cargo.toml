@@ -1,0 +1,30 @@
+[workspace]
+members = ["ft-email-auth-provider"]
+resolver = "2"
+
+
+[profile.release]
+lto = true
+opt-level = 's'
+
+[workspace.package]
+authors = [
+    "Amit Upadhyay <upadhyay@gmail.com>",
+    "Arpita Jaiswal <arpita@fifthtry.com>",
+    "Siddhant Kumar <siddhant@fifthtry.com>",
+]
+edition = "2021"
+
+[workspace.dependencies]
+serde = {  version = "1", features = ["derive"] }
+serde_json = "1"
+http = "1"
+bytes = "1"
+diesel = { version = ">=2, <2.2", default-features = false, features = ["chrono"] }
+thiserror = "1"
+argon2 = "0.5"
+chrono = { version = "0.4", default-features = false, features = ["serde"] }
+validator = "0.18"
+cookie = "0.18"
+#ft-sdk = { version = "0.1.11", path = "../../ft-sdk/ft-sdk", features = ["sqlite-default", "auth-provider", "field-extractors"] }
+ft-sdk = { version = "0.1.11", features = ["sqlite-default", "auth-provider", "field-extractors"] }
