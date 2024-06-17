@@ -1,5 +1,5 @@
 [package]
-name = "ft_email_auth_provider"
+name = "email_auth_provider"
 version = "0.1.0"
 edition.workspace = true
 description = "Email auth provider"

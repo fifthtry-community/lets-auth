@@ -225,6 +225,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "email_auth_provider"
+version = "0.1.0"
+dependencies = [
+ "argon2",
+ "bytes",
+ "chrono",
+ "cookie",
+ "diesel",
+ "ft-sdk",
+ "http",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "validator",
+]
+
+[[package]]
 name = "fnv"
 version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -300,23 +317,6 @@ dependencies = [
  "http",
  "serde",
  "thiserror",
-]
-
-[[package]]
-name = "ft_email_auth_provider"
-version = "0.1.0"
-dependencies = [
- "argon2",
- "bytes",
- "chrono",
- "cookie",
- "diesel",
- "ft-sdk",
- "http",
- "serde",
- "serde_json",
- "thiserror",
- "validator",
 ]
 
 [[package]]

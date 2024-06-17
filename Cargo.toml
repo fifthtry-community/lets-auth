@@ -1,5 +1,5 @@
 [workspace]
-members = ["ft-email-auth-provider"]
+members = ["email-auth-provider"]
 resolver = "2"
 
 

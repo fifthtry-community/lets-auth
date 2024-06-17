@@ -16,16 +16,16 @@ function popd2() {
 
 
 function build-email-wasm() {
-    pushd2 "${PROJ_ROOT}/ft-email-auth-provider" || return 1
+    pushd2 "${PROJ_ROOT}/email-auth-provider" || return 1
     # cargo clean
     cargo build --target wasm32-unknown-unknown --release || return 1
-    cp ./target/wasm32-unknown-unknown/release/ft_email_auth_provider.wasm . || return 1
+    cp ../target/wasm32-unknown-unknown/release/email_auth_provider.wasm . || return 1
     popd2
 }
 
 function dotcom() {
   build-email-wasm || return 1
   pushd2 "${PROJ_ROOT}" || return 1
-  cp ./ft-email-auth-provider/ft_email_auth_provider.wasm ../dotcom/frontend/email_auth.wasm || return 1
+  cp ./email-auth-provider/email_auth_provider.wasm ../dotcom/frontend/email_auth.wasm || return 1
   popd2
 }
