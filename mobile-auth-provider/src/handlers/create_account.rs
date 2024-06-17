@@ -1,5 +1,3 @@
-use diesel::RunQueryDsl;
-
 #[ft_sdk::form]
 pub fn create_account(
     mut conn: ft_sdk::Connection,
@@ -44,7 +42,7 @@ struct CreateAccount {
 
 impl CreateAccount {
     fn to_provider_data(&self) -> ft_sdk::auth::ProviderData {
-        let mut res = ft_sdk::auth::ProviderData {
+        ft_sdk::auth::ProviderData {
             identity: self.username.to_string(),
             username: Some(self.username.to_string()),
             name: None,
@@ -52,10 +50,9 @@ impl CreateAccount {
             verified_emails: vec![],
             profile_picture: None,
             custom: serde_json::json!({
-                "mobile_numbers": vec![self.mobile_number],
+                "mobile_numbers": vec![self.mobile_number.clone()],
             }),
-        };
-        res
+        }
     }
 }
 

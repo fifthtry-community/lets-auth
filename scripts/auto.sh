@@ -14,6 +14,14 @@ function popd2() {
     unset PUSHED
 }
 
+function build-mobile-wasm() {
+    pushd2 "${PROJ_ROOT}/mobile-auth-provider" || return 1
+    # cargo clean
+    cargo build --target wasm32-unknown-unknown --release || return 1
+    cp ../target/wasm32-unknown-unknown/release/mobile_auth_provider.wasm . || return 1
+    popd2
+}
+
 
 function build-email-wasm() {
     pushd2 "${PROJ_ROOT}/email-auth-provider" || return 1
