@@ -26,8 +26,8 @@ pub fn create_account(
         )?,
     };
 
-    let ft_sdk::auth::SessionID(sid) =
-        ft_sdk::auth::provider::login(&mut conn, &uid, sid.map(ft_sdk::auth::SessionID))?;
+    let ft_sdk::SessionID(sid) =
+        ft_sdk::auth::provider::login(&mut conn, &uid, sid.map(ft_sdk::SessionID))?;
 
     ft_sdk::println!("Create User done for sid {sid}");
 

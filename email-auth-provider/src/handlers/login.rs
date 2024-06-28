@@ -94,10 +94,10 @@ pub fn login(
 ) -> ft_sdk::form::Result {
     let login_meta = validate(&mut conn, payload)?;
 
-    let ft_sdk::auth::SessionID(sid) = ft_sdk::auth::provider::login(
+    let ft_sdk::SessionID(sid) = ft_sdk::auth::provider::login(
         &mut conn,
         &login_meta.user_id,
-        sid.map(ft_sdk::auth::SessionID),
+        sid.map(ft_sdk::SessionID),
     )?;
 
     Ok(ft_sdk::form::redirect("/")?.with_cookie(common::session_cookie(sid.as_str(), host)?))
