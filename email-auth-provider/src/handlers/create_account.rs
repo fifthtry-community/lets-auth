@@ -222,7 +222,7 @@ fn validate(
     Ok(CreateAccount {
         pre_verified,
         user_id,
-        hashed_password: payload.hashed_password(),
+        hashed_password: hashed_password(&payload.password),
         email: payload.email,
         name: payload.name,
         #[cfg(feature = "username")]
@@ -260,7 +260,7 @@ impl CreateAccountPayload {
             );
         }
 
-        if let Some(message) = self.is_strong_password() {
+        if let Some(message) = is_strong_password(&self.password) {
             errors.insert("password".to_string(), message);
         }
 
@@ -285,27 +285,23 @@ impl CreateAccountPayload {
 
         Ok(())
     }
+}
 
-    pub(crate) fn hashed_password(&self) -> String {
-        let salt = argon2::password_hash::SaltString::generate(&mut ft_sdk::Rng {});
-        let argon2 = argon2::Argon2::default();
-        argon2::password_hash::PasswordHasher::hash_password(
-            &argon2,
-            self.password.as_bytes(),
-            &salt,
-        )
+pub(crate) fn hashed_password(password: &str) -> String {
+    let salt = argon2::password_hash::SaltString::generate(&mut ft_sdk::Rng {});
+    let argon2 = argon2::Argon2::default();
+    argon2::password_hash::PasswordHasher::hash_password(&argon2, password.as_bytes(), &salt)
         .unwrap()
         .to_string()
+}
+
+pub(crate) fn is_strong_password(password: &str) -> Option<String> {
+    // TODO: better password validation
+    if password.len() < 4 {
+        return Some("password is too short".to_string());
     }
 
-    pub(crate) fn is_strong_password(&self) -> Option<String> {
-        // TODO: better password validation
-        if self.password.len() < 4 {
-            return Some("password is too short".to_string());
-        }
-
-        None
-    }
+    None
 }
 
 fn validate_verified_email(

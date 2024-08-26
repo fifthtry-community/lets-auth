@@ -180,7 +180,7 @@ pub fn reset_link(
     ft_sdk::Mountpoint(mountpoint): &ft_sdk::Mountpoint,
 ) -> String {
     format!(
-        "https://{host}{mountpoint}{set_password_route}?code={key}&email={email}",
+        "https://{host}{mountpoint}{set_password_route}?code={key}&email={email}?spr={set_password_route}",
         mountpoint = mountpoint.trim_end_matches('/'),
     )
 }

@@ -30,7 +30,7 @@ pub fn confirm_email(
     }
 
     let sent_at = data
-        .get_custom::<i64>(email_auth::EMAIL_CONF_SENT_AT)
+        .get_custom(email_auth::EMAIL_CONF_SENT_AT)
         .expect("email_conf_sent_at should exists if the account was found");
 
     let sent_at = chrono::DateTime::from_timestamp_nanos(sent_at);
