@@ -30,13 +30,9 @@ pub fn confirm_email(
     }
 
     let sent_at = data
-        .custom
-        .as_object()
-        .expect("custom is a json object")
-        .get(email_auth::EMAIL_CONF_SENT_AT)
-        .expect("email_conf_sent_at should exists if the account was found")
-        .as_i64()
-        .expect("value must be an i64 datetime in nanoseconds");
+        .get_custom::<i64>(email_auth::EMAIL_CONF_SENT_AT)
+        .expect("email_conf_sent_at should exists if the account was found");
+
     let sent_at = chrono::DateTime::from_timestamp_nanos(sent_at);
 
     if key_expired(sent_at) {
@@ -49,7 +45,7 @@ pub fn confirm_email(
             &mut conn,
         )?;
 
-        let name = data.name.unwrap_or_else(|| "User".to_string());
+        let name = data.name.unwrap_or_else(|| email.clone());
 
         email_auth::handlers::resend_confirmation_email::send_confirmation_email(
             &mut conn, &email, &name, &conf_link,
