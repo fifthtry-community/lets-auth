@@ -41,48 +41,17 @@ impl Login {
 }
 
 fn validate(conn: &mut ft_sdk::Connection, payload: LoginPayload) -> Result<Login, ft_sdk::Error> {
-    let (user_id, user_data) = if payload.username.contains('@') {
-        match ft_sdk::auth::provider::user_data_by_email(
-            conn,
-            email_auth::PROVIDER_ID,
-            &payload.username,
-        ) {
+    let (user_id, user_data) =
+        match email_auth::utils::user_data_from_email_or_username(conn, payload.username) {
             Ok(v) => v,
             Err(ft_sdk::auth::UserDataError::NoDataFound) => {
-                match ft_sdk::auth::provider::user_data_by_verified_email(
-                    conn,
-                    email_auth::PROVIDER_ID,
-                    &payload.username,
-                ) {
-                    Ok(v) => v,
-                    Err(ft_sdk::auth::UserDataError::NoDataFound) => {
-                        ft_sdk::println!("username not found");
-                        return Err(ft_sdk::single_error(
-                            "username",
-                            "Incorrect username/password.",
-                        )
-                        .into());
-                    }
-                    Err(e) => return Err(e.into()),
-                }
-            }
-            Err(e) => return Err(e.into()),
-        }
-    } else {
-        match ft_sdk::auth::provider::user_data_by_identity(
-            conn,
-            email_auth::PROVIDER_ID,
-            &payload.username,
-        ) {
-            Ok(v) => v,
-            Err(ft_sdk::auth::UserDataError::NoDataFound) => {
+                ft_sdk::println!("username not found");
                 return Err(
                     ft_sdk::single_error("username", "Incorrect username/password.").into(),
                 );
             }
             Err(e) => return Err(e.into()),
-        }
-    };
+        };
 
     if !Login::match_password(&user_data, &payload.password)? {
         // we intentionally send the error against username to avoid leaking the fact that the
