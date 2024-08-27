@@ -176,5 +176,5 @@ pub fn reset_link(
 ) -> String {
     assert!(set_password_route.starts_with('/'));
     assert!(set_password_route.ends_with('/'));
-    format!("https://{host}{set_password_route}?code={key}&email={email}?spr={set_password_route}",)
+    format!("https://{host}{set_password_route}?code={key}&email={email}&spr={set_password_route}",)
 }
