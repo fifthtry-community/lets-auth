@@ -26,10 +26,6 @@ pub fn set_password(
         Err(e) => return Err(e.into()),
     };
 
-    if data.verified_emails.contains(&email) {
-        return ft_sdk::processor::temporary_redirect(next);
-    }
-
     let sent_at = data
         .get_custom(email_auth::PASSWORD_RESET_CODE_SENT_AT)
         .expect("PASSWORD_RESET_CODE_SENT_AT should exists if the account was found");
