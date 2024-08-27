@@ -5,22 +5,14 @@ pub fn forgot_password(
     ft_sdk::Optional(set_password_route): ft_sdk::Optional<"set-password-route">,
     ft_sdk::Optional(next): ft_sdk::Optional<"next">,
     host: ft_sdk::Host,
-    mountpoint: ft_sdk::Mountpoint,
 ) -> ft_sdk::form::Result {
     let (user_id, email, data) = get_user_data(&mut conn, username_or_email)?;
     let user_name = data.name.clone().unwrap_or_else(|| email.clone());
 
     let set_password_route = set_password_route.unwrap_or_else(|| "/set-password/".to_string());
 
-    let reset_link = generate_new_reset_key(
-        data,
-        &user_id,
-        &email,
-        set_password_route,
-        &host,
-        &mountpoint,
-        &mut conn,
-    )?;
+    let reset_link =
+        generate_new_reset_key(data, &user_id, &email, set_password_route, &host, &mut conn)?;
 
     send_reset_password_email(&mut conn, &email, &user_name, &reset_link)?;
 
@@ -39,7 +31,7 @@ fn get_user_data(
     if username_or_email.contains('@')
         && !validator::ValidateEmail::validate_email(&username_or_email)
     {
-        return Err(ft_sdk::single_error("username-or-email", "Incorrect email format.").into());
+        return Err(ft_sdk::single_error("username", "Incorrect email format.").into());
     }
 
     let (id, ud) =
@@ -76,12 +68,11 @@ pub fn generate_new_reset_key(
     email: &str,
     set_password_route: String,
     host: &ft_sdk::Host,
-    mountpoint: &ft_sdk::Mountpoint,
     conn: &mut ft_sdk::Connection,
 ) -> Result<String, ft_sdk::Error> {
     let key = ft_sdk::Rng::generate_key(64);
 
-    let reset_link = reset_link(&key, email, set_password_route, host, mountpoint);
+    let reset_link = reset_link(&key, email, set_password_route, host);
 
     ft_sdk::println!("Password reset link added {reset_link}");
 
@@ -182,10 +173,8 @@ pub fn reset_link(
     email: &str,
     set_password_route: String,
     ft_sdk::Host(host): &ft_sdk::Host,
-    ft_sdk::Mountpoint(mountpoint): &ft_sdk::Mountpoint,
 ) -> String {
-    format!(
-        "https://{host}{mountpoint}{set_password_route}?code={key}&email={email}?spr={set_password_route}",
-        mountpoint = mountpoint.trim_end_matches('/'),
-    )
+    assert!(set_password_route.starts_with('/'));
+    assert!(set_password_route.ends_with('/'));
+    format!("https://{host}{set_password_route}?code={key}&email={email}?spr={set_password_route}",)
 }

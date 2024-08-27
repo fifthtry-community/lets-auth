@@ -8,7 +8,6 @@ pub fn set_password(
     ft_sdk::Query(email): ft_sdk::Query<"email">,
     ft_sdk::Query(next): ft_sdk::Query<"next", Option<String>>,
     host: ft_sdk::Host,
-    mountpoint: ft_sdk::Mountpoint,
 ) -> ft_sdk::processor::Result {
     validate_email_and_password(&email, &new_password, &new_password2)?;
 
@@ -43,7 +42,6 @@ pub fn set_password(
             &email,
             spr,
             &host,
-            &mountpoint,
             &mut conn,
         )?;
 
