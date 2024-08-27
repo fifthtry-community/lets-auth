@@ -47,7 +47,7 @@ fn get_user_data(
             Ok(v) => v,
             Err(ft_sdk::auth::UserDataError::NoDataFound) => {
                 return Err(ft_sdk::single_error(
-                    "username-or-email",
+                    "username",
                     "No account is linked with the provided email",
                 )
                 .into());
@@ -59,7 +59,7 @@ fn get_user_data(
         Some(e) => e,
         None => {
             return Err(ft_sdk::single_error(
-                "username-or-email",
+                "username",
                 "No email found for the given user. Password reset email can't be sent.",
             )
             .into())
