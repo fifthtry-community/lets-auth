@@ -83,9 +83,13 @@ pub fn generate_new_reset_key(
         serde_json::Value::String(key),
     );
 
+    let now = ft_sdk::env::now()
+        .timestamp_nanos_opt()
+        .expect("unexpected out of range datetime");
+
     data.custom.as_object_mut().unwrap().insert(
         email_auth::PASSWORD_RESET_CODE_SENT_AT.to_string(),
-        serde_json::Value::String(ft_sdk::env::now().to_rfc3339()),
+        serde_json::Value::Number(now.into()),
     );
 
     ft_sdk::auth::provider::update_user(
