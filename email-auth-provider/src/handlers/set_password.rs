@@ -1,4 +1,4 @@
-#[ft_sdk::processor]
+#[ft_sdk::form]
 pub fn set_password(
     mut conn: ft_sdk::Connection,
     ft_sdk::Required(new_password): ft_sdk::Required<"new-password">,
@@ -8,7 +8,7 @@ pub fn set_password(
     ft_sdk::Query(email): ft_sdk::Query<"email">,
     ft_sdk::Query(next): ft_sdk::Query<"next", Option<String>>,
     host: ft_sdk::Host,
-) -> ft_sdk::processor::Result {
+) -> ft_sdk::form::Result {
     validate_email_and_password(&email, &new_password, &new_password2)?;
 
     let next = next.unwrap_or_else(|| "/".to_string());
@@ -20,9 +20,7 @@ pub fn set_password(
         &code,
     ) {
         Ok(value) => value,
-        Err(ft_sdk::auth::UserDataError::NoDataFound) => {
-            return ft_sdk::processor::temporary_redirect(next)
-        }
+        Err(ft_sdk::auth::UserDataError::NoDataFound) => return ft_sdk::form::redirect(next),
         Err(e) => return Err(e.into()),
     };
 
@@ -79,7 +77,7 @@ pub fn set_password(
     };
 
     ft_sdk::auth::provider::update_user(&mut conn, email_auth::PROVIDER_ID, &user_id, data, false)?;
-    ft_sdk::processor::temporary_redirect(next)
+    ft_sdk::form::redirect(next)
 }
 
 /// check if it has been 2 days since the code was sent. The threshold can be
