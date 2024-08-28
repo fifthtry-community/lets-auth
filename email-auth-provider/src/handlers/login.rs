@@ -3,6 +3,21 @@ pub struct Login {
     user_id: ft_sdk::auth::UserId,
 }
 
+#[ft_sdk::form]
+pub fn login(
+    mut conn: ft_sdk::Connection,
+    ft_sdk::Form(payload): ft_sdk::Form<LoginPayload>,
+    ft_sdk::Cookie(sid): ft_sdk::Cookie<{ ft_sdk::auth::SESSION_KEY }>,
+    host: ft_sdk::Host,
+) -> ft_sdk::form::Result {
+    let login_meta = validate(&mut conn, payload)?;
+
+    let ft_sdk::SessionID(sid) =
+        ft_sdk::auth::provider::login(&mut conn, &login_meta.user_id, sid.map(ft_sdk::SessionID))?;
+
+    Ok(ft_sdk::form::redirect("/")?.with_cookie(common::session_cookie(sid.as_str(), host)?))
+}
+
 impl Login {
     /// Check if the password matches the hashed password in the database
     fn match_password(
@@ -42,12 +57,12 @@ impl Login {
 
 fn validate(conn: &mut ft_sdk::Connection, payload: LoginPayload) -> Result<Login, ft_sdk::Error> {
     let (user_id, user_data) =
-        match email_auth::utils::user_data_from_email_or_username(conn, payload.username) {
+        match email_auth::utils::user_data_from_email_or_username(conn, payload.username_or_email) {
             Ok(v) => v,
             Err(ft_sdk::auth::UserDataError::NoDataFound) => {
                 ft_sdk::println!("username not found");
                 return Err(
-                    ft_sdk::single_error("username", "Incorrect username/password.").into(),
+                    ft_sdk::single_error("username-or-email", "Incorrect username/password.").into(),
                 );
             }
             Err(e) => return Err(e.into()),
@@ -57,29 +72,15 @@ fn validate(conn: &mut ft_sdk::Connection, payload: LoginPayload) -> Result<Logi
         // we intentionally send the error against username to avoid leaking the fact that the
         // username exists
         ft_sdk::println!("incorrect password");
-        return Err(ft_sdk::single_error("username", "Incorrect username/password.").into());
+        return Err(ft_sdk::single_error("username-or-email", "Incorrect username/password.").into());
     }
 
     Ok(Login { user_id })
 }
 
 #[derive(serde::Deserialize, Debug)]
+#[serde(rename_all = "kebab-case")]
 struct LoginPayload {
-    username: String,
+    username_or_email: String,
     password: String,
-}
-
-#[ft_sdk::form]
-pub fn login(
-    mut conn: ft_sdk::Connection,
-    ft_sdk::Form(payload): ft_sdk::Form<LoginPayload>,
-    ft_sdk::Cookie(sid): ft_sdk::Cookie<{ ft_sdk::auth::SESSION_KEY }>,
-    host: ft_sdk::Host,
-) -> ft_sdk::form::Result {
-    let login_meta = validate(&mut conn, payload)?;
-
-    let ft_sdk::SessionID(sid) =
-        ft_sdk::auth::provider::login(&mut conn, &login_meta.user_id, sid.map(ft_sdk::SessionID))?;
-
-    Ok(ft_sdk::form::redirect("/")?.with_cookie(common::session_cookie(sid.as_str(), host)?))
 }
