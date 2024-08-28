@@ -1,7 +1,7 @@
 #[ft_sdk::form]
 pub fn forgot_password(
     mut conn: ft_sdk::Connection,
-    ft_sdk::Required(username_or_email): ft_sdk::Required<"username">,
+    ft_sdk::Required(username_or_email): ft_sdk::Required<"username-or-email">,
     ft_sdk::Optional(set_password_route): ft_sdk::Optional<"set-password-route">,
     ft_sdk::Optional(next): ft_sdk::Optional<"next">,
     host: ft_sdk::Host,
@@ -31,7 +31,7 @@ fn get_user_data(
     if username_or_email.contains('@')
         && !validator::ValidateEmail::validate_email(&username_or_email)
     {
-        return Err(ft_sdk::single_error("username", "Incorrect email format.").into());
+        return Err(ft_sdk::single_error("username-or-email", "Incorrect email format.").into());
     }
 
     let (id, ud) =
@@ -39,7 +39,7 @@ fn get_user_data(
             Ok(v) => v,
             Err(ft_sdk::auth::UserDataError::NoDataFound) => {
                 return Err(ft_sdk::single_error(
-                    "username",
+                    "username-or-email",
                     "No account is linked with the provided email",
                 )
                 .into());
@@ -51,7 +51,7 @@ fn get_user_data(
         Some(e) => e,
         None => {
             return Err(ft_sdk::single_error(
-                "username",
+                "username-or-email",
                 "No email found for the given user. Password reset email can't be sent.",
             )
             .into())
