@@ -135,7 +135,7 @@ pub fn send_reset_password_email(
     Ok(())
 }
 
-fn password_reset_request_text_template(name: &str, link: &str) -> String {
+fn password_reset_request_html_template(name: &str, link: &str) -> String {
     format!(
         r#"
             <html>
@@ -156,7 +156,7 @@ fn password_reset_request_text_template(name: &str, link: &str) -> String {
     )
 }
 
-fn password_reset_request_html_template(name: &str, link: &str) -> String {
+fn password_reset_request_text_template(name: &str, link: &str) -> String {
     format!(
         r#"
             Hi {name},
