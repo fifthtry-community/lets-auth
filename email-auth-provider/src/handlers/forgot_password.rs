@@ -17,7 +17,7 @@ pub fn forgot_password(
     send_reset_password_email(&mut conn, &email, &user_name, &reset_link)?;
 
     let next = format!(
-        "{}?email={}",
+        "{}",
         next.unwrap_or_else(|| "/".to_string()),
         email
     );
