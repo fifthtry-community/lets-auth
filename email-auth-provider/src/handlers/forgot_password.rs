@@ -16,11 +16,7 @@ pub fn forgot_password(
 
     send_reset_password_email(&mut conn, &email, &user_name, &reset_link)?;
 
-    let next = format!(
-        "{}",
-        next.unwrap_or_else(|| "/".to_string()),
-        email
-    );
+    let next = format!("{}", next.unwrap_or_else(|| "/".to_string()));
     ft_sdk::form::redirect(next)
 }
 
