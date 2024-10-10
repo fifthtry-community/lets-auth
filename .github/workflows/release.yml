@@ -27,19 +27,33 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: print rustc version
         run: rustc --version
-      - name: cargo build (linux)
+      - name: cargo build wasm
         run: cargo build --release --target wasm32-unknown-unknown
       - name: print file info
         run: |
           file ./target/wasm32-unknown-unknown/release/email_auth_provider.wasm
           file ./target/wasm32-unknown-unknown/release/mobile_auth_provider.wasm
+          ls -lah ./target/wasm32-unknown-unknown/release/email_auth_provider.wasm
+          ls -lah ./target/wasm32-unknown-unknown/release/mobile_auth_provider.wasm
+      - name: Install wasm-opt
+        run: cargo install wasm-opt
+      - name: optimize wasm builds
+        run: |
+          wasm-opt -O3 ./target/wasm32-unknown-unknown/release/email_auth_provider.wasm -o email_auth_provider.wasm
+          wasm-opt -O3 ./target/wasm32-unknown-unknown/release/mobile_auth_provider.wasm -o mobile_auth_provider.wasm
+      - name: print file info after optmization
+        run: |
+          file email_auth_provider.wasm
+          file mobile_auth_provider.warm
+          ls -lah email_auth_provider.wasm
+          ls -lah mobile_auth_provider.wasm
       - name: Update .github/RELEASE_TEMPLATE.md
         run: |
           sed -i "s/GITHUB_SHA/${GITHUB_SHA}/g" .github/RELEASE_TEMPLATE.md
           sed -i "s/DATE/$(date)/g" .github/RELEASE_TEMPLATE.md
       - uses: ncipollo/release-action@v1
         with:
-          artifacts: "./target/wasm32-unknown-unknown/release/email_auth_provider.wasm,./target/wasm32-unknown-unknown/release/mobile_auth_provider.wasm"
+          artifacts: "email_auth_provider.wasm,mobile_auth_provider.wasm"
           generateReleaseNotes: true
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ github.event.inputs.releaseTag }}
