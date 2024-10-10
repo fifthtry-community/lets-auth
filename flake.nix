@@ -5,36 +5,41 @@
 
   outputs = { self, nixpkgs, rust-overlay }:
     let
-      system = "x86_64-linux";
-      overlays = [ (import rust-overlay) ];
-      pkgs = import nixpkgs {
-        inherit system overlays;
-      };
-
-      toolchain = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
+      systems = [ "x86_64-linux" "aarch64-darwin" ];
+      forAllSystems = f:
+        nixpkgs.lib.genAttrs systems
+          (system:
+            f (import nixpkgs {
+              inherit system;
+              overlays = [ (import rust-overlay) ];
+            }));
     in
     {
-      devShells.${system}.default = pkgs.mkShell {
-        name = "ec-shell";
-        nativeBuildInputs = with pkgs; [
-          pkg-config
-          postgresql_14
-          openssl.dev
-        ];
-        buildInputs = with pkgs; [
-          diesel-cli
+      devShells = forAllSystems (pkgs:
+        let
+          toolchain = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
+        in
+        {
+          default = pkgs.mkShell {
+            name = "auth-shell";
+            nativeBuildInputs = with pkgs; [
+            ] ++ lib.optionals stdenv.isDarwin [ darwin.apple_sdk.frameworks.Foundation ];
 
-          toolchain
-          rust-analyzer-unwrapped
-        ];
+            buildInputs = with pkgs; [
+              toolchain
+              rust-analyzer-unwrapped
+              diesel-cli
+            ];
 
-        shellHook = ''
-          source scripts/auto.sh
-        '';
+            shellHook = ''
+              source scripts/auto.sh
+            '';
 
-        RUST_SRC_PATH = "${toolchain}/lib/rustlib/src/rust/library";
-      };
 
-      formatter.${system} = pkgs.nixpkgs-fmt;
+            RUST_SRC_PATH = "${toolchain}/lib/rustlib/src/rust/library";
+          };
+        });
+
+      formatter = forAllSystems (pkgs: pkgs.nixpkgs-fmt);
     };
 }
