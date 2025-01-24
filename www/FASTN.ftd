@@ -1,0 +1,6 @@
+-- import: fastn
+
+-- fastn.package: lets-auth.fifthtry-community.com
+
+-- fastn.dependency: lets-auth-system.fifthtry.site
+provided-via: mysite.com/lets-auth

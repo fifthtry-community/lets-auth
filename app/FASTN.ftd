@@ -1,0 +1,7 @@
+-- import: fastn
+
+-- fastn.package: lets-auth.fifthtry.site
+
+-- fastn.dependency: lets-auth-system.fifthtry.site
+
+-- fastn.auto-import: lets-auth-system.fifthtry.site as lets-auth

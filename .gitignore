@@ -1,4 +1,3 @@
-.packages
 .build
 .DS_Store
 .idea
@@ -7,3 +6,8 @@ target
 
 .direnv
 *.wasm
+
+
+www/.packages
+app/.packages
+app/.packages/lets-auth-system.fifthtry.site/.packages
