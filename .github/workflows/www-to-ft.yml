@@ -1,0 +1,21 @@
+name: Upload www to FifthTry
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - www/**
+      - .github/workflows/www-to-ft.yml
+
+
+jobs:
+  upload-to-fifthtry:
+    runs-on: ubuntu-latest
+    env:
+      FIFTHTRY_SITE_WRITE_TOKEN: ${{ secrets.FT_LETS_AUTH_WWW }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - run: sh -c "$(curl -fsSL https://fastn.com/install.sh)"
+      - name: Build the pages with fastn
+        run: cd www/ && fastn upload lets-auth-www
