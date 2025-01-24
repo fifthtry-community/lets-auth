@@ -1,0 +1,11 @@
+-- import: fastn
+
+-- fastn.package: lets-auth-system.fifthtry.site
+system: lets-auth
+system-is-confidential: false
+
+
+-- fastn.dependency: design-system.fifthtry.site
+
+-- fastn.auto-import: design-system.fifthtry.site as ds
+-- fastn.auto-import: lets-auth-system.fifthtry.site/assets
