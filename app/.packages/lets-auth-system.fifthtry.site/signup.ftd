@@ -1,0 +1,69 @@
+-- import: lets-auth-system.fifthtry.site/actions/create-account
+
+-- component signup-page:
+module action: create-account
+
+-- lets-auth.auth-page: Sign Up
+
+    -- ds.form-field: Name
+    $field: $signup-page.action.name
+    placeholder: Enter your name
+
+    -- ds.form-field: Username
+    $field: $signup-page.action.username
+    placeholder: Pick a username
+
+    -- ds.form-field: Email
+    $field: $signup-page.action.email
+    placeholder: Enter Email
+
+    -- ds.form-field: Password
+    $field: $signup-page.action.password
+    type: password
+    placeholder: Select your password
+
+    -- ds.form-field: Confirm Password
+    $field: $signup-page.action.password2
+    type: password
+    placeholder: Enter password again
+
+
+	;; Accept Terms and Conditions checkbox
+
+	-- ds.column:
+	spacing: $ds.spaces.vertical-gap.extra-extra-small
+	align-content: left
+	inset: $ds.spaces.inset-square.zero
+
+		-- ds.checkbox: I accept Terms and Conditions
+		$is-checked: $signup-page.action.accept_terms.value
+		size: small
+
+		-- ds.copy-small: $signup-page.action.accept_terms.error
+		if: { signup-page.action.accept_terms.error != NULL }
+		color: $ds.colors.error.text
+
+	-- end: ds.column
+
+	-- ds.primary-button: Sign up
+	$on-click$: $signup-page.action.create-account($name = $signup-page.action.name, $email = $signup-page.action.email, $username = $signup-page.action.username, $password = $signup-page.action.password, $password2 = $signup-page.action.password2, $accept_terms = $signup-page.action.accept_terms, $next = $signup-page.action.next)
+	width: full
+	radius: curved
+
+	-- ds.row:
+	spacing: $ds.spaces.horizontal-gap.extra-small
+	inset: $ds.spaces.inset-square.small
+	wrap: true
+
+		-- ds.copy-regular: Already have an account?
+		width: hug-content
+
+		-- ds.link: Log in
+		color: $ds.colors.accent.primary
+		link: $lets-auth.sign-in-url
+
+	-- end: ds.row
+
+-- end: lets-auth.auth-page
+
+-- end: signup-page

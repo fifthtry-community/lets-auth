@@ -23,6 +23,6 @@ $processor$: pr.toc
 
 - Auth Pages:
   - Sign-in Page: /storybook/signin/
-
+  - Sign-up Page: /storybook/signup/
 
 -- optional string $active-file-preview-url: /storybook/signin/
