@@ -24,5 +24,6 @@ $processor$: pr.toc
 - Auth Pages:
   - Sign-in Page: /storybook/signin/
   - Sign-up Page: /storybook/signup/
+  - Set Password Page: /storybook/reset-password/
 
 -- optional string $active-file-preview-url: /storybook/signin/
