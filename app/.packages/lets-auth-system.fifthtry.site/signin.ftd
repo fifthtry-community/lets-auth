@@ -6,59 +6,12 @@ module action: signin
 
 -- lets-auth.auth-page: Sign In
 
-    -- ds.column:
-    spacing: $ds.spaces.vertical-gap.extra-extra-small
-    align-content: left
-    inset: $ds.spaces.inset-square.zero
+    -- ds.form-field: Username or email address
+    $field: $signin-page.action.username-or-email
 
-        -- ds.copy-small: Username or email address
-
-        -- ftd.text-input:
-        placeholder: Enter username or email address
-        type: text
-        $on-input$: $ftd.set-string($a = $signin-page.action.username-or-email.value, v = $VALUE)
-        width: fill-container
-        height.fixed.px: 40
-        border-radius.px: 8
-        background.solid: transparent
-        border-width.px: 1
-        border-color: $inherited.colors.border
-        border-color if { signin-page.action.username-or-email.error != NULL }: $inherited.colors.error.border
-        padding.px: 8
-        color: $inherited.colors.text-strong
-
-        -- ds.copy-small: $signin-page.action.username-or-email.error
-        if: { signin-page.action.username-or-email.error != NULL }
-        color: $ds.colors.error.text
-
-    -- end: ds.column
-
-    -- ds.column:
-    spacing: $ds.spaces.vertical-gap.extra-extra-small
-    align-content: left
-    inset: $ds.spaces.inset-square.zero
-
-        -- ds.copy-small: Password
-
-        -- ftd.text-input:
-        placeholder: Enter password
-        type: password
-        $on-input$: $ftd.set-string($a = $signin-page.action.password.value, v = $VALUE)
-        width: fill-container
-        height.fixed.px: 40
-        border-radius.px: 8
-        background.solid: transparent
-        border-width.px: 1
-        border-color: $inherited.colors.border
-        border-color if { signin-page.action.password.error != NULL }: $inherited.colors.error.border
-        padding.px: 8
-        color: $inherited.colors.text-strong
-
-        -- ds.copy-small: $signin-page.action.password.error
-        if: { signin-page.action.password.error != NULL }
-        color: $ds.colors.error.text
-
-    -- end: ds.column
+    -- ds.form-field: Password
+    $field: $signin-page.action.password
+    type: password
 
     -- ds.primary-button: Login
     $on-click$: $signin-page.action.signin($username_or_email=$signin-page.action.username-or-email, $password=$signin-page.action.password, $next=$signin-page.action.next)
