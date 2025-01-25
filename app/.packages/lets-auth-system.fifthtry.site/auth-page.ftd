@@ -19,7 +19,7 @@ fastn-badge: false
         -- ds.heading-large: $auth-page.title
 
         -- ds.column:
-        width.fixed.px: 600
+        width.fixed.px if { ftd.device == "desktop" }: 600
         border: $ds.borders.uniform.small
         inset: $ds.spaces.inset-square.large
         content: $auth-page.content
