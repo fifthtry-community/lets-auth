@@ -1,4 +1,5 @@
 export PROJ_ROOT=$(pwd)
+FASTN=${FASTN_BINARY:-fastn}
 
 export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
@@ -35,5 +36,22 @@ function dotcom() {
   build-email-wasm || return 1
   pushd2 "${PROJ_ROOT}" || return 1
   cp ./email-auth-provider/email_auth_provider.wasm ../dotcom/frontend/email_auth.wasm || return 1
+  popd2
+}
+
+
+function update-ui() {
+  pushd2 "${PROJ_ROOT}/app/.packages/lets-auth-system.fifthtry.site" || return 1
+  $FASTN serve update
+  popd2
+}
+
+function run-ui() {
+  pushd2 "${PROJ_ROOT}/app/.packages/lets-auth-system.fifthtry.site" || return 1
+
+  echo "Using $FASTN to serve lets-auth-system.fifthtry.site/"
+
+  $FASTN serve --port 8002 --offline
+
   popd2
 }
