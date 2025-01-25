@@ -22,7 +22,7 @@ navigate: storybook
 $processor$: pr.toc
 
 - Auth Pages:
-  - Login Page: /storybook/login/
+  - Sign-in Page: /storybook/signin/
 
 
--- optional string $active-file-preview-url: /storybook/login/
+-- optional string $active-file-preview-url: /storybook/signin/

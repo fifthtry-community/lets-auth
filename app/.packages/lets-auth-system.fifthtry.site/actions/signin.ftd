@@ -11,7 +11,7 @@ js: $assets.files.actions.alert.js
 
 
 
-show_alert
+show_alert(
     "/-/auth/login/",
     username_or_email,
     password,

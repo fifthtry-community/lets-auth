@@ -1,0 +1,112 @@
+-- import: lets-auth-system.fifthtry.site/actions/signin
+
+-- component signin-page:
+caption title: Sign In
+module action: signin
+
+-- ds.page: $ds.title(a = $signin-page.title)
+fastn-badge: false
+margin: $ds.spaces.vertical-gap.zero
+
+	-- ds.section-column:
+	align-content: center
+	spacing: $ds.spaces.vertical-gap.extra-large
+
+        -- ds.heading-large: $signin-page.title
+
+        -- ds.column:
+        width.fixed.px: 600
+        border: $ds.borders.uniform.small
+        inset: $ds.spaces.inset-square.large
+
+            -- ds.column:
+            spacing: $ds.spaces.vertical-gap.extra-extra-small
+            align-content: left
+            inset: $ds.spaces.inset-square.zero
+
+                -- ds.copy-small: Username or email address
+
+                -- ftd.text-input:
+                placeholder: Enter username or email address
+                type: text
+                $on-input$: $ftd.set-string($a = $signin-page.action.username-or-email.value, v = $VALUE)
+                width: fill-container
+                height.fixed.px: 40
+                border-radius.px: 8
+                background.solid: transparent
+                border-width.px: 1
+                border-color: $inherited.colors.border
+                border-color if { signin-page.action.username-or-email.error != NULL }: $inherited.colors.error.border
+                padding.px: 8
+                color: $inherited.colors.text-strong
+
+                -- ds.copy-small: $signin-page.action.username-or-email.error
+                if: { signin-page.action.username-or-email.error != NULL }
+                color: $ds.colors.error.text
+
+            -- end: ds.column
+
+            -- ds.column:
+            spacing: $ds.spaces.vertical-gap.extra-extra-small
+            align-content: left
+            inset: $ds.spaces.inset-square.zero
+
+                -- ds.copy-small: Password
+
+                -- ftd.text-input:
+                placeholder: Enter password
+                type: password
+                $on-input$: $ftd.set-string($a = $signin-page.action.password.value, v = $VALUE)
+                width: fill-container
+                height.fixed.px: 40
+                border-radius.px: 8
+                background.solid: transparent
+                border-width.px: 1
+                border-color: $inherited.colors.border
+                border-color if { signin-page.action.password.error != NULL }: $inherited.colors.error.border
+                padding.px: 8
+                color: $inherited.colors.text-strong
+
+                -- ds.copy-small: $signin-page.action.password.error
+                if: { signin-page.action.password.error != NULL }
+                color: $ds.colors.error.text
+
+            -- end: ds.column
+
+            -- ds.primary-button: Login
+            $on-click$: $signin-page.action.signin($username_or_email=$signin-page.action.username-or-email, $password=$signin-page.action.password, $next=$signin-page.action.next)
+            width: full
+            radius: curved
+
+            -- ds.row:
+            spacing: $ds.spaces.vertical-gap.small
+            inset: $ds.spaces.inset-square.small
+            wrap: true
+
+                -- ds.copy-regular: Don’t have an account?
+                width: hug-content
+
+                -- ds.link: **Create an account**
+                color: $ds.colors.accent.primary
+                link: $lets-auth.sign-up-url
+
+            -- end: ds.row
+
+            -- ds.row:
+            spacing: $ds.spaces.horizontal-gap.extra-small
+            inset: $ds.spaces.inset-square.small
+            wrap: true
+
+                -- ds.link: I forgot my password
+                color: $ds.colors.accent.primary
+                link: $lets-auth.forgot-password-url
+
+            -- end: ds.row
+
+        -- end: ds.column
+
+	-- end: ds.section-column
+
+-- end: ds.page
+
+-- end: signin-page

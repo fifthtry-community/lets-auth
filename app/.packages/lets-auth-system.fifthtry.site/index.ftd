@@ -1,0 +1,8 @@
+-- import: lets-auth-system.fifthtry.site/signin as _
+export: signin-page
+
+-- ftd.text: checkout [storybook](/storybook/)
+
+-- string sign-up-url: /-/auth/signup/
+-- string sign-in-url: /-/auth/signin/
+-- string forgot-password-url: /-/auth/forgot-password/

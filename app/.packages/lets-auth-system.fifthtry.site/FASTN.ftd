@@ -9,3 +9,4 @@ system-is-confidential: false
 
 -- fastn.auto-import: design-system.fifthtry.site as ds
 -- fastn.auto-import: lets-auth-system.fifthtry.site/assets
+-- fastn.auto-import: lets-auth-system.fifthtry.site as lets-auth
