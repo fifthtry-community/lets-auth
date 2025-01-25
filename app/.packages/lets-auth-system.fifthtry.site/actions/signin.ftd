@@ -9,8 +9,6 @@ ftd.string-field $password:
 ftd.string-field $next:
 js: $assets.files.actions.alert.js
 
-
-
 show_alert(
     "/-/auth/login/",
     username_or_email,

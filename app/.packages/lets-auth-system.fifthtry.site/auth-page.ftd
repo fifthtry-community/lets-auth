@@ -1,0 +1,53 @@
+;; all auth related pages use this component as the base page level component.
+;;
+;; this page itself uses other pluggable components like auth-header, so if you
+;; want to just modify the header, you do not have to overwrite this page, just
+;; the auth-header component, and this page will use your modified auth-header.
+-- component auth-page:
+caption title:
+optional body description:
+children content:
+
+-- ds.site-page: $auth-page.title
+description: $auth-page.description
+fastn-badge: false
+
+	-- ds.section-column:
+	align-content: center
+	spacing: $ds.spaces.vertical-gap.extra-large
+
+        -- ds.heading-large: $auth-page.title
+
+        -- ds.column:
+        width.fixed.px: 600
+        border: $ds.borders.uniform.small
+        inset: $ds.spaces.inset-square.large
+        content: $auth-page.content
+
+        -- end: ds.column
+
+	-- end: ds.section-column
+
+-- end: ds.site-page
+
+-- end: auth-page
+
+
+
+
+
+
+-- component auth-header:
+
+-- ds.site-header:
+
+-- end: auth-header
+
+
+
+
+-- component auth-footer:
+
+-- ds.site-footer:
+
+-- end: auth-footer
