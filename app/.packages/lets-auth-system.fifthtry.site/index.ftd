@@ -7,6 +7,9 @@ export: signup-page
 -- import: lets-auth-system.fifthtry.site/reset-password as _
 export: set-password-page
 
+-- import: lets-auth-system.fifthtry.site/forgot-password as _
+export: forgot-password-page
+
 -- import: lets-auth-system.fifthtry.site/auth-page as _
 export: auth-page
 
@@ -15,3 +18,5 @@ export: auth-page
 -- string sign-up-url: /-/auth/signup/
 -- string sign-in-url: /-/auth/signin/
 -- string forgot-password-url: /-/auth/forgot-password/
+-- string set-password-url: /-/auth/set-password/
+-- string forgot-password-success-url: /-/auth/forgot-password-success/
