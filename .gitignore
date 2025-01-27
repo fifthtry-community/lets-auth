@@ -9,6 +9,8 @@ target
 
 
 www/.packages
+template/.packages
+template/.fastn
 app/.packages/*
 !app/.packages/lets-auth-system.fifthtry.site
 !app/.packages/lets-auth-system.fifthtry.site/**

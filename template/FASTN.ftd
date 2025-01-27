@@ -1,0 +1,10 @@
+-- import: fastn
+
+-- fastn.package: test
+
+-- fastn.dependency: design-system.fifthtry.site
+-- fastn.dependency: lets-auth.fifthtry.site
+
+-- fastn.app: Auth App
+mount-point: /-/auth/
+package: lets-auth.fifthtry.site
