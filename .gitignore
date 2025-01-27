@@ -4,6 +4,9 @@
 
 target
 
+# we store binaries from internet here
+bin
+
 .direnv
 *.wasm
 

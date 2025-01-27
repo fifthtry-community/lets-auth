@@ -1,6 +1,9 @@
 export PROJ_ROOT=$(pwd)
 FASTN=${FASTN_BINARY:-fastn}
 
+export BINARYEN_VERSION="version_119"
+
+export PATH=$PATH:${PROJ_ROOT}/bin/binaryen-${BINARYEN_VERSION}/bin
 export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 export DATABASE_URL=${DATABASE_URL:-postgresql://127.0.0.1/fifthtry}
@@ -54,4 +57,28 @@ function run-ui() {
   $FASTN serve --port 8002 --offline
 
   popd2
+}
+
+function update-template() {
+  pushd2 "${PROJ_ROOT}/template" || return 1
+  $FASTN update
+  popd2
+}
+
+function build-wasm() {
+  pushd2 "${PROJ_ROOT}" || return 1
+
+  # this script should be used both for local development and for building on ci
+  sh scripts/build-wasm.sh
+
+  popd2
+}
+
+
+function run-template() {
+  pushd2 "${PROJ_ROOT}/template" || return 1
+
+  build-wasm
+  echo "consider update-template if this fails or if you modify dependencies"
+  $FASTN serve --port 8000 --offline
 }
