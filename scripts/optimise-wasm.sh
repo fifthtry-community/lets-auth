@@ -74,6 +74,18 @@ function ensure_wasm_opt() {
   echo 'use $WASM_OPT_CMD as wasm-opt'
 }
 
+function to_human_readable() {
+  local size=$1
+  if [ "$size" -ge 1048576 ]; then
+    printf "%.3fMB\n" "$(echo "scale=3; $size / 1048576" | bc)"
+  elif [ "$size" -ge 1024 ]; then
+    printf "%.3fKB\n" "$(echo "scale=3; $size / 1024" | bc)"
+  else
+    echo "${size}B"
+  fi
+}
+
+
 function wasm_opt() {
   if [ -z "$WASM_OPT_CMD" ]; then
     echo "Error: WASM_OPT_CMD is not set."
@@ -105,10 +117,16 @@ function wasm_opt() {
 
   # Get the file size after optimization
   after_size=$(get_size "$wasm_file")
+
   size_diff=$((before_size - after_size))
+  size_diff_percentage=$((size_diff * 100 / before_size))
+
+  before_human=$(to_human_readable "$before_size")
+  after_human=$(to_human_readable "$after_size")
+  diff_human=$(to_human_readable "$size_diff")
 
   # Print results
-  echo "$wasm_file: Before = ${before_size} bytes, After = ${after_size} bytes, Reduction = ${size_diff} bytes"
+  echo "$wasm_file: Before = $before_human, After = $after_human, Reduction = $diff_human (${size_diff_percentage}%)"
 }
 
 ensure_wasm_opt
