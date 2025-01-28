@@ -11,11 +11,5 @@ bin
 *.wasm
 
 
-www/.packages
-template/.packages
-template/.fastn
-app/.packages/*
-!app/.packages/lets-auth-system.fifthtry.site
-!app/.packages/lets-auth-system.fifthtry.site/**
-app/.packages/lets-auth-system.fifthtry.site/.packages
-app/.packages/lets-auth-system.fifthtry.site/.fastn
+.packages
+.fastn
