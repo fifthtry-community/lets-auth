@@ -1,6 +1,6 @@
 -- import: fastn
 
--- fastn.package: test
+-- fastn.package: lets-auth-template.fifthtry.site
 
 -- fastn.dependency: design-system.fifthtry.site
 -- fastn.dependency: lets-auth.fifthtry.site

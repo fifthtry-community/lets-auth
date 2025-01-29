@@ -44,13 +44,13 @@ function dotcom() {
 
 
 function update-ui() {
-  pushd2 "${PROJ_ROOT}/app/.packages/lets-auth-system.fifthtry.site" || return 1
+  pushd2 "${PROJ_ROOT}/lets-auth-system.fifthtry.site" || return 1
   $FASTN update
   popd2
 }
 
 function run-ui() {
-  pushd2 "${PROJ_ROOT}/app/.packages/lets-auth-system.fifthtry.site" || return 1
+  pushd2 "${PROJ_ROOT}/lets-auth-system.fifthtry.site" || return 1
 
   echo "Using $FASTN to serve lets-auth-system.fifthtry.site/"
 
@@ -60,7 +60,7 @@ function run-ui() {
 }
 
 function update-template() {
-  pushd2 "${PROJ_ROOT}/template" || return 1
+  pushd2 "${PROJ_ROOT}/lets-auth-template.fifthtry.site" || return 1
   $FASTN update
   popd2
 }
@@ -76,7 +76,7 @@ function build-wasm() {
 
 
 function run-template() {
-  pushd2 "${PROJ_ROOT}/template" || return 1
+  pushd2 "${PROJ_ROOT}/lets-auth-template.fifthtry.site" || return 1
 
   build-wasm
   echo "consider update-template if this fails or if you modify dependencies"
