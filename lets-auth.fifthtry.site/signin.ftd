@@ -1,0 +1,4 @@
+-- import: lets-auth.fifthtry.site/actions/signin
+
+-- lets-auth.signin-page:
+action: signin

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -uxe
+set -ue
 set -o pipefail
 
 # Define global variable for wasm-opt command

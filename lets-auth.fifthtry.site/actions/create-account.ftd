@@ -17,9 +17,10 @@ ftd.string-field $password:
 ftd.string-field $password2:
 ftd.boolean-field $accept_terms:
 ftd.string-field $next:
+string action_url: $ftd.app-path(path="/create-account/")
 
 ftd.submit_form(
-    "/-/auth/create-account/",
+    action_url,
     name,
     email,
     username,

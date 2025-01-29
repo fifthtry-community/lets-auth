@@ -1,3 +1,5 @@
+-- import: fastn/processors as pr
+
 -- import: lets-auth-system.fifthtry.site/signin as _
 export: signin-page
 
@@ -20,3 +22,14 @@ export: auth-page
 -- string forgot-password-url: /-/auth/forgot-password/
 -- string set-password-url: /-/auth/set-password/
 -- string forgot-password-success-url: /-/auth/forgot-password-success/
+
+
+-- record user-details:
+string name:
+string email:
+string identity:
+boolean verified-email:
+
+
+-- optional user-details user:
+$processor$: pr.user-details

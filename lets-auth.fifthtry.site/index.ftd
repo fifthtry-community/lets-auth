@@ -1,1 +1,6 @@
--- ftd.text: lets auth
+-- ftd.text: $lets-auth.user.name
+if: { lets-auth.user != NULL }
+
+-- ftd.text: login
+if: { lets-auth.user == NULL }
+link: $ftd.app-path(path="/login/")
