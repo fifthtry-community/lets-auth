@@ -1,0 +1,7 @@
+-- import: lets-auth.fifthtry.site/actions/signup
+
+-- ftd.temporary-redirect: /
+if: { lets-auth.user != NULL }
+
+-- lets-auth.signup-page:
+action: signup

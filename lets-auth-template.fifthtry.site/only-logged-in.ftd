@@ -1,0 +1,4 @@
+-- ftd.temporary-redirect: /
+if: { lets-auth.user == NULL }
+
+-- ftd.text: only logged in people can see this!!

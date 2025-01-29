@@ -1,1 +1,10 @@
--- ftd.text: this is template
+-- ftd.text: $lets-auth.user.name
+if: { lets-auth.user != NULL }
+
+-- ftd.text: checkout only logged in people content
+if: { lets-auth.user != NULL }
+link: /only-logged-in/
+
+-- ftd.text: login
+if: { lets-auth.user == NULL }
+link: /-/auth/signin/

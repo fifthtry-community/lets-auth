@@ -1,4 +1,7 @@
 -- import: lets-auth.fifthtry.site/actions/signin
 
+-- ftd.temporary-redirect: /
+if: { lets-auth.user != NULL }
+
 -- lets-auth.signin-page:
 action: signin
