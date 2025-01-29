@@ -1,3 +1,8 @@
 -- import: fastn
 
 -- fastn.package: lets-auth.fifthtry-community.com
+
+-- fastn.dependency: design-system.fifthtry.site
+
+;; this is a system: alias must be ds
+-- fastn.auto-import: design-system.fifthtry.site as ds

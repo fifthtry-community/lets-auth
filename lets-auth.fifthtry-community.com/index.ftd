@@ -1,1 +1,91 @@
--- ftd.text: lets-auth homepage
+-- ds.site-page: lets-auth - Auth For fastn Apps
+
+-- ds.heading-large: `lets-auth`: Auth For `fastn` Apps
+
+You can add authentication to your fastn powered sites by using
+`lets-auth.fifthtry.site` package.
+
+You can create a new site using `lets-auth` using `lets-auth-template` on
+FifthTry.
+
+If you want to add auth to an existing website do the following:
+
+-- ds.heading-medium: Add Dependency And "mount" Auth App
+
+You will have to use the `lets-auth.fifthtry.site` package.
+
+-- ds.code:
+lang: ftd
+
+\-- import: fastn
+
+\-- fastn.package: your-package
+
+\-- fastn.dependency: lets-auth.fifthtry.site
+\-- fastn.dependency: lets-auth-system.fifthtry.site
+
+\;; NOTE: you MUST use this auto-import alias or things won't work
+\-- fastn.auto-import: lets-auth-system.fifthtry.site as lets-auth
+
+\-- fastn.app: Auth App
+mount-point: /-/auth/
+package: lets-auth.fifthtry.site
+
+-- ds.copy-regular:
+
+Note that we are "mounting" the `lets-auth.fifthtry.site` package at `/-/auth/`
+URL. [Learn more about `fastn.app` feature in `fastn`
+here](https://fastn.com/app/).
+
+-- ds.heading-medium: Using Auth
+
+Once you have done this setup, when you restart your `fastn` server, the app
+would be ready for you. We will create `fastn_user` etc tables for you in you
+`sqlite` db transparently. You can visit `/-/auth/signin/` to signin or
+`/-/auth/signin/` to create a new account. You can hit `/-/auth/logout/` to
+logout.
+
+A sample app file using the auth feature:
+
+-- ds.code:
+lang: ftd
+
+\;; echo the name of currently logged in user if someone is logged in
+\-- ftd.text: $lets-auth.user.name
+if: { lets-auth.user != NULL }
+
+\;; show a logout url if user is logged in
+\-- ftd.text: logout
+if: { lets-auth.user != NULL }
+link: /-/auth/logout/
+
+\;; if user is not logged in show the link to login page
+\-- ftd.text: login
+if: { lets-auth.user == NULL }
+link: /-/auth/signin/
+
+-- ds.heading-medium: `lets-auth.user`
+
+`lets-auth.user` is an `optional `lets-auth.user-details`, which is defined as:
+
+-- ds.code:
+lang: ftd
+
+\-- record user-details:
+string name:
+string email:
+string identity:
+boolean verified-email:
+
+
+
+-- ds.heading-medium: Open Source
+
+This project is licensed under [MIT license][1]. You can find our source code on
+[fifthtry-community/auth][2] on Github.
+
+[1]: https://github.com/fifthtry-community/auth/blob/main/LICENSE
+[2]: https://github.com/fifthtry-community/auth
+
+
+-- end: ds.site-page

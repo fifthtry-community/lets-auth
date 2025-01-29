@@ -60,6 +60,22 @@ function run-ui() {
   popd2
 }
 
+function update-www() {
+  pushd2 "${PROJ_ROOT}/lets-auth.fifthtry-community.com" || return 1
+  $FASTN update
+  popd2
+}
+
+function run-www() {
+  pushd2 "${PROJ_ROOT}/lets-auth.fifthtry-community.com" || return 1
+
+  echo "Using $FASTN to serve lets-auth.fifthtry-community.com/"
+
+  $FASTN --trace serve --port 8003 --offline
+
+  popd2
+}
+
 function update-template() {
   pushd2 "${PROJ_ROOT}/lets-auth-template.fifthtry.site" || return 1
   $FASTN update
