@@ -100,6 +100,7 @@ function wasm_opt() {
   fi
 
   wasm_file=$1
+  echo "optimising: ${wasm_file}"
 
   # Define a helper function to get file size
   get_size() {

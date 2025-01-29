@@ -30,4 +30,5 @@ mkdir -p $DEST
 cp "${SOURCE_DIR}mobile_auth_provider.wasm" "$DEST"
 cp "${SOURCE_DIR}email_auth_provider.wasm" "$DEST"
 
-echo "WASM files copied successfully."
+echo "WASM files copied successfully to ${DEST}"
+ls -lh $DEST
