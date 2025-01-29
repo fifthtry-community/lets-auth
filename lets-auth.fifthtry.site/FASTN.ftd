@@ -5,3 +5,9 @@
 -- fastn.dependency: lets-auth-system.fifthtry.site
 
 -- fastn.auto-import: lets-auth-system.fifthtry.site as lets-auth
+
+-- fastn.migration: Empty
+
+;; We are interested in default tables ('fastn_user' for example) created by
+;; fastn. `fastn` requires at least one `-- fastn.migration:` decl to do that.
+SELECT 1;
