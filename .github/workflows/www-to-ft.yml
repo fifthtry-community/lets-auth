@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main ]
     paths:
-      - www/**
+      - lets-auth.fifthtry-community.com/**
       - .github/workflows/www-to-ft.yml
 
 
@@ -18,4 +18,4 @@ jobs:
         uses: actions/checkout@v2
       - run: sh -c "$(curl -fsSL https://fastn.com/install.sh)"
       - name: Upload to FifthTry using fastn
-        run: cd www/ && fastn upload lets-auth-www
+        run: cd lets-auth.fifthtry-community.com/ && fastn upload lets-auth-www
