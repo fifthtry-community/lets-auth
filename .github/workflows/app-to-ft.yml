@@ -16,4 +16,5 @@ jobs:
       FIFTHTRY_SITE_WRITE_TOKEN: ${{ secrets.FT_LETS_AUTH }}
     steps:
       - uses: actions/checkout@v2
+      - uses: Swatinem/rust-cache@v2
       - run: ./scripts/publish-app.sh
