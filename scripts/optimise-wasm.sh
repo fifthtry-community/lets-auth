@@ -131,5 +131,5 @@ function wasm_opt() {
 
 ensure_wasm_opt
 
-wasm_opt app/mobile_auth_provider.wasm
-wasm_opt app/email_auth_provider.wasm
+wasm_opt lets-auth.fifthtry.site/mobile_auth_provider.wasm
+wasm_opt lets-auth.fifthtry.site/email_auth_provider.wasm
