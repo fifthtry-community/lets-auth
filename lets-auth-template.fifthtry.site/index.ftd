@@ -4,7 +4,7 @@ if: { lets-auth.user != NULL }
 
 -- ftd.text: logout
 if: { lets-auth.user != NULL }
-link: /–/auth/logout/
+link: /-/auth/logout/
 
 
 -- ftd.text: checkout only logged in people content
