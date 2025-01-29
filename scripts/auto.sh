@@ -6,7 +6,8 @@ export BINARYEN_VERSION="version_119"
 export PATH=$PATH:${PROJ_ROOT}/bin/binaryen-${BINARYEN_VERSION}/bin
 export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
-export DATABASE_URL=${DATABASE_URL:-postgresql://127.0.0.1/fifthtry}
+export DB_FILE=${DB_FILE:-${PROJ_ROOT}/db.sqlite}
+export DATABASE_URL=${DATABASE_URL:-sqlite:///${DB_FILE}}
 
 function pushd2() {
     PUSHED=$(pwd)
@@ -54,7 +55,7 @@ function run-ui() {
 
   echo "Using $FASTN to serve lets-auth-system.fifthtry.site/"
 
-  $FASTN serve --port 8002 --offline
+  $FASTN --trace serve --port 8002 --offline
 
   popd2
 }
@@ -80,5 +81,5 @@ function run-template() {
 
   build-wasm
   echo "consider update-template if this fails or if you modify dependencies"
-  $FASTN serve --port 8000 --offline
+  $FASTN --trace serve --port 8000 --offline
 }

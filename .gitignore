@@ -2,6 +2,8 @@
 .DS_Store
 .idea
 
+db.sqlite
+
 target
 
 # we store binaries from internet here

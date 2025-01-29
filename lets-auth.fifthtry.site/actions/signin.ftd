@@ -7,7 +7,7 @@ value: /
 ftd.string-field $username_or_email:
 ftd.string-field $password:
 ftd.string-field $next:
-string action_url: $ftd.app-path(path=/login/)
+string action_url: $ftd.app-path(path=/email_auth_provider/login/)
 
 ftd.submit_form(
     action_url,
