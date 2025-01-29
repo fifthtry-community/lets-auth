@@ -5,6 +5,7 @@ on:
     branches: [ main ]
     paths:
       - lets-auth.fifthtry.site/**
+      - scripts/*.sh
       - .github/workflows/app-to-ft.yml
 
 
@@ -15,4 +16,4 @@ jobs:
       FIFTHTRY_SITE_WRITE_TOKEN: ${{ secrets.FT_LETS_AUTH }}
     steps:
       - uses: actions/checkout@v2
-      - run: sh scripts/publish-app.sh
+      - run: ./scripts/publish-app.sh

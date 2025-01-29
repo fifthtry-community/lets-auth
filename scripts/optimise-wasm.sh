@@ -1,5 +1,8 @@
 #!/bin/bash
 
+set -uxe
+set -o pipefail
+
 # Define global variable for wasm-opt command
 WASM_OPT_CMD=""
 export BINARYEN_VERSION="${BINARYEN_VERSION:-version_119}"

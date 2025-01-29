@@ -1,5 +1,9 @@
 #!/bin/bash
 
+set -uxe
+set -o pipefail
+
+
 cargo build --release --target wasm32-unknown-unknown
 
 # Define the common source folder paths
