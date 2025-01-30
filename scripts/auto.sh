@@ -96,6 +96,5 @@ function run-template() {
   pushd2 "${PROJ_ROOT}/lets-auth-template.fifthtry.site" || return 1
 
   build-wasm
-  echo "consider update-template if this fails or if you modify dependencies"
   $FASTN --trace serve --port 8000 --offline
 }
