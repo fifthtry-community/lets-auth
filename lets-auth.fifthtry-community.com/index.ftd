@@ -22,10 +22,9 @@ lang: ftd
 \-- fastn.package: your-package
 
 \-- fastn.dependency: lets-auth.fifthtry.site
-\-- fastn.dependency: lets-auth-system.fifthtry.site
 
 \;; NOTE: you MUST use this auto-import alias or things won't work
-\-- fastn.auto-import: lets-auth-system.fifthtry.site as lets-auth
+\-- fastn.auto-import: lets-auth.fifthtry.site as lets-auth
 
 \-- fastn.app: Auth App
 mount-point: /-/auth/
