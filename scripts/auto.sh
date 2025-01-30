@@ -97,5 +97,5 @@ function run-template() {
 
   build-wasm
   echo "consider update-template if this fails or if you modify dependencies"
-  $FASTN --trace serve --port 8000 --offline
+  $FASTN --trace serve --offline
 }
