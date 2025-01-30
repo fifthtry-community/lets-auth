@@ -7,7 +7,7 @@ value: /
 ftd.string-field $username_or_email:
 ftd.string-field $password:
 ftd.string-field $next:
-js: $assets.files.actions.alert.js
+js: $assets.files.actions.dummy.alert.js
 
 show_alert(
     "/-/auth/login/",

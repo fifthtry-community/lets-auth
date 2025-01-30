@@ -3,7 +3,7 @@
 ;; they represent.
 
 -- import: fastn/processors as pr
--- import: lets-auth-system.fifthtry.site/storybook
+-- import: lets-auth.fifthtry.site/storybook
 -- import: design-system.fifthtry.site/assets as ds-assets
 -- import: design-system.fifthtry.site/actions/navigate
 export: active-file-content, active-title, active-sub-title, submit

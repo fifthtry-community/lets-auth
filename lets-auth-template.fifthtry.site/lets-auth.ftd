@@ -1,0 +1,20 @@
+-- import: lets-auth.fifthtry.site/actions/dummy/create-account
+
+-- import: lets-auth.fifthtry.site as _
+export: signin-page, signup-page, user, forgot-password-url, user-details, set-password-page, forgot-password-success-url, set-password-url, forgot-password-page, auth-page, sign-up-url, sign-in-url
+
+/-- component signup-page:
+module action: create-account
+
+-- ftd.text: signup yo yo
+
+-- end: signup-page
+
+
+
+-- ftd.text: $lets-auth.user.name
+if: { lets-auth.user != NULL }
+
+-- ftd.text: login
+if: { lets-auth.user == NULL }
+link: $ftd.app-path(path=/signin/)

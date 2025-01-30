@@ -1,3 +1,43 @@
+-- import: fastn/processors as pr
+
+-- import: lets-auth.fifthtry.site/ui/signin as _
+export: signin-page
+
+-- import: lets-auth.fifthtry.site/ui/signup as _
+export: signup-page
+
+-- import: lets-auth.fifthtry.site/ui/reset-password as _
+export: set-password-page
+
+-- import: lets-auth.fifthtry.site/ui/forgot-password as _
+export: forgot-password-page
+
+-- import: lets-auth.fifthtry.site/ui/auth-page as _
+export: auth-page
+
+
+-- string sign-up-url: /-/auth/signup/
+-- string sign-in-url: /-/auth/signin/
+-- string forgot-password-url: /-/auth/forgot-password/
+-- string set-password-url: /-/auth/set-password/
+-- string forgot-password-success-url: /-/auth/forgot-password-success/
+
+
+-- record user-details:
+string name:
+string email:
+string identity:
+boolean verified-email:
+
+
+-- optional user-details user:
+$processor$: pr.user-details
+
+
+
+;; enable this conditionally when `ftd.current-package` variable is implemented
+/-- ftd.text: checkout [storybook](/storybook/)
+
 -- ftd.text: $lets-auth.user.name
 if: { lets-auth.user != NULL }
 
