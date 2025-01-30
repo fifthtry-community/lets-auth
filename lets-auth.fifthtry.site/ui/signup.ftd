@@ -1,4 +1,4 @@
--- import: lets-auth-system.fifthtry.site/actions/create-account
+-- import: lets-auth.fifthtry.site/actions/dummy/create-account
 
 -- component signup-page:
 module action: create-account

@@ -1,4 +1,4 @@
--- import: lets-auth-system.fifthtry.site/actions/signin
+-- import: lets-auth.fifthtry.site/actions/dummy/signin
 
 -- component signin-page:
 caption title: Sign In

@@ -45,17 +45,17 @@ function dotcom() {
 
 
 function update-ui() {
-  pushd2 "${PROJ_ROOT}/lets-auth-system.fifthtry.site" || return 1
+  pushd2 "${PROJ_ROOT}/lets-auth.fifthtry.site" || return 1
   $FASTN update
   popd2
 }
 
 function run-ui() {
-  pushd2 "${PROJ_ROOT}/lets-auth-system.fifthtry.site" || return 1
+  pushd2 "${PROJ_ROOT}/lets-auth.fifthtry.site" || return 1
 
-  echo "Using $FASTN to serve lets-auth-system.fifthtry.site/"
+  echo "Using $FASTN to serve lets-auth.fifthtry.site/"
 
-  $FASTN --trace serve --port 8002 --offline
+  $FASTN --trace serve --port 8002 --offline || echo "fastn failed, ensure its installed, and also consider running update-ui"
 
   popd2
 }
@@ -71,7 +71,7 @@ function run-www() {
 
   echo "Using $FASTN to serve lets-auth.fifthtry-community.com/"
 
-  $FASTN --trace serve --port 8003 --offline
+  $FASTN --trace serve --port 8003 --offline || echo "fastn failed, ensure its installed, and also consider running update-ui"
 
   popd2
 }
