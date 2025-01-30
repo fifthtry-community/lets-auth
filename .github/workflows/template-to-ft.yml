@@ -1,21 +1,21 @@
-name: Upload lets-auth-system to FifthTry
+name: Upload lets-auth-template to FifthTry
 
 on:
   push:
     branches: [ main ]
     paths:
-      - lets-auth-system.fifthtry.site/**
-      - .github/workflows/system-to-ft.yml
+      - lets-auth-template.fifthtry.site/**
+      - .github/workflows/template-to-ft.yml
 
 
 jobs:
   upload-to-fifthtry:
     runs-on: ubuntu-latest
     env:
-      FIFTHTRY_SITE_WRITE_TOKEN: ${{ secrets.FT_LETS_AUTH_SYSTEM }}
+      FIFTHTRY_SITE_WRITE_TOKEN: ${{ secrets.FT_LETS_AUTH_TEMPLATE }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
       - run: sh -c "$(curl -fsSL https://fastn.com/install.sh)"
       - name: Upload to FifthTry using fastn
-        run: cd lets-auth-system.fifthtry.site/ && fastn upload lets-auth-system
+        run: cd lets-auth-template.fifthtry.site/ && fastn upload lets-auth-template
