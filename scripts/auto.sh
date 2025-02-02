@@ -95,6 +95,6 @@ function build-wasm() {
 function run-template() {
   pushd2 "${PROJ_ROOT}/lets-auth-template.fifthtry.site" || return 1
 
-  build-wasm
+  build-wasm || return 1
   $FASTN --trace serve --offline
 }
