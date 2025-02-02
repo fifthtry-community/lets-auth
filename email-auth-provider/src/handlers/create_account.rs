@@ -19,9 +19,10 @@ pub fn create_account(
     // code can be invalid. eg: xyz
     ft_sdk::Query(code): ft_sdk::Query<"code", Option<String>>,
     host: ft_sdk::Host,
-    mountpoint: ft_sdk::AppUrl,
+    app_url: ft_sdk::AppUrl,
 ) -> ft_sdk::form::Result {
-    let config = email_auth::config(&host, &mountpoint)?;
+    ft_sdk::println!("app-url: {app_url:?}");
+    let config = email_auth::config(&host, &app_url)?;
     ft_sdk::println!("{config:?}");
     let account_meta = validate(payload, &mut conn, &code)?;
     ft_sdk::println!("Account meta done for {}", account_meta.name);
@@ -59,7 +60,7 @@ pub fn create_account(
         &account_meta.email_confirmation_code,
         &account_meta.email,
         &host,
-        &mountpoint,
+        &app_url,
     );
     ft_sdk::println!("Confirmation link added {conf_link}");
 
