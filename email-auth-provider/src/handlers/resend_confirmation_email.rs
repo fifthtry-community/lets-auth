@@ -4,7 +4,7 @@ pub fn resend_confirmation_email(
     mut conn: ft_sdk::Connection,
     ft_sdk::Query(email): ft_sdk::Query<"email">,
     host: ft_sdk::Host,
-    mountpoint: ft_sdk::Mountpoint,
+    mountpoint: ft_sdk::AppUrl,
 ) -> ft_sdk::form::Result {
     if !validator::ValidateEmail::validate_email(&email) {
         return Err(ft_sdk::single_error("email", "Incorrect email format.").into());
@@ -35,7 +35,7 @@ pub fn generate_new_confirmation_key(
     user_id: &ft_sdk::auth::UserId,
     email: &str,
     host: &ft_sdk::Host,
-    mountpoint: &ft_sdk::Mountpoint,
+    mountpoint: &ft_sdk::AppUrl,
     conn: &mut ft_sdk::Connection,
 ) -> Result<String, ft_sdk::Error> {
     let key = email_auth::handlers::create_account::generate_key(64);
@@ -57,7 +57,13 @@ pub fn generate_new_confirmation_key(
         serde_json::Value::String(ft_sdk::env::now().to_rfc3339()),
     );
 
-    ft_sdk::auth::provider::update_user(conn, email_auth::PROVIDER_ID, user_id, data.clone(), false)?;
+    ft_sdk::auth::provider::update_user(
+        conn,
+        email_auth::PROVIDER_ID,
+        user_id,
+        data.clone(),
+        false,
+    )?;
 
     Ok(conf_link)
 }
@@ -68,7 +74,8 @@ pub fn send_confirmation_email(
     name: &str,
     conf_link: &str,
 ) -> Result<(), ft_sdk::Error> {
-    let (from_name, from_email) = email_auth::handlers::create_account::email_from_address_from_env();
+    let (from_name, from_email) =
+        email_auth::handlers::create_account::email_from_address_from_env();
 
     ft_sdk::println!("Found email sender: {from_name}, {from_email}");
 

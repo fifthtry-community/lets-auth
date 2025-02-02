@@ -19,8 +19,10 @@ pub fn create_account(
     // code can be invalid. eg: xyz
     ft_sdk::Query(code): ft_sdk::Query<"code", Option<String>>,
     host: ft_sdk::Host,
-    mountpoint: ft_sdk::Mountpoint,
+    mountpoint: ft_sdk::AppUrl,
 ) -> ft_sdk::form::Result {
+    let config = email_auth::config(&host, &mountpoint)?;
+    ft_sdk::println!("{config:?}");
     let account_meta = validate(payload, &mut conn, &code)?;
     ft_sdk::println!("Account meta done for {}", account_meta.name);
 
@@ -379,12 +381,12 @@ pub fn confirmation_link(
     key: &str,
     email: &str,
     ft_sdk::Host(host): &ft_sdk::Host,
-    ft_sdk::Mountpoint(mountpoint): &ft_sdk::Mountpoint,
+    ft_sdk::AppUrl(mountpoint): &ft_sdk::AppUrl,
 ) -> String {
     format!(
         "https://{host}{mountpoint}{confirm_email_route}?code={key}&email={email}",
         confirm_email_route = email_auth::urls::Route::ConfirmEmail,
-        mountpoint = mountpoint.trim_end_matches('/'),
+        mountpoint = mountpoint.as_ref().unwrap().trim_end_matches('/'),
     )
 }
 

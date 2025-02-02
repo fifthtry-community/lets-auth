@@ -37,7 +37,7 @@ pub fn create_account(
 struct CreateAccount {
     mobile_number: String,
     username: String,
-    user_id: Option<ft_sdk::UserId>
+    user_id: Option<ft_sdk::UserId>,
 }
 
 impl CreateAccount {
@@ -79,8 +79,8 @@ fn validate_and_account_meta(
 
     // check if the code is associated with a subscriber that is creating an account
     // if we find a user_id, it means the user is pre_verified
-    let user_id = match diesel::sql_query(
-        format!(r#"
+    let user_id = match diesel::sql_query(format!(
+        r#"
             SELECT
                 id, identity
             FROM fastn_user
@@ -90,14 +90,17 @@ fn validate_and_account_meta(
                     FROM json_each ( data -> '{}' -> 'custom' -> 'mobile_numbers')
                     WHERE value = $1
                 )
-            "#,  mobile_auth::PROVIDER_ID),
-    )
-        .bind::<diesel::sql_types::Text, _>(&payload.mobile_number)
-        .get_result::<Identity>(conn)
+            "#,
+        mobile_auth::PROVIDER_ID
+    ))
+    .bind::<diesel::sql_types::Text, _>(&payload.mobile_number)
+    .get_result::<Identity>(conn)
     {
         Ok(identity) => {
             if identity.identity.is_some() {
-                return Err(ft_sdk::single_error("mobile_number", "Mobile number already exists.").into());
+                return Err(
+                    ft_sdk::single_error("mobile_number", "Mobile number already exists.").into(),
+                );
             }
             Some(ft_sdk::auth::UserId(identity.id))
         }
@@ -110,7 +113,7 @@ fn validate_and_account_meta(
     Ok(CreateAccount {
         user_id,
         mobile_number: payload.mobile_number,
-        username: payload.username
+        username: payload.username,
     })
 }
 
@@ -131,7 +134,6 @@ impl CreateAccountPayload {
 
         Ok(())
     }
-
 }
 
 fn validate_mobile_number(
@@ -140,7 +142,10 @@ fn validate_mobile_number(
 ) -> Result<(), ft_sdk::Error> {
     let re = regex::Regex::new(r"^\d{10,12}$").unwrap();
     if !re.is_match(mobile_number) {
-        errors.insert("mobile_number".to_string(), "Invalid mobile number".to_string());
+        errors.insert(
+            "mobile_number".to_string(),
+            "Invalid mobile number".to_string(),
+        );
     }
 
     Ok(())
