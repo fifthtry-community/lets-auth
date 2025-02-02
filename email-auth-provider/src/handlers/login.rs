@@ -56,23 +56,27 @@ impl Login {
 }
 
 fn validate(conn: &mut ft_sdk::Connection, payload: LoginPayload) -> Result<Login, ft_sdk::Error> {
-    let (user_id, user_data) =
-        match email_auth::utils::user_data_from_email_or_username(conn, payload.username_or_email) {
-            Ok(v) => v,
-            Err(ft_sdk::auth::UserDataError::NoDataFound) => {
-                ft_sdk::println!("username not found");
-                return Err(
-                    ft_sdk::single_error("username-or-email", "Incorrect username/password.").into(),
-                );
-            }
-            Err(e) => return Err(e.into()),
-        };
+    let (user_id, user_data) = match email_auth::utils::user_data_from_email_or_username(
+        conn,
+        payload.username_or_email,
+    ) {
+        Ok(v) => v,
+        Err(ft_sdk::auth::UserDataError::NoDataFound) => {
+            ft_sdk::println!("username not found");
+            return Err(
+                ft_sdk::single_error("username-or-email", "Incorrect username/password.").into(),
+            );
+        }
+        Err(e) => return Err(e.into()),
+    };
 
     if !Login::match_password(&user_data, &payload.password)? {
         // we intentionally send the error against username to avoid leaking the fact that the
         // username exists
         ft_sdk::println!("incorrect password");
-        return Err(ft_sdk::single_error("username-or-email", "Incorrect username/password.").into());
+        return Err(
+            ft_sdk::single_error("username-or-email", "Incorrect username/password.").into(),
+        );
     }
 
     Ok(Login { user_id })

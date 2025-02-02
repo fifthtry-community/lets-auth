@@ -10,21 +10,21 @@ pub(crate) fn user_data_from_email_or_username<S: AsRef<str>>(
             email_auth::PROVIDER_ID,
             email_or_username,
         ) {
-            Ok(v) => return Ok(v),
+            Ok(v) => Ok(v),
             Err(ft_sdk::auth::UserDataError::NoDataFound) => {
-                return ft_sdk::auth::provider::user_data_by_verified_email(
+                ft_sdk::auth::provider::user_data_by_verified_email(
                     conn,
                     email_auth::PROVIDER_ID,
                     email_or_username,
-                );
+                )
             }
-            Err(e) => return Err(e),
+            Err(e) => Err(e),
         }
     } else {
-        return ft_sdk::auth::provider::user_data_by_identity(
+        ft_sdk::auth::provider::user_data_by_identity(
             conn,
             email_auth::PROVIDER_ID,
             email_or_username,
-        );
-    };
+        )
+    }
 }

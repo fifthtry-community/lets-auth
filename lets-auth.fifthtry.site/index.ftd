@@ -22,6 +22,7 @@ export: auth-page
 -- string set-password-url: /-/auth/set-password/
 -- string forgot-password-success-url: /-/auth/forgot-password-success/
 
+-- string smtp-password: dummy password
 
 -- record user-details:
 string name:
@@ -29,6 +30,12 @@ string email:
 string identity:
 boolean verified-email:
 
+
+-- option string allowed-domain: fifthtry.com
+
+-- boolean is-authenticated():
+
+true
 
 -- optional user-details user:
 $processor$: pr.user-details

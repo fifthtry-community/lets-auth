@@ -5,7 +5,7 @@ pub fn confirm_email(
     ft_sdk::Query(email): ft_sdk::Query<"email">,
     ft_sdk::Query(next): ft_sdk::Query<"next", Option<String>>,
     host: ft_sdk::Host,
-    mountpoint: ft_sdk::Mountpoint,
+    mountpoint: ft_sdk::AppUrl,
 ) -> ft_sdk::processor::Result {
     if !validator::ValidateEmail::validate_email(&email) {
         return Err(ft_sdk::single_error("email", "Invalid email format.").into());
@@ -36,14 +36,15 @@ pub fn confirm_email(
     let sent_at = chrono::DateTime::from_timestamp_nanos(sent_at);
 
     if key_expired(sent_at) {
-        let conf_link = email_auth::handlers::resend_confirmation_email::generate_new_confirmation_key(
-            data.clone(),
-            &user_id,
-            &email,
-            &host,
-            &mountpoint,
-            &mut conn,
-        )?;
+        let conf_link =
+            email_auth::handlers::resend_confirmation_email::generate_new_confirmation_key(
+                data.clone(),
+                &user_id,
+                &email,
+                &host,
+                &mountpoint,
+                &mut conn,
+            )?;
 
         let name = data.name.unwrap_or_else(|| email.clone());
 

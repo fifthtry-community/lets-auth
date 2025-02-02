@@ -1,4 +1,5 @@
 #[ft_sdk::form]
+#[allow(clippy::too_many_arguments)]
 pub fn set_password(
     mut conn: ft_sdk::Connection,
     ft_sdk::Required(new_password): ft_sdk::Required<"new-password">,
@@ -107,14 +108,14 @@ fn validate_email_and_password(
 
     if new_password != new_password2 {
         return Err(ft_sdk::single_error(
-            "new-password2".to_string(),
-            "Password and Confirm password field do not match.".to_string(),
+            "new-password2",
+            "Password and Confirm password field do not match.",
         )
         .into());
     }
 
-    if let Some(message) = email_auth::handlers::create_account::is_strong_password(&new_password) {
-        return Err(ft_sdk::single_error("new-password".to_string(), message).into());
+    if let Some(message) = email_auth::handlers::create_account::is_strong_password(new_password) {
+        return Err(ft_sdk::single_error("new-password", message).into());
     }
 
     Ok(())
