@@ -42,12 +42,7 @@ pub fn set_password(
 
         let name = data.name.unwrap_or_else(|| email.clone());
 
-        email_auth::handlers::forgot_password::send_reset_password_email(
-            &mut conn,
-            &email,
-            &name,
-            &reset_link,
-        )?;
+        email_auth::handlers::forgot_password::send_reset_password_email(email, name, &reset_link)?;
 
         return Err(ft_sdk::single_error(
             "code",

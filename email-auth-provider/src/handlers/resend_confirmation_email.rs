@@ -24,7 +24,7 @@ pub fn resend_confirmation_email(
 
     let name = data.name.unwrap_or_else(|| "User".to_string());
 
-    send_confirmation_email(&mut conn, &email, &name, &conf_link)?;
+    send_confirmation_email(email, name, &conf_link)?;
 
     ft_sdk::form::redirect("/")
 }
@@ -69,30 +69,31 @@ pub fn generate_new_confirmation_key(
 }
 
 pub fn send_confirmation_email(
-    conn: &mut ft_sdk::Connection,
-    email: &str,
-    name: &str,
+    email: String,
+    name: String,
     conf_link: &str,
 ) -> Result<(), ft_sdk::Error> {
-    let (from_name, from_email) =
-        email_auth::handlers::create_account::email_from_address_from_env();
+    let from = email_auth::handlers::create_account::email_from_address_from_env();
 
-    ft_sdk::println!("Found email sender: {from_name}, {from_email}");
+    ft_sdk::println!("Found email sender: {from:?}");
 
-    if let Err(e) = ft_sdk::send_email(
-        conn,
-        (&from_name, &from_email),
-        vec![(name, email)],
-        "Confirm you account",
-        &email_auth::handlers::create_account::confirm_account_html_template(name, conf_link),
-        &email_auth::handlers::create_account::confirm_account_text_template(name, conf_link),
-        None,
-        None,
-        None,
-        "auth_confirm_account_request",
-    ) {
+    if let Err(e) = ft_sdk::email::send(&ft_sdk::Email {
+        from,
+        subject: "Confirm you account".to_string(),
+        body_html: email_auth::handlers::create_account::confirm_account_html_template(
+            &name, conf_link,
+        ),
+        body_text: email_auth::handlers::create_account::confirm_account_text_template(
+            &name, conf_link,
+        ),
+        to: vec![(name, email).into()],
+        reply_to: None,
+        cc: None,
+        bcc: None,
+        mkind: "auth_confirm_account_request".to_string(),
+    }) {
         ft_sdk::println!("auth.wasm: failed to queue email: {:?}", e);
-        return Err(e.into());
+        return Err(e);
     }
 
     ft_sdk::println!("Email added to the queue");

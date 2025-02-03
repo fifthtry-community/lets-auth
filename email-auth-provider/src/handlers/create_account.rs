@@ -18,11 +18,10 @@ pub fn create_account(
     ft_sdk::Cookie(sid): ft_sdk::Cookie<{ ft_sdk::auth::SESSION_KEY }>,
     // code can be invalid. eg: xyz
     ft_sdk::Query(code): ft_sdk::Query<"code", Option<String>>,
-    scheme: ft_sdk::Scheme,
     host: ft_sdk::Host,
+    config: email_auth::Config,
     app_url: ft_sdk::AppUrl,
 ) -> ft_sdk::form::Result {
-    let config = email_auth::config(&scheme, &host, &app_url)?;
     ft_sdk::println!("Config: {config:?}");
     let account_meta = validate(payload, &mut conn, &code)?;
     ft_sdk::println!("Account meta done for {}", account_meta.name);
@@ -64,23 +63,22 @@ pub fn create_account(
     );
     ft_sdk::println!("Confirmation link added {conf_link}");
 
-    let (from_name, from_email) = email_from_address_from_env();
-    ft_sdk::println!("Found email sender: {from_name}, {from_email}");
+    let from = email_from_address_from_env();
+    ft_sdk::println!("Found email sender: {from:?}");
 
-    if let Err(e) = ft_sdk::send_email(
-        &mut conn,
-        (&from_name, &from_email),
-        vec![(&account_meta.name, &account_meta.email)],
-        "Confirm you account",
-        &confirm_account_html_template(&account_meta.name, &conf_link),
-        &confirm_account_text_template(&account_meta.name, &conf_link),
-        None,
-        None,
-        None,
-        "auth_confirm_account_request",
-    ) {
+    if let Err(e) = ft_sdk::email::send(&ft_sdk::Email {
+        from,
+        to: vec![(account_meta.name.clone(), account_meta.email).into()],
+        subject: "Confirm you account".to_string(),
+        body_html: confirm_account_html_template(&account_meta.name, &conf_link),
+        body_text: confirm_account_text_template(&account_meta.name, &conf_link),
+        reply_to: None,
+        cc: None,
+        bcc: None,
+        mkind: "auth_confirm_account_request".to_string(),
+    }) {
         ft_sdk::println!("auth.wasm: failed to queue email: {:?}", e);
-        return Err(e.into());
+        return Err(e);
     }
     ft_sdk::println!("Email added to the queue");
 
@@ -382,20 +380,22 @@ pub fn confirmation_link(
     key: &str,
     email: &str,
     ft_sdk::Host(host): &ft_sdk::Host,
-    ft_sdk::AppUrl(mountpoint): &ft_sdk::AppUrl,
+    ft_sdk::AppUrl(app_url): &ft_sdk::AppUrl,
 ) -> String {
     format!(
-        "https://{host}{mountpoint}{confirm_email_route}?code={key}&email={email}",
+        "https://{host}{app_url}{confirm_email_route}?code={key}&email={email}",
         confirm_email_route = email_auth::urls::Route::ConfirmEmail,
-        mountpoint = mountpoint.as_ref().unwrap().trim_end_matches('/'),
+        app_url = app_url.as_ref().unwrap().trim_end_matches('/'),
     )
 }
 
-pub fn email_from_address_from_env() -> (String, String) {
+pub fn email_from_address_from_env() -> ft_sdk::EmailAddress {
     let email = ft_sdk::env::var("FASTN_SMTP_SENDER_EMAIL".to_string())
         .unwrap_or_else(|| "support@fifthtry.com".to_string());
-    let name = ft_sdk::env::var("FASTN_SMTP_SENDER_NAME".to_string())
-        .unwrap_or_else(|| "FifthTry Team".to_string());
+    let name = Some(
+        ft_sdk::env::var("FASTN_SMTP_SENDER_NAME".to_string())
+            .unwrap_or_else(|| "FifthTry Team".to_string()),
+    );
 
-    (name, email)
+    ft_sdk::EmailAddress { name, email }
 }
