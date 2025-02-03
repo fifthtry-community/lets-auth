@@ -3,7 +3,10 @@ extern crate self as email_auth;
 mod handlers;
 mod urls;
 
+use ft_sdk::Error;
 pub(crate) use handlers::utils;
+use http::Request;
+use serde_json::Value;
 
 pub const PROVIDER_ID: &str = "email";
 pub const SUBSCRIPTION_PROVIDER_ID: &str = "subscription";
@@ -20,19 +23,21 @@ pub struct Config {
     pub signup_url: String,
 }
 
-pub fn config(
-    scheme: &ft_sdk::Scheme,
-    host: &ft_sdk::Host,
-    app_url: &ft_sdk::AppUrl,
-) -> Result<Config, ft_sdk::Error> {
-    let url = app_url.join(scheme, host, "config")?;
-    ft_sdk::println!("url: {url}");
+impl ft_sdk::FromRequest for Config {
+    fn from_request(req: &Request<Value>) -> Result<Self, Error> {
+        let scheme = ft_sdk::Scheme::from_request(req)?;
+        let host = ft_sdk::Host::from_request(req)?;
+        let app_url: ft_sdk::AppUrl = ft_sdk::AppUrl::from_request(req)?;
 
-    let req = http::Request::builder()
-        .uri(url)
-        .body(bytes::Bytes::new())?;
+        let url = app_url.join(&scheme, &host, "config")?;
+        ft_sdk::println!("url: {url}");
 
-    let res = ft_sdk::http::send(req).unwrap();
+        let req = http::Request::builder()
+            .uri(url)
+            .body(bytes::Bytes::new())?;
 
-    serde_json::from_slice(res.body()).map_err(|e| e.into())
+        let res = ft_sdk::http::send(req).unwrap();
+
+        serde_json::from_slice(res.body()).map_err(|e| e.into())
+    }
 }

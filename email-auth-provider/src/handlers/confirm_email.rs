@@ -49,7 +49,7 @@ pub fn confirm_email(
         let name = data.name.unwrap_or_else(|| email.clone());
 
         email_auth::handlers::resend_confirmation_email::send_confirmation_email(
-            &mut conn, &email, &name, &conf_link,
+            email, name, &conf_link,
         )?;
 
         return Err(ft_sdk::single_error(

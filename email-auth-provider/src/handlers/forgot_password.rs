@@ -7,14 +7,14 @@ pub fn forgot_password(
     host: ft_sdk::Host,
 ) -> ft_sdk::form::Result {
     let (user_id, email, data) = get_user_data(&mut conn, username_or_email)?;
-    let user_name = data.name.clone().unwrap_or_else(|| email.clone());
+    let name = data.name.clone().unwrap_or_else(|| email.clone());
 
     let set_password_route = set_password_route.unwrap_or_else(|| "/set-password/".to_string());
 
     let reset_link =
         generate_new_reset_key(data, &user_id, &email, set_password_route, &host, &mut conn)?;
 
-    send_reset_password_email(&mut conn, &email, &user_name, &reset_link)?;
+    send_reset_password_email(email, name, &reset_link)?;
 
     let next = next.unwrap_or_else(|| "/".to_string());
     ft_sdk::form::redirect(next)
@@ -100,30 +100,27 @@ pub fn generate_new_reset_key(
 }
 
 pub fn send_reset_password_email(
-    conn: &mut ft_sdk::Connection,
-    email: &str,
-    name: &str,
+    email: String,
+    name: String,
     link: &str,
 ) -> Result<(), ft_sdk::Error> {
-    let (from_name, from_email) =
-        email_auth::handlers::create_account::email_from_address_from_env();
+    let from = email_auth::handlers::create_account::email_from_address_from_env();
 
-    ft_sdk::println!("Found email sender: {from_name}, {from_email}");
+    ft_sdk::println!("Found email sender: {from:?},");
 
-    if let Err(e) = ft_sdk::send_email(
-        conn,
-        (&from_name, &from_email),
-        vec![(name, email)],
-        "Reset password",
-        &password_reset_request_html_template(name, link),
-        &password_reset_request_text_template(name, link),
-        None,
-        None,
-        None,
-        "auth_reset_password_request",
-    ) {
+    if let Err(e) = ft_sdk::email::send(&ft_sdk::Email {
+        from,
+        subject: "Reset password".to_string(),
+        body_html: password_reset_request_html_template(&name, link),
+        body_text: password_reset_request_text_template(&name, link),
+        to: vec![(name, email).into()],
+        reply_to: None,
+        cc: None,
+        bcc: None,
+        mkind: "auth_reset_password_request".to_string(),
+    }) {
         ft_sdk::println!("auth.wasm: failed to queue email: {:?}", e);
-        return Err(e.into());
+        return Err(e);
     }
 
     ft_sdk::println!("Email added to the queue");
