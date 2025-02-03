@@ -19,7 +19,7 @@ pub fn create_account(
     // code can be invalid. eg: xyz
     ft_sdk::Query(code): ft_sdk::Query<"code", Option<String>>,
     host: ft_sdk::Host,
-    config: email_auth::Config,
+    ft_sdk::Config(config): ft_sdk::Config<email_auth::Config>,
     app_url: ft_sdk::AppUrl,
 ) -> ft_sdk::form::Result {
     ft_sdk::println!("Config: {config:?}");
