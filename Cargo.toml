@@ -26,7 +26,6 @@ argon2 = "0.5"
 chrono = { version = "0.4", default-features = false, features = ["serde"] }
 validator = "0.20.0"
 cookie = "0.18"
-#ft-sdk = { path = "../ft-sdk/ft-sdk", features = ["sqlite-default", "auth-provider", "field-extractors"] }
 ft-sdk = { path = "../ft-sdk/ft-sdk", version = "0.2.1", features = ["sqlite-default", "auth-provider", "field-extractors"] }
 regex = "1"
 common = { path = "common" }
