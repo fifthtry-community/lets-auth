@@ -78,7 +78,7 @@ pub fn create_account(
         mkind: "auth_confirm_account_request".to_string(),
     }) {
         ft_sdk::println!("auth.wasm: failed to queue email: {:?}", e);
-        return Err(e);
+        return Err(e.into());
     }
     ft_sdk::println!("Email added to the queue");
 

@@ -120,7 +120,7 @@ pub fn send_reset_password_email(
         mkind: "auth_reset_password_request".to_string(),
     }) {
         ft_sdk::println!("auth.wasm: failed to queue email: {:?}", e);
-        return Err(e);
+        return Err(e.into());
     }
 
     ft_sdk::println!("Email added to the queue");
