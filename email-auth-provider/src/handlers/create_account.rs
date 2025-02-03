@@ -18,12 +18,12 @@ pub fn create_account(
     ft_sdk::Cookie(sid): ft_sdk::Cookie<{ ft_sdk::auth::SESSION_KEY }>,
     // code can be invalid. eg: xyz
     ft_sdk::Query(code): ft_sdk::Query<"code", Option<String>>,
+    scheme: ft_sdk::Scheme,
     host: ft_sdk::Host,
     app_url: ft_sdk::AppUrl,
 ) -> ft_sdk::form::Result {
-    ft_sdk::println!("app-url: {app_url:?}");
-    let config = email_auth::config(&host, &app_url)?;
-    ft_sdk::println!("{config:?}");
+    let config = email_auth::config(&scheme, &host, &app_url)?;
+    ft_sdk::println!("Config: {config:?}");
     let account_meta = validate(payload, &mut conn, &code)?;
     ft_sdk::println!("Account meta done for {}", account_meta.name);
 

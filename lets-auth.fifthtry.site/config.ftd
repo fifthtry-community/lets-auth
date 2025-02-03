@@ -1,21 +1,3 @@
--- integer x: 20
--- record foo:
-integer x:
-string y:
-boolean z:
-
--- foo f:
-x: $x
-y: hello
-z: false
-
--- string k: 10
-
 -- ftd.json:
-yo-data: $x
-f: $f
-name: Sam
-inline-integer-is-string: 10
-inline-bool: false
-url: $lets-auth.sign-up-url
-k: $k
+sign-in-url: $lets-auth.sign-in-url
+sign-up-url: $lets-auth.sign-up-url

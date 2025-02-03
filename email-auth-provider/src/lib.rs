@@ -14,14 +14,18 @@ pub const EMAIL_CONF_SENT_AT: &str = "email_conf_sent_at";
 
 #[derive(serde::Deserialize, Debug)]
 pub struct Config {
+    #[serde(rename = "sign-in-url")]
     pub signin_url: String,
+    #[serde(rename = "sign-up-url")]
+    pub signup_url: String,
 }
 
 pub fn config(
-    ft_sdk::Host(host): &ft_sdk::Host,
-    ft_sdk::AppUrl(mountpoint): &ft_sdk::AppUrl,
+    scheme: &ft_sdk::Scheme,
+    host: &ft_sdk::Host,
+    app_url: &ft_sdk::AppUrl,
 ) -> Result<Config, ft_sdk::Error> {
-    let url = format!("https://{host}{}config/", mountpoint.as_ref().unwrap());
+    let url = app_url.join(scheme, host, "config")?;
     ft_sdk::println!("url: {url}");
 
     let req = http::Request::builder()
