@@ -1,3 +1,4 @@
 -- ftd.json:
 sign-in-url: $lets-auth.sign-in-url
 sign-up-url: $lets-auth.sign-up-url
+create-account-confirmation-html: $lets-auth.create-account-confirmation-html

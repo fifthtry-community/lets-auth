@@ -12,6 +12,11 @@ module action: create-account
 
 
 
+-- string create-account-confirmation-html:
+
+<fifthtry specific html>
+
+
 -- ftd.text: $lets-auth.user.name
 if: { lets-auth.user != NULL }
 

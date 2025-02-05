@@ -22,6 +22,11 @@ export: auth-page
 -- string set-password-url: /-/auth/set-password/
 -- string forgot-password-success-url: /-/auth/forgot-password-success/
 
+-- string create-account-confirmation-html:
+
+<generic email html>
+
+
 -- string smtp-password: dummy password
 
 -- record user-details:

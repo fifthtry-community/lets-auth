@@ -1,0 +1,44 @@
+-- import: fastn/processors as pr
+
+-- string name:
+$processor$: pr.request-data
+
+-- string link:
+$processor$: pr.request-data
+
+-- optional string what:
+$processor$: pr.request-data
+
+
+-- string html: $render(template=$lets-auth.create-account-confirmation-html, name=$name, link=$link)
+-- string text: $render(template=$lets-auth.create-account-confirmation-text, name=$name, link=$link)
+-- string subject: $render(template=$lets-auth.create-account-confirmation-subject, name=$name, link=$link)
+
+
+;; this makes sure we can easily preview the HTML in storybook
+/-- ftd.response:  $html
+if: { what == "html" }
+content-type: text/html
+
+/-- ftd.response: $text
+if: { what == "text" }
+content-type: text/text
+
+/-- ftd.response: $subject
+if: { what == "subject" }
+content-type: text/text
+
+
+;; this ensures wasm only makes one HTTP request
+-- ftd.json:
+text: $text
+html: $html
+subject: $subject
+
+
+-- string render(template, name, link):
+string template:
+string name:
+string link:
+
+js_replace(js_replace(template, "name", name), "link", link)
