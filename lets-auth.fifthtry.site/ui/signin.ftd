@@ -1,10 +1,10 @@
 -- import: lets-auth.fifthtry.site/actions/dummy/signin
 
 -- component signin-page:
-caption title: Sign In
+caption title: Sign in
 module action: signin
 
--- lets-auth.auth-page: Sign In
+-- lets-auth.auth-page: Sign in
 
     -- ds.form-field: Username or email address
     $field: $signin-page.action.username-or-email
@@ -13,10 +13,9 @@ module action: signin
     $field: $signin-page.action.password
     type: password
 
-    -- ds.primary-button: Login
+    -- ds.primary-button: Sign in
     $on-click$: $signin-page.action.signin($username_or_email=$signin-page.action.username-or-email, $password=$signin-page.action.password, $next=$signin-page.action.next)
     width: full
-    radius: curved
 
     -- ds.row:
     spacing: $ds.spaces.vertical-gap.small
@@ -32,16 +31,9 @@ module action: signin
 
     -- end: ds.row
 
-    -- ds.row:
-    spacing: $ds.spaces.horizontal-gap.extra-small
-    inset: $ds.spaces.inset-square.small
-    wrap: true
-
-        -- ds.link: I forgot my password
+        -- ds.link: Forgot password?
         color: $ds.colors.accent.primary
         link: $lets-auth.forgot-password-url
-
-    -- end: ds.row
 
 -- end: lets-auth.auth-page
 

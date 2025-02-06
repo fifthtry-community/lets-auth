@@ -3,7 +3,7 @@
 -- component signup-page:
 module action: create-account
 
--- lets-auth.auth-page: Sign Up
+-- lets-auth.auth-page: Sign up
 
     -- ds.form-field: Name
     $field: $signup-page.action.name
@@ -58,7 +58,7 @@ module action: create-account
 		-- ds.copy-regular: Already have an account?
 		width: hug-content
 
-		-- ds.link: Log in
+		-- ds.link: Sign in
 		color: $ds.colors.accent.primary
 		link: $lets-auth.sign-in-url
 
