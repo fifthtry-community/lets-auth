@@ -15,6 +15,7 @@ fastn-badge: false
 	-- ds.section-column:
 	align-content: center
 	spacing: $ds.spaces.vertical-gap.medium
+    margin: $ds.spaces.vertical-gap.zero
 
         -- ds.heading-medium: $auth-page.title
 
