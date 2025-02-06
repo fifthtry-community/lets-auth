@@ -14,15 +14,16 @@ fastn-badge: false
 
 	-- ds.section-column:
 	align-content: center
-	spacing: $ds.spaces.vertical-gap.extra-large
+	spacing: $ds.spaces.vertical-gap.medium
 
-        -- ds.heading-large: $auth-page.title
+        -- ds.heading-medium: $auth-page.title
 
         -- ds.column:
-        width.fixed.px if { ftd.device == "desktop" }: 600
+        width.fixed.px if { ftd.device == "desktop" }: 400
         border: $ds.borders.uniform.small
         inset: $ds.spaces.inset-square.large
         content: $auth-page.content
+        background.solid: $ds.colors.background.step-1
 
         -- end: ds.column
 
