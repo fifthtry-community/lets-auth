@@ -21,7 +21,7 @@ pub fn validate_identity(
 
 pub fn session_cookie(sid: &str, host: ft_sdk::Host) -> Result<http::HeaderValue, ft_sdk::Error> {
     // DO NOT CHANGE THINGS HERE, consult logout code in fastn.
-    let secure_cookies = option_env!("DEV_USE_SECURE_COOKIES").is_none();
+    let secure_cookies = option_env!("DEV_USE_HTTP_COOKIES").is_none();
     let cookie = cookie::Cookie::build((ft_sdk::auth::SESSION_KEY, sid))
         .domain(host.without_port())
         .path("/")
