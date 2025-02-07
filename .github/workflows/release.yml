@@ -3,6 +3,9 @@ name: Create a new release
 on:
   workflow_dispatch:
     inputs:
+      branch:
+        default: 'main'
+        description: 'Branch to release from'
       releaseTag:
         description: 'Release Tag'
         required: true
@@ -17,6 +20,7 @@ jobs:
       CARGO_TERM_COLOR: always
     steps:
       - uses: actions/checkout@v4
+        ref: ${{ inputs.branch }}
       - uses: dtolnay/rust-toolchain@stable
       - uses: actions/cache@v4
         with:
