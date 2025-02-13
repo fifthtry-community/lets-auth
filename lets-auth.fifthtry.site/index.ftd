@@ -36,11 +36,32 @@ string identity:
 boolean verified-email:
 
 
+-- template create-account-confirmation-subject(link, name):
+string link:
+string name:
+
+Confirm your account on FifthTry $name
+
+-- template create-account-confirmation-html(link, name):
+string link:
+string name:
+
+hi $name,
+
+Some <b>yo</b>, $link
+
+
+-- template create-account-confirmation-text(link, name):
+string link:
+string name:
+
+hi $name,
+
+click on link here: $link
+
+
 -- option string allowed-domain: fifthtry.com
 
--- boolean is-authenticated():
-
-true
 
 -- optional user-details user:
 $processor$: pr.user-details

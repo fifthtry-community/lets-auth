@@ -11,10 +11,28 @@ module action: create-account
 -- end: signup-page
 
 
+-- template create-account-confirmation-subject(link, name):
+string link:
+string name:
 
--- string create-account-confirmation-html:
+Confirm your account on FifthTry $name
 
-<fifthtry specific html>
+-- template create-account-confirmation-html(link, name):
+string link:
+string name:
+
+hi $name,
+
+Some <b>yo</b>, $link
+
+
+-- template create-account-confirmation-text(link, name):
+string link:
+string name:
+
+hi $name,
+
+click on link here: $link
 
 
 -- ftd.text: $lets-auth.user.name
