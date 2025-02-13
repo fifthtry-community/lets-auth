@@ -1,18 +1,43 @@
 -- import: fastn/processors as pr
 
--- string name:
+-- string name: Default Name
 $processor$: pr.request-data
 
--- string link:
+-- string link: Default Link
 $processor$: pr.request-data
 
--- optional string what:
+-- optional string what: json
 $processor$: pr.request-data
 
 
--- string html: $render(template=$lets-auth.create-account-confirmation-html, name=$name, link=$link)
--- string text: $render(template=$lets-auth.create-account-confirmation-text, name=$name, link=$link)
--- string subject: $render(template=$lets-auth.create-account-confirmation-subject, name=$name, link=$link)
+-- template create-account-confirmation-subject(link, name):
+string link:
+string name:
+
+Confirm your account on FifthTry $name
+
+-- template create-account-confirmation-html(link, name):
+string link:
+string name:
+
+hi $name,
+
+Some <b>yo</b>, $link
+
+
+-- template create-account-confirmation-text(link, name):
+string link:
+string name:
+
+hi $name,
+
+click on link here: $link
+
+
+-- string html: $lets-talk.create-account-confirmation-html(name=$name, link=$link)
+-- string text: $create-account-confirmation-text(name=$name, link=$link)
+-- string subject: $create-account-confirmation-subject(name=$name, link=$link)
+
 
 
 ;; this makes sure we can easily preview the HTML in storybook
@@ -28,17 +53,10 @@ content-type: text/text
 if: { what == "subject" }
 content-type: text/text
 
+-- ftd.text: $html
 
 ;; this ensures wasm only makes one HTTP request
--- ftd.json:
+/-- ftd.json:
 text: $text
 html: $html
 subject: $subject
-
-
--- string render(template, name, link):
-string template:
-string name:
-string link:
-
-js_replace(js_replace(template, "name", name), "link", link)
