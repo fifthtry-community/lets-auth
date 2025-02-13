@@ -6,7 +6,7 @@ $processor$: pr.request-data
 -- string link: Default Link
 $processor$: pr.request-data
 
--- optional string what: json
+-- optional string what:
 $processor$: pr.request-data
 
 
@@ -34,9 +34,9 @@ hi $name,
 click on link here: $link
 
 
--- string html: $lets-talk.create-account-confirmation-html(name=$name, link=$link)
--- string text: $create-account-confirmation-text(name=$name, link=$link)
--- string subject: $create-account-confirmation-subject(name=$name, link=$link)
+-- string html: $lets-auth.create-account-confirmation-html(name=$name, link=$link)
+-- string text: $lets-auth.create-account-confirmation-text(name=$name, link=$link)
+-- string subject: $lets-auth.create-account-confirmation-subject(name=$name, link=$link)
 
 
 
@@ -53,10 +53,28 @@ content-type: text/text
 if: { what == "subject" }
 content-type: text/text
 
--- ftd.text: $html
+-- ds.page:
+
+-- ftd.row:
+
+-- ds.heading-small: $subject
+
+-- end: ftd.row
+
+-- ds.heading-small: Html Mail
+
+$html
+
+-- ds.heading-small: Text Mail
+
+$text
+
+
+-- end: ds.page
 
 ;; this ensures wasm only makes one HTTP request
-/-- ftd.json:
+-- ftd.json:
+if: { $what == "json" }
 text: $text
 html: $html
 subject: $subject
