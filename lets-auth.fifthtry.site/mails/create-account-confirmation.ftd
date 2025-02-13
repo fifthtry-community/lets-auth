@@ -10,55 +10,17 @@ $processor$: pr.request-data
 $processor$: pr.request-data
 
 
--- template create-account-confirmation-subject(link, name):
-string link:
-string name:
-
-Confirm your account on FifthTry $name
-
--- template create-account-confirmation-html(link, name):
-string link:
-string name:
-
-hi $name,
-
-Some <b>yo</b>, $link
-
-
--- template create-account-confirmation-text(link, name):
-string link:
-string name:
-
-hi $name,
-
-click on link here: $link
-
-
 -- string html: $lets-auth.create-account-confirmation-html(name=$name, link=$link)
 -- string text: $lets-auth.create-account-confirmation-text(name=$name, link=$link)
 -- string subject: $lets-auth.create-account-confirmation-subject(name=$name, link=$link)
 
-
-
-;; this makes sure we can easily preview the HTML in storybook
-/-- ftd.response:  $html
-if: { what == "html" }
-content-type: text/html
-
-/-- ftd.response: $text
-if: { what == "text" }
-content-type: text/text
-
-/-- ftd.response: $subject
-if: { what == "subject" }
-content-type: text/text
 
 -- ds.page:
 theme-switcher: true
 
 -- ftd.row:
 
--- ds.heading-small: $subject
+    -- ds.heading-small: $subject
 
 -- end: ftd.row
 
@@ -73,10 +35,10 @@ srcdoc: $html
 
 $text
 
-
 -- end: ds.page
 
-;; this ensures wasm only makes one HTTP request
+
+
 -- ftd.json:
 if: { $what == "json" }
 text: $text
