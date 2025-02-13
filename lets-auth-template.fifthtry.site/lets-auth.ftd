@@ -23,7 +23,7 @@ string name:
 
 hi $name,
 
-Some <b>yo</b>, $link
+Some <b>yo</b>, <a href=$link>Confirm account</a>
 
 
 -- template create-account-confirmation-text(link, name):
