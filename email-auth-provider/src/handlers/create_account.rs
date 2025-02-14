@@ -68,14 +68,22 @@ pub fn create_account(
 
     if let Err(e) = ft_sdk::email::send(&ft_sdk::Email {
         from,
-        to: vec![(account_meta.name.clone(), account_meta.email).into()],
-        subject: "Confirm you account".to_string(),
-        body_html: confirm_account_html_template(&account_meta.name, &conf_link),
-        body_text: confirm_account_text_template(&account_meta.name, &conf_link),
+        to: smallvec::smallvec![(account_meta.name.clone(), account_meta.email).into()],
         reply_to: None,
-        cc: None,
-        bcc: None,
-        mkind: "auth_confirm_account_request".to_string(),
+        cc: Default::default(),
+        bcc: Default::default(),
+        mkind: "create-account-confirmation".to_string(),
+        content: ft_sdk::EmailContent::FromMKind {
+            context: Some(
+                serde_json::json!({
+                    "name": account_meta.name,
+                    "link": conf_link,
+                })
+                .as_object()
+                .unwrap()
+                .to_owned(),
+            ),
+        },
     }) {
         ft_sdk::println!("auth.wasm: failed to queue email: {:?}", e);
         return Err(e.into());
@@ -334,42 +342,6 @@ fn validate_verified_email(
     }
 
     Ok(())
-}
-
-pub fn confirm_account_html_template(name: &str, link: &str) -> String {
-    // TODO: until we figure out email templates, this has to do
-    format!(
-        r#"
-            <html>
-                <head>
-                    <title>Confirm your account</title>
-                </head>
-                <body>
-                    <h1>Hi {name},</h1>
-                    <p>Click the link below to confirm your account</p>
-                    <a href="{link}">Confirm your account</a>
-
-                    In case you can't click the link, copy and paste the following link in your browser:
-                    <br>
-                    <a href="{link}">{link}</a>
-                </body>
-            </html>
-            "#,
-    )
-}
-
-pub fn confirm_account_text_template(name: &str, link: &str) -> String {
-    format!(
-        r#"
-            Hi {name},
-
-            Click the link below to confirm your account:
-
-            {link}
-
-            In case you can't click the link, copy and paste it in your browser.
-            "#,
-    )
 }
 
 pub fn generate_key(length: usize) -> String {
