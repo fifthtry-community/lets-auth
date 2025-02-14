@@ -79,18 +79,21 @@ pub fn send_confirmation_email(
 
     if let Err(e) = ft_sdk::email::send(&ft_sdk::Email {
         from,
-        subject: "Confirm you account".to_string(),
-        body_html: email_auth::handlers::create_account::confirm_account_html_template(
-            &name, conf_link,
-        ),
-        body_text: email_auth::handlers::create_account::confirm_account_text_template(
-            &name, conf_link,
-        ),
-        to: vec![(name, email).into()],
+        to: smallvec::smallvec![(name, email).into()],
         reply_to: None,
-        cc: None,
-        bcc: None,
+        cc: smallvec::smallvec![],
+        bcc: smallvec::smallvec![],
         mkind: "auth_confirm_account_request".to_string(),
+        content: ft_sdk::EmailContent::FromMKind {
+            context: Some(
+                serde_json::json!({
+                    "link": conf_link,
+                })
+                .as_object()
+                .unwrap()
+                .to_owned(),
+            ),
+        },
     }) {
         ft_sdk::println!("auth.wasm: failed to queue email: {:?}", e);
         return Err(e.into());

@@ -110,14 +110,21 @@ pub fn send_reset_password_email(
 
     if let Err(e) = ft_sdk::email::send(&ft_sdk::Email {
         from,
-        subject: "Reset password".to_string(),
-        body_html: password_reset_request_html_template(&name, link),
-        body_text: password_reset_request_text_template(&name, link),
-        to: vec![(name, email).into()],
+        to: smallvec::smallvec![(name, email).into()],
         reply_to: None,
-        cc: None,
-        bcc: None,
+        cc: Default::default(),
+        bcc: Default::default(),
         mkind: "auth_reset_password_request".to_string(),
+        content: ft_sdk::EmailContent::FromMKind {
+            context: Some(
+                serde_json::json!({
+                    "link": link,
+                })
+                .as_object()
+                .unwrap()
+                .to_owned(),
+            ),
+        },
     }) {
         ft_sdk::println!("auth.wasm: failed to queue email: {:?}", e);
         return Err(e.into());
@@ -126,41 +133,6 @@ pub fn send_reset_password_email(
     ft_sdk::println!("Email added to the queue");
 
     Ok(())
-}
-
-fn password_reset_request_html_template(name: &str, link: &str) -> String {
-    format!(
-        r#"
-            <html>
-                <head>
-                    <title>Password reset request</title>
-                </head>
-                <body>
-                    <h1>Hi {name},</h1>
-                    <p>Click the link below to reset password of your account</p>
-                    <a href="{link}">Reset password</a>
-
-                    In case you can't click the link, copy and paste the following link in your browser:
-                    <br>
-                    <a href="{link}">{link}</a>
-                </body>
-            </html>
-            "#,
-    )
-}
-
-fn password_reset_request_text_template(name: &str, link: &str) -> String {
-    format!(
-        r#"
-            Hi {name},
-
-            Click the link below to reset password of your account:
-
-            {link}
-
-            In case you can't click the link, copy and paste it in your browser.
-            "#,
-    )
 }
 
 /// Link to reset password.
