@@ -22,12 +22,10 @@ export: auth-page
 -- string set-password-url: /-/auth/set-password/
 -- string forgot-password-success-url: /-/auth/forgot-password-success/
 
--- string create-account-confirmation-html:
-
-<generic email html>
 
 
--- string smtp-password: dummy password
+
+
 
 -- record user-details:
 string name:
@@ -40,26 +38,86 @@ boolean verified-email:
 string link:
 string name:
 
-Confirm your account on FifthTry $name
+Confirm you account
 
 -- template create-account-confirmation-html(link, name):
 string link:
 string name:
 
-hi $name,
-
-Some <b>yo</b>, $link
+<html>
+    <head>
+        <title>Confirm your account</title>
+    </head>
+    <body>
+        <h1>Hi $name,</h1>
+        <p>Click the link below to confirm your account</p>
+        <a href="$link">Confirm your account</a>
+        In case you can't click the link, copy and paste the following link in your browser:
+        <br>
+        <a href="$link">$link</a>
+    </body>
+</html>
 
 
 -- template create-account-confirmation-text(link, name):
 string link:
 string name:
 
-hi $name,
+Hi $name,
 
-click on link here: $link
+Click the link below to confirm your account:
+
+$link
+
+In case you can't click the link, copy and paste it in your browser.
 
 
+
+
+
+-- template reset-password-subject(link, name):
+string link:
+string name:
+
+Reset password
+
+
+-- template reset-password-html(link, name):
+string link:
+string name:
+
+<html>
+    <head>
+        <title>Password reset request</title>
+    </head>
+    <body>
+        <h1>Hi $name,</h1>
+        <p>Click the link below to reset password of your account</p>
+        <a href="$link">Reset password</a>
+        In case you can't click the link, copy and paste the following link in your browser:
+        <br>
+        <a href="$link">$link</a>
+    </body>
+</html>
+
+
+
+-- template reset-password-text(link, name):
+string link:
+string name:
+
+Hi $name,
+
+Click the link below to reset password of your account:
+
+$link
+
+In case you can't click the link, copy and paste it in your browser.
+
+
+
+;; null value here means use the host as the domain name (ignoring the
+;; subdomain part, for e.g., meet.fifthtry.com will be fifthtry.com)
 -- option string allowed-domain: fifthtry.com
 
 
