@@ -16,11 +16,11 @@ export: forgot-password-page
 export: auth-page
 
 
--- string sign-up-url: /-/auth/signup/
--- string sign-in-url: /-/auth/signin/
--- string forgot-password-url: /-/auth/forgot-password/
--- string set-password-url: /-/auth/set-password/
--- string forgot-password-success-url: /-/auth/forgot-password-success/
+-- string sign-up-url: $ftd.app-url(path=/signup/)
+-- string sign-in-url: $ftd.app-url(path=/signin/)
+-- string forgot-password-url: $ftd.app-url(path=/forgot-password/)
+-- string set-password-url: $ftd.app-url(path=/set-password/)
+-- string forgot-password-success-url: $ftd.app-url(path=/forgot-password-success/)
 
 
 
