@@ -110,15 +110,16 @@ pub fn send_reset_password_email(
 
     if let Err(e) = ft_sdk::email::send(&ft_sdk::Email {
         from,
-        to: smallvec::smallvec![(name, email).into()],
+        to: smallvec::smallvec![(name.clone(), email).into()],
         reply_to: None,
         cc: Default::default(),
         bcc: Default::default(),
-        mkind: "auth_reset_password_request".to_string(),
+        mkind: "reset-password".to_string(),
         content: ft_sdk::EmailContent::FromMKind {
             context: Some(
                 serde_json::json!({
                     "link": link,
+                    "name": name,
                 })
                 .as_object()
                 .unwrap()

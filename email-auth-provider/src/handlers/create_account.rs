@@ -19,10 +19,8 @@ pub fn create_account(
     // code can be invalid. eg: xyz
     ft_sdk::Query(code): ft_sdk::Query<"code", Option<String>>,
     host: ft_sdk::Host,
-    ft_sdk::Config(config): ft_sdk::Config<email_auth::Config>,
     app_url: ft_sdk::AppUrl,
 ) -> ft_sdk::form::Result {
-    ft_sdk::println!("Config: {config:?}");
     let account_meta = validate(payload, &mut conn, &code)?;
     ft_sdk::println!("Account meta done for {}", account_meta.name);
 
@@ -62,34 +60,7 @@ pub fn create_account(
         &app_url,
     );
     ft_sdk::println!("Confirmation link added {conf_link}");
-
-    let from = email_from_address_from_env();
-    ft_sdk::println!("Found email sender: {from:?}");
-
-    if let Err(e) = ft_sdk::email::send(&ft_sdk::Email {
-        from,
-        to: smallvec::smallvec![(account_meta.name.clone(), account_meta.email).into()],
-        reply_to: None,
-        cc: Default::default(),
-        bcc: Default::default(),
-        mkind: "create-account-confirmation".to_string(),
-        content: ft_sdk::EmailContent::FromMKind {
-            context: Some(
-                serde_json::json!({
-                    "name": account_meta.name,
-                    "link": conf_link,
-                })
-                .as_object()
-                .unwrap()
-                .to_owned(),
-            ),
-        },
-    }) {
-        ft_sdk::println!("auth.wasm: failed to queue email: {:?}", e);
-        return Err(e.into());
-    }
-    ft_sdk::println!("Email added to the queue");
-
+    send_confirmation_email(account_meta.email, account_meta.name, &conf_link)?;
     Ok(ft_sdk::form::redirect("/")?.with_cookie(common::session_cookie(sid.as_str(), host)?))
 }
 
@@ -356,7 +327,9 @@ pub fn confirmation_link(
 ) -> String {
     format!(
         "https://{host}{app_url}{confirm_email_route}?code={key}&email={email}",
-        confirm_email_route = email_auth::urls::Route::ConfirmEmail,
+        confirm_email_route = email_auth::urls::Route::ConfirmEmail
+            .to_string()
+            .trim_start_matches('/'),
         app_url = app_url.as_ref().unwrap().trim_end_matches('/'),
     )
 }
@@ -370,4 +343,41 @@ pub fn email_from_address_from_env() -> ft_sdk::EmailAddress {
     );
 
     ft_sdk::EmailAddress { name, email }
+}
+
+pub fn send_confirmation_email(
+    email: String,
+    name: String,
+    conf_link: &str,
+) -> Result<(), ft_sdk::Error> {
+    let from = email_from_address_from_env();
+
+    ft_sdk::println!("Found email sender: {from:?}");
+
+    if let Err(e) = ft_sdk::email::send(&ft_sdk::Email {
+        from,
+        to: smallvec::smallvec![(name.clone(), email).into()],
+        reply_to: None,
+        cc: smallvec::smallvec![],
+        bcc: smallvec::smallvec![],
+        mkind: "create-account-confirmation".to_string(),
+        content: ft_sdk::EmailContent::FromMKind {
+            context: Some(
+                serde_json::json!({
+                    "link": conf_link,
+                    "name": name,
+                })
+                .as_object()
+                .unwrap()
+                .to_owned(),
+            ),
+        },
+    }) {
+        ft_sdk::println!("auth.wasm: failed to queue email: {:?}", e);
+        return Err(e.into());
+    }
+
+    ft_sdk::println!("Email added to the queue");
+
+    Ok(())
 }

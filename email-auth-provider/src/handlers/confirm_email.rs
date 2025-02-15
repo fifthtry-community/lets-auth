@@ -48,9 +48,7 @@ pub fn confirm_email(
 
         let name = data.name.unwrap_or_else(|| email.clone());
 
-        email_auth::handlers::resend_confirmation_email::send_confirmation_email(
-            email, name, &conf_link,
-        )?;
+        email_auth::handlers::create_account::send_confirmation_email(email, name, &conf_link)?;
 
         return Err(ft_sdk::single_error(
             "code",
