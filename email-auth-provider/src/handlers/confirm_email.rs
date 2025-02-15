@@ -5,7 +5,7 @@ pub fn confirm_email(
     ft_sdk::Query(email): ft_sdk::Query<"email">,
     ft_sdk::Query(next): ft_sdk::Query<"next", Option<String>>,
     host: ft_sdk::Host,
-    mountpoint: ft_sdk::AppUrl,
+    app_url: ft_sdk::AppUrl,
 ) -> ft_sdk::processor::Result {
     if !validator::ValidateEmail::validate_email(&email) {
         return Err(ft_sdk::single_error("email", "Invalid email format.").into());
@@ -42,7 +42,7 @@ pub fn confirm_email(
                 &user_id,
                 &email,
                 &host,
-                &mountpoint,
+                app_url,
                 &mut conn,
             )?;
 

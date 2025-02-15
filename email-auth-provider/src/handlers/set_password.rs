@@ -9,6 +9,7 @@ pub fn set_password(
     ft_sdk::Query(email): ft_sdk::Query<"email">,
     ft_sdk::Query(next): ft_sdk::Query<"next", Option<String>>,
     host: ft_sdk::Host,
+    app_url: ft_sdk::AppUrl,
 ) -> ft_sdk::form::Result {
     validate_email_and_password(&email, &new_password, &new_password2)?;
 
@@ -38,6 +39,7 @@ pub fn set_password(
             spr,
             &host,
             &mut conn,
+            app_url,
         )?;
 
         let name = data.name.unwrap_or_else(|| email.clone());
