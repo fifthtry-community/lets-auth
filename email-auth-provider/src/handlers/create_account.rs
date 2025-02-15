@@ -57,7 +57,7 @@ pub fn create_account(
         &account_meta.email_confirmation_code,
         &account_meta.email,
         &host,
-        &app_url,
+        app_url,
     );
     ft_sdk::println!("Confirmation link added {conf_link}");
     send_confirmation_email(account_meta.email, account_meta.name, &conf_link)?;
@@ -323,14 +323,12 @@ pub fn confirmation_link(
     key: &str,
     email: &str,
     ft_sdk::Host(host): &ft_sdk::Host,
-    ft_sdk::AppUrl(app_url): &ft_sdk::AppUrl,
+    ft_sdk::AppUrl(app_url): ft_sdk::AppUrl,
 ) -> String {
     format!(
         "https://{host}{app_url}{confirm_email_route}?code={key}&email={email}",
-        confirm_email_route = email_auth::urls::Route::ConfirmEmail
-            .to_string()
-            .trim_start_matches('/'),
-        app_url = app_url.as_ref().unwrap().trim_end_matches('/'),
+        confirm_email_route = email_auth::urls::Route::ConfirmEmail,
+        app_url = app_url.unwrap_or_default().trim_end_matches('/'),
     )
 }
 

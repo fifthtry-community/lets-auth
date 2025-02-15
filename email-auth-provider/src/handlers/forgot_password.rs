@@ -5,14 +5,22 @@ pub fn forgot_password(
     ft_sdk::Optional(set_password_route): ft_sdk::Optional<"set-password-route">,
     ft_sdk::Optional(next): ft_sdk::Optional<"next">,
     host: ft_sdk::Host,
+    app_url: ft_sdk::AppUrl,
 ) -> ft_sdk::form::Result {
     let (user_id, email, data) = get_user_data(&mut conn, username_or_email)?;
     let name = data.name.clone().unwrap_or_else(|| email.clone());
 
     let set_password_route = set_password_route.unwrap_or_else(|| "/set-password/".to_string());
 
-    let reset_link =
-        generate_new_reset_key(data, &user_id, &email, set_password_route, &host, &mut conn)?;
+    let reset_link = generate_new_reset_key(
+        data,
+        &user_id,
+        &email,
+        set_password_route,
+        &host,
+        &mut conn,
+        app_url,
+    )?;
 
     send_reset_password_email(email, name, &reset_link)?;
 
@@ -65,10 +73,11 @@ pub fn generate_new_reset_key(
     set_password_route: String,
     host: &ft_sdk::Host,
     conn: &mut ft_sdk::Connection,
+    app_url: ft_sdk::AppUrl,
 ) -> Result<String, ft_sdk::Error> {
     let key = ft_sdk::Rng::generate_key(64);
 
-    let reset_link = reset_link(&key, email, set_password_route, host);
+    let reset_link = reset_link(&key, email, set_password_route, host, app_url);
 
     ft_sdk::println!("Password reset link added {reset_link}");
 
@@ -143,8 +152,12 @@ pub fn reset_link(
     email: &str,
     set_password_route: String,
     ft_sdk::Host(host): &ft_sdk::Host,
+    ft_sdk::AppUrl(app_url): ft_sdk::AppUrl,
 ) -> String {
     assert!(set_password_route.starts_with('/'));
     assert!(set_password_route.ends_with('/'));
-    format!("https://{host}{set_password_route}?code={key}&email={email}&spr={set_password_route}",)
+    format!(
+        "https://{host}{app_url}{set_password_route}?code={key}&email={email}&spr={set_password_route}",
+        app_url = app_url.unwrap_or_default().trim_end_matches('/'),
+    )
 }
