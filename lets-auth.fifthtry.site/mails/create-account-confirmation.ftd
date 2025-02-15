@@ -15,7 +15,8 @@ $processor$: pr.request-data
 -- string subject: $lets-auth.create-account-confirmation-subject(name=$name, link=$link)
 
 
--- ds.page:
+;; TODO: commenting this out because currently this fails due to some fastn bug
+/-- ds.page:
 theme-switcher: true
 
 -- ftd.row:
