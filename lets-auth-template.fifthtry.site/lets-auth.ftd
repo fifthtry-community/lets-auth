@@ -1,7 +1,7 @@
 -- import: lets-auth.fifthtry.site/actions/dummy/create-account
 
 -- import: lets-auth.fifthtry.site as _
-export: signin-page, signup-page, user, forgot-password-url, user-details, set-password-page, forgot-password-success-url, set-password-url, forgot-password-page, auth-page, sign-up-url, sign-in-url
+export: signin-page, signup-page, user, forgot-password-url, user-details, set-password-page, forgot-password-success-url, set-password-url, forgot-password-page, auth-page, sign-up-url, sign-in-url, create-account-confirmation-subject, create-account-confirmation-html, create-account-confirmation-text, reset-password-subject, reset-password-text, reset-password-html
 
 /-- component signup-page:
 module action: create-account
@@ -9,30 +9,6 @@ module action: create-account
 -- ftd.text: signup yo yo
 
 -- end: signup-page
-
-
--- template create-account-confirmation-subject(link, name):
-string link:
-string name:
-
-Confirm your account on FifthTry $name
-
--- template create-account-confirmation-html(link, name):
-string link:
-string name:
-
-hi $name,
-
-Some <b>yo</b>, <a href="$link">Confirm account</a>
-
-
--- template create-account-confirmation-text(link, name):
-string link:
-string name:
-
-hi $name,
-
-click on link here: $link
 
 
 -- ftd.text: $lets-auth.user.name
