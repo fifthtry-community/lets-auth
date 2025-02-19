@@ -133,6 +133,19 @@ $processor$: pr.user-details
 -- ftd.text: $lets-auth.user.name
 if: { lets-auth.user != NULL }
 
+-- ftd.text: $lets-auth.user.email
+
+-- ftd.text: You're verified
+if: { lets-auth.user.verified-email }
+
+-- ftd.text: You're **not** verified
+if: { !lets-auth.user.verified-email }
+
+-- ftd.text: logout
+link: /-/auth/logout/
+if: { lets-auth.user != NULL }
+
+
 -- ftd.text: login
 if: { lets-auth.user == NULL }
 link: $ftd.app-url(path=/signin/)

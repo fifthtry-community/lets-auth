@@ -6,6 +6,14 @@ if: { lets-auth.user != NULL }
 if: { lets-auth.user != NULL }
 link: /-/auth/logout/
 
+-- ftd.text: $lets-auth.user.email
+
+-- ftd.text: You're verified
+if: { lets-auth.user.verified-email }
+
+-- ftd.text: You're **not** verified
+if: { !lets-auth.user.verified-email }
+
 
 -- ftd.text: checkout only logged in people content
 if: { lets-auth.user != NULL }
