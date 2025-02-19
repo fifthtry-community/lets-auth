@@ -6,6 +6,7 @@ pub fn forgot_password(
     ft_sdk::Optional(next): ft_sdk::Optional<"next">,
     host: ft_sdk::Host,
     app_url: ft_sdk::AppUrl,
+    ft_sdk::Config(config): ft_sdk::Config<crate::Config>,
 ) -> ft_sdk::form::Result {
     let (user_id, email, data) = get_user_data(&mut conn, username_or_email)?;
     let name = data.name.clone().unwrap_or_else(|| email.clone());
@@ -22,7 +23,7 @@ pub fn forgot_password(
         app_url,
     )?;
 
-    send_reset_password_email(email, name, &reset_link)?;
+    send_reset_password_email(email, name, &reset_link, &config)?;
 
     let next = next.unwrap_or_else(|| "/".to_string());
     ft_sdk::form::redirect(next)
@@ -112,15 +113,16 @@ pub fn send_reset_password_email(
     email: String,
     name: String,
     link: &str,
+    config: &crate::Config,
 ) -> Result<(), ft_sdk::Error> {
-    let from = email_auth::handlers::create_account::email_from_address_from_env();
+    let from = config.from_email();
 
     ft_sdk::println!("Found email sender: {from:?},");
 
     if let Err(e) = ft_sdk::email::send(&ft_sdk::Email {
         from,
         to: smallvec::smallvec![(name.clone(), email).into()],
-        reply_to: None,
+        reply_to: Some(smallvec::smallvec![config.reply_to()]),
         cc: Default::default(),
         bcc: Default::default(),
         mkind: "reset-password".to_string(),

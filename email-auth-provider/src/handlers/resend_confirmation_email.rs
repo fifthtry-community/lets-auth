@@ -5,6 +5,7 @@ pub fn resend_confirmation_email(
     ft_sdk::Query(email): ft_sdk::Query<"email">,
     host: ft_sdk::Host,
     app_url: ft_sdk::AppUrl,
+    ft_sdk::Config(config): ft_sdk::Config<crate::Config>,
 ) -> ft_sdk::form::Result {
     if !validator::ValidateEmail::validate_email(&email) {
         return Err(ft_sdk::single_error("email", "Incorrect email format.").into());
@@ -18,7 +19,9 @@ pub fn resend_confirmation_email(
 
     let name = data.name.unwrap_or_else(|| "User".to_string());
 
-    email_auth::handlers::create_account::send_confirmation_email(email, name, &conf_link)?;
+    email_auth::handlers::create_account::send_confirmation_email(
+        email, name, &conf_link, &config,
+    )?;
 
     ft_sdk::form::redirect("/")
 }

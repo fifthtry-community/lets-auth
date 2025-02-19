@@ -1,3 +1,3 @@
 -- ftd.json:
-sign-in-url: $lets-auth.sign-in-url
-sign-up-url: $lets-auth.sign-up-url
+email-sender-name: $lets-auth.email-sender-name
+email-reply-to: $lets-auth.email-reply-to

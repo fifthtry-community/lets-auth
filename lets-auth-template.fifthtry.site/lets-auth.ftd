@@ -3,17 +3,14 @@
 -- import: lets-auth.fifthtry.site as _
 export: signin-page, signup-page, user, forgot-password-url, user-details, set-password-page, forgot-password-success-url, set-password-url, forgot-password-page, auth-page, sign-up-url, sign-in-url, create-account-confirmation-subject, create-account-confirmation-html, create-account-confirmation-text, reset-password-subject, reset-password-text, reset-password-html
 
-/-- component signup-page:
-module action: create-account
+;; Lines starting with ";;" are comments. Changing these will have no effect.
+;; Feel free to delete these lines once you've read them.
 
--- ftd.text: signup yo yo
+;; NOTE: This name will appear on sent emails
+;; Change "Amit" to "<Your Name>" in the following line
+-- string email-sender-name: Amit
 
--- end: signup-page
-
-
--- ftd.text: $lets-auth.user.name
-if: { lets-auth.user != NULL }
-
--- ftd.text: login
-if: { lets-auth.user == NULL }
-link: $ftd.app-path(path=/signin/)
+;; NOTE: You'll receive replies on this email address. A business email address
+;; is suitable for these situations. Eg.: "support@yourbusiness.com".
+;; Change "amitu@fifthtry.com" to "support@yourbusiness.com" in the following line
+-- string email-reply-to: amitu@fifthtry.com

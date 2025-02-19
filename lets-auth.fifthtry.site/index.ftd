@@ -22,7 +22,8 @@ export: auth-page
 -- string set-password-url: $ftd.app-url(path=/set-password/)
 -- string forgot-password-success-url: $ftd.app-url(path=/forgot-password-success/)
 
-
+-- string email-sender-name: Amit
+-- string email-reply-to: support@fifthtry.com
 
 
 

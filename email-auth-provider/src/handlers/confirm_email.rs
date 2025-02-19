@@ -6,6 +6,7 @@ pub fn confirm_email(
     ft_sdk::Query(next): ft_sdk::Query<"next", Option<String>>,
     host: ft_sdk::Host,
     app_url: ft_sdk::AppUrl,
+    ft_sdk::Config(config): ft_sdk::Config<crate::Config>,
 ) -> ft_sdk::processor::Result {
     if !validator::ValidateEmail::validate_email(&email) {
         return Err(ft_sdk::single_error("email", "Invalid email format.").into());
@@ -48,7 +49,9 @@ pub fn confirm_email(
 
         let name = data.name.unwrap_or_else(|| email.clone());
 
-        email_auth::handlers::create_account::send_confirmation_email(email, name, &conf_link)?;
+        email_auth::handlers::create_account::send_confirmation_email(
+            email, name, &conf_link, &config,
+        )?;
 
         return Err(ft_sdk::single_error(
             "code",

@@ -10,6 +10,7 @@ pub fn set_password(
     ft_sdk::Query(next): ft_sdk::Query<"next", Option<String>>,
     host: ft_sdk::Host,
     app_url: ft_sdk::AppUrl,
+    ft_sdk::Config(config): ft_sdk::Config<crate::Config>,
 ) -> ft_sdk::form::Result {
     validate_email_and_password(&email, &new_password, &new_password2)?;
 
@@ -44,7 +45,12 @@ pub fn set_password(
 
         let name = data.name.unwrap_or_else(|| email.clone());
 
-        email_auth::handlers::forgot_password::send_reset_password_email(email, name, &reset_link)?;
+        email_auth::handlers::forgot_password::send_reset_password_email(
+            email,
+            name,
+            &reset_link,
+            &config,
+        )?;
 
         return Err(ft_sdk::single_error(
             "code",

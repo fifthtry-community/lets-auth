@@ -20,6 +20,7 @@ pub fn create_account(
     ft_sdk::Query(code): ft_sdk::Query<"code", Option<String>>,
     host: ft_sdk::Host,
     app_url: ft_sdk::AppUrl,
+    ft_sdk::Config(config): ft_sdk::Config<crate::Config>,
 ) -> ft_sdk::form::Result {
     let account_meta = validate(payload, &mut conn, &code)?;
     ft_sdk::println!("Account meta done for {}", account_meta.name);
@@ -60,7 +61,7 @@ pub fn create_account(
         app_url,
     );
     ft_sdk::println!("Confirmation link added {conf_link}");
-    send_confirmation_email(account_meta.email, account_meta.name, &conf_link)?;
+    send_confirmation_email(account_meta.email, account_meta.name, &conf_link, &config)?;
     Ok(ft_sdk::form::redirect("/")?.with_cookie(common::session_cookie(sid.as_str(), host)?))
 }
 
@@ -332,30 +333,19 @@ pub fn confirmation_link(
     )
 }
 
-pub fn email_from_address_from_env() -> ft_sdk::EmailAddress {
-    let email = ft_sdk::env::var("FASTN_SMTP_SENDER_EMAIL".to_string())
-        .unwrap_or_else(|| "support@fifthtry.com".to_string());
-    let name = Some(
-        ft_sdk::env::var("FASTN_SMTP_SENDER_NAME".to_string())
-            .unwrap_or_else(|| "FifthTry Team".to_string()),
-    );
-
-    ft_sdk::EmailAddress { name, email }
-}
-
 pub fn send_confirmation_email(
     email: String,
     name: String,
     conf_link: &str,
+    config: &crate::Config,
 ) -> Result<(), ft_sdk::Error> {
-    let from = email_from_address_from_env();
-
+    let from = config.from_email();
     ft_sdk::println!("Found email sender: {from:?}");
 
     if let Err(e) = ft_sdk::email::send(&ft_sdk::Email {
         from,
         to: smallvec::smallvec![(name.clone(), email).into()],
-        reply_to: None,
+        reply_to: Some(smallvec::smallvec![config.reply_to()]),
         cc: smallvec::smallvec![],
         bcc: smallvec::smallvec![],
         mkind: "create-account-confirmation".to_string(),
