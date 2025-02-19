@@ -5,6 +5,8 @@ on:
     branches: [ main ]
     paths:
       - lets-auth.fifthtry.site/**
+      - email-auth-provider/**
+      - mobile-auth-provider/**
       - scripts/*.sh
       - .github/workflows/app-to-ft.yml
 
