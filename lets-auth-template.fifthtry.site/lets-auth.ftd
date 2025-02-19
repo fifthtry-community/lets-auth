@@ -12,5 +12,5 @@ export: signin-page, signup-page, user, forgot-password-url, user-details, set-p
 
 ;; NOTE: You'll receive replies on this email address. A business email address
 ;; is suitable for these situations. Eg.: "support@yourbusiness.com".
-;; Change "amitu@fifthtry.com" to "support@yourbusiness.com" in the following line
--- string email-reply-to: amitu@fifthtry.com
+;; Change "support@fifthtry.com" to "support@yourbusiness.com" in the following line
+-- string email-reply-to: support@fifthtry.com
