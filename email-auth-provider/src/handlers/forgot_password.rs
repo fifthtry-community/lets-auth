@@ -153,13 +153,12 @@ pub fn reset_link(
     key: &str,
     email: &str,
     set_password_route: String,
-    ft_sdk::Host(host): &ft_sdk::Host,
-    ft_sdk::AppUrl(app_url): ft_sdk::AppUrl,
+    host: &ft_sdk::Host,
+    app_url: ft_sdk::AppUrl,
 ) -> String {
     assert!(set_password_route.starts_with('/'));
     assert!(set_password_route.ends_with('/'));
-    format!(
-        "https://{host}{app_url}{set_password_route}?code={key}&email={email}&spr={set_password_route}",
-        app_url = app_url.unwrap_or_default().trim_end_matches('/'),
-    )
+
+    let url = crate::wasm_handler_link(&set_password_route, host, app_url);
+    format!("{url}?code={key}&email={email}&spr={set_password_route}",)
 }

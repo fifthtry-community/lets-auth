@@ -14,6 +14,9 @@ pub const EMAIL_CONF_SENT_AT: &str = "email_conf_sent_at";
 // TODO: make this configurable as well. We need DKIM support among other things before we can do
 // this
 pub const EMAIL_SENDER: &str = "support@fifthtry.com";
+// WARN: change this if you change the crate name or the ../../scripts/build-wasm.sh file
+/// lets-auth.fifthtry.site package must have [WASM_MOD_NAME].wasm file in its root
+const WASM_MOD_NAME: &str = "email_auth_provider";
 
 #[derive(serde::Deserialize, Debug)]
 #[serde(rename_all = "kebab-case")]
@@ -36,4 +39,22 @@ impl Config {
             email: self.email_reply_to.clone(),
         }
     }
+}
+
+/// Generate https url prefix to reach handlers of this crate
+/// path: `/confirm-email`
+/// output: https://examplehost.com/-/auth/email_auth_provider/confirm-email/ (given that the app is
+/// mounted on /-/auth/ and the wasm module is named email_auth_provider)
+pub fn wasm_handler_link(
+    path: &str,
+    ft_sdk::Host(host): &ft_sdk::Host,
+    ft_sdk::AppUrl(app_url): ft_sdk::AppUrl,
+) -> String {
+    let path = path.trim_start_matches('/');
+    let path = path.trim_end_matches('/');
+
+    format!(
+        "https://{host}{app_url}/{WASM_MOD_NAME}/{path}/",
+        app_url = app_url.unwrap_or_default().trim_end_matches('/'),
+    )
 }

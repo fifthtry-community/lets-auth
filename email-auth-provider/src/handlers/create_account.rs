@@ -323,14 +323,15 @@ pub fn generate_key(length: usize) -> String {
 pub fn confirmation_link(
     key: &str,
     email: &str,
-    ft_sdk::Host(host): &ft_sdk::Host,
-    ft_sdk::AppUrl(app_url): ft_sdk::AppUrl,
+    host: &ft_sdk::Host,
+    app_url: ft_sdk::AppUrl,
 ) -> String {
-    format!(
-        "https://{host}{app_url}{confirm_email_route}?code={key}&email={email}",
-        confirm_email_route = email_auth::urls::Route::ConfirmEmail,
-        app_url = app_url.unwrap_or_default().trim_end_matches('/'),
-    )
+    let url = crate::wasm_handler_link(
+        &email_auth::urls::Route::ConfirmEmail.to_string(),
+        host,
+        app_url,
+    );
+    format!("{url}?code={key}&email={email}",)
 }
 
 pub fn send_confirmation_email(
