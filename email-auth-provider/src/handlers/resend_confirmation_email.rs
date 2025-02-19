@@ -51,7 +51,12 @@ pub fn generate_new_confirmation_key(
 
     data.custom.as_object_mut().unwrap().insert(
         email_auth::EMAIL_CONF_SENT_AT.to_string(),
-        serde_json::Value::String(ft_sdk::env::now().to_rfc3339()),
+        serde_json::Value::Number(
+            ft_sdk::env::now()
+                .timestamp_nanos_opt()
+                .expect("unexpected out of rande datetime")
+                .into(),
+        ),
     );
 
     ft_sdk::auth::provider::update_user(
