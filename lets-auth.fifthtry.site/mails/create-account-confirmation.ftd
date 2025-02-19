@@ -1,6 +1,6 @@
 -- import: fastn/processors as pr
 
--- string name: Default Name
+-- string first-name: User
 $processor$: pr.request-data
 
 -- string link: https://www.fifthtry.com/some-link/
@@ -10,9 +10,9 @@ $processor$: pr.request-data
 $processor$: pr.request-data
 
 
--- string html: $lets-auth.create-account-confirmation-html(name=$name, link=$link)
--- string text: $lets-auth.create-account-confirmation-text(name=$name, link=$link)
--- string subject: $lets-auth.create-account-confirmation-subject(name=$name, link=$link)
+-- string html: $lets-auth.create-account-confirmation-html(name=$first-name, link=$link)
+-- string text: $lets-auth.create-account-confirmation-text(name=$first-name, link=$link)
+-- string subject: $lets-auth.create-account-confirmation-subject(name=$first-name, link=$link)
 
 
 ;; TODO: commenting this out because currently this fails due to some fastn bug

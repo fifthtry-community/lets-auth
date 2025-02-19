@@ -363,7 +363,7 @@ pub fn send_confirmation_email(
             context: Some(
                 serde_json::json!({
                     "link": conf_link,
-                    "name": name,
+                    "first-name": get_first_name(&name),
                 })
                 .as_object()
                 .unwrap()
@@ -378,4 +378,24 @@ pub fn send_confirmation_email(
     ft_sdk::println!("Email added to the queue");
 
     Ok(())
+}
+
+pub fn get_first_name(name: &str) -> String {
+    name.split_whitespace()
+        .next()
+        .unwrap_or_default()
+        .to_string()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_get_first_name() {
+        assert_eq!(get_first_name("John Doe"), "John");
+        assert_eq!(get_first_name("John"), "John");
+        assert_eq!(get_first_name("John Doe Smith"), "John");
+        assert_eq!(get_first_name("john@gmail.com"), "john@gmail.com");
+    }
 }
