@@ -3,10 +3,16 @@
 ;; they represent.
 
 -- import: fastn/processors as pr
+
+;; this is needed so we can pass this module to `ds.storybook`.
+;;           storybook navigate module
 -- import: lets-auth.fifthtry.site/storybook
--- import: design-system.fifthtry.site/assets as ds-assets
+
 -- import: design-system.fifthtry.site/actions/navigate
 export: active-file-content, active-title, active-sub-title, submit
+
+-- optional string $active-file-preview-url: /storybook/dashboard/
+;;           end storybook navigate module
 
 -- ds.page: Storybook
 fastn-badge: false
@@ -26,5 +32,3 @@ $processor$: pr.toc
   - Sign-up Page: /storybook/signup/
   - Forgot Password Page: /storybook/forgot-password/
   - Set Password Page: /storybook/reset-password/
-
--- optional string $active-file-preview-url: /storybook/signin/

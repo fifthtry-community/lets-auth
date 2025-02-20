@@ -1,4 +1,4 @@
-;; all auth related pages use this component as the base page level component.
+;; all auth related pages use this component as the base level page component.
 ;;
 ;; this page itself uses other pluggable components like auth-header, so if you
 ;; want to just modify the header, you do not have to overwrite this page, just
