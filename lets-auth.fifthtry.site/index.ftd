@@ -26,7 +26,11 @@ export: auth-page
 -- string email-reply-to: support@fifthtry.com
 
 
-
+;; this is the super user of the site, they will have access to extra permissions
+-- integer super-user-id: 1
+;; any site can be either a personal site or a non personal site. personal sites
+;; get some extra features.
+-- boolean is-personal-site: true
 
 -- record user-details:
 string name:

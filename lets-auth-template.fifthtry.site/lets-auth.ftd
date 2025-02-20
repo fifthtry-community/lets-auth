@@ -1,7 +1,7 @@
 -- import: lets-auth.fifthtry.site/actions/dummy/create-account
 
 -- import: lets-auth.fifthtry.site as _
-export: signin-page, signup-page, user, forgot-password-url, user-details, set-password-page, forgot-password-success-url, set-password-url, forgot-password-page, auth-page, sign-up-url, sign-in-url, create-account-confirmation-subject, create-account-confirmation-html, create-account-confirmation-text, reset-password-subject, reset-password-text, reset-password-html
+export: signin-page, signup-page, user, forgot-password-url, user-details, set-password-page, forgot-password-success-url, set-password-url, forgot-password-page, auth-page, sign-up-url, sign-in-url, create-account-confirmation-subject, create-account-confirmation-html, create-account-confirmation-text, reset-password-subject, reset-password-text, reset-password-html, super-user-id, is-personal-site
 
 ;; Lines starting with ";;" are comments. Changing these will have no effect.
 ;; Feel free to delete these lines once you've read them.
