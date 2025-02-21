@@ -138,12 +138,18 @@ $processor$: pr.user-details
 if: { lets-auth.user != NULL }
 
 -- ftd.text: $lets-auth.user.email
+if: { lets-auth.user != NULL }
+
+-- ftd.column:
+if: { lets-auth.user != NULL }
 
 -- ftd.text: You're verified
 if: { lets-auth.user.verified-email }
 
 -- ftd.text: You're **not** verified
 if: { !lets-auth.user.verified-email }
+
+-- end: ftd.column
 
 -- ftd.text: logout
 link: /-/auth/logout/
