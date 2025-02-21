@@ -26,7 +26,7 @@ boolean reset-success:
     type: password
 
     -- ds.primary-button: Sign in
-    $on-click$: $signin-page.action.signin($username_or_email=$signin-page.action.username-or-email, $password=$signin-page.action.password, $next=$signin-page.action.next)
+    $on-click$: $signin-page.action.signin($username_or_email=$signin-page.action.username-or-email, $password=$signin-page.action.password, $next=$signin-page.action.next-field)
     width: full
 
     -- ds.row:

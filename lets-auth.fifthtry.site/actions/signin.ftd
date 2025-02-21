@@ -1,7 +1,12 @@
+-- import: fastn/processors
+
+-- string next: /
+$processor$: processors.request-data
+
 -- ftd.string-field $username-or-email: username-or-email
 -- ftd.string-field $password: password
--- ftd.string-field $next: next
-value: /
+-- ftd.string-field $next-field: next
+value: *$next
 
 -- void signin(username_or_email, password, next):
 ftd.string-field $username_or_email:

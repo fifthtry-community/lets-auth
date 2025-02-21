@@ -7,6 +7,7 @@ pub struct Login {
 pub fn login(
     mut conn: ft_sdk::Connection,
     ft_sdk::Form(payload): ft_sdk::Form<LoginPayload>,
+    ft_sdk::Query(next): ft_sdk::Query<"next", Option<String>>,
     ft_sdk::Cookie(sid): ft_sdk::Cookie<{ ft_sdk::auth::SESSION_KEY }>,
     host: ft_sdk::Host,
 ) -> ft_sdk::form::Result {
@@ -15,7 +16,8 @@ pub fn login(
     let ft_sdk::SessionID(sid) =
         ft_sdk::auth::provider::login(&mut conn, &login_meta.user_id, sid.map(ft_sdk::SessionID))?;
 
-    Ok(ft_sdk::form::redirect("/")?.with_cookie(common::session_cookie(sid.as_str(), host)?))
+    let next = next.unwrap_or_else(|| "/".to_string());
+    Ok(ft_sdk::form::redirect(next)?.with_cookie(common::session_cookie(sid.as_str(), host)?))
 }
 
 impl Login {

@@ -1,3 +1,8 @@
+-- import: fastn/processors
+
+-- string next: /
+$processor$: processors.request-data
+
 -- ftd.string-field $name: name
 -- ftd.string-field $username: username
 -- ftd.string-field $email: email
@@ -5,8 +10,8 @@
 -- ftd.string-field $password2: password2
 -- ftd.boolean-field $accept_terms: accept_terms
 
--- ftd.string-field $next: next
-value: /
+-- ftd.string-field $next-field: next
+value: *$next
 
 
 -- void create-account(name, email, username, password, password2, accept_terms, next):

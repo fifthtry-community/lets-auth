@@ -5,7 +5,7 @@
 -- ftd.string-field $password2: password2
 -- ftd.boolean-field $accept_terms: accept_terms
 
--- ftd.string-field $next: next
+-- ftd.string-field $next-field: next
 value: /
 
 

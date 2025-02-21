@@ -46,7 +46,7 @@ module action: create-account
 	-- end: ds.column
 
 	-- ds.primary-button: Sign up
-	$on-click$: $signup-page.action.create-account($name = $signup-page.action.name, $email = $signup-page.action.email, $username = $signup-page.action.username, $password = $signup-page.action.password, $password2 = $signup-page.action.password2, $accept_terms = $signup-page.action.accept_terms, $next = $signup-page.action.next)
+	$on-click$: $signup-page.action.create-account($name = $signup-page.action.name, $email = $signup-page.action.email, $username = $signup-page.action.username, $password = $signup-page.action.password, $password2 = $signup-page.action.password2, $accept_terms = $signup-page.action.accept_terms, $next = $signup-page.action.next-field)
 	width: full
 	radius: curved
 

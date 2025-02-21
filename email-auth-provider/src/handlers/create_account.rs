@@ -15,6 +15,7 @@
 pub fn create_account(
     mut conn: ft_sdk::Connection,
     ft_sdk::Form(payload): ft_sdk::Form<CreateAccountPayload>,
+    ft_sdk::Query(next): ft_sdk::Query<"next", Option<String>>,
     ft_sdk::Cookie(sid): ft_sdk::Cookie<{ ft_sdk::auth::SESSION_KEY }>,
     // code can be invalid. eg: xyz
     ft_sdk::Query(code): ft_sdk::Query<"code", Option<String>>,
@@ -48,9 +49,10 @@ pub fn create_account(
 
     ft_sdk::println!("Create User done for sid {sid}");
 
+    let next = next.unwrap_or_else(|| "/".to_string());
     if account_meta.pre_verified {
         return Ok(
-            ft_sdk::form::redirect("/")?.with_cookie(common::session_cookie(sid.as_str(), host)?)
+            ft_sdk::form::redirect(next)?.with_cookie(common::session_cookie(sid.as_str(), host)?)
         );
     }
 
@@ -62,7 +64,7 @@ pub fn create_account(
     );
     ft_sdk::println!("Confirmation link added {conf_link}");
     send_confirmation_email(account_meta.email, account_meta.name, &conf_link, &config)?;
-    Ok(ft_sdk::form::redirect("/")?.with_cookie(common::session_cookie(sid.as_str(), host)?))
+    Ok(ft_sdk::form::redirect(next)?.with_cookie(common::session_cookie(sid.as_str(), host)?))
 }
 
 struct CreateAccount {
