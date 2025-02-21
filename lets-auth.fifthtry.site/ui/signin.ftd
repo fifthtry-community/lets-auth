@@ -31,9 +31,9 @@ module action: signin
 
     -- end: ds.row
 
-        -- ds.link: Forgot password?
-        color: $ds.colors.accent.primary
-        link: $lets-auth.forgot-password-url
+    -- ds.link: Forgot password?
+    color: $ds.colors.accent.primary
+    link: $lets-auth.forgot-password-url
 
 -- end: lets-auth.auth-page
 

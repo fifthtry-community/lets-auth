@@ -12,6 +12,9 @@ export: set-password-page
 -- import: lets-auth.fifthtry.site/ui/forgot-password as _
 export: forgot-password-page
 
+-- import: lets-auth.fifthtry.site/ui/forgot-password-success as _
+export: forgot-password-success-page
+
 -- import: lets-auth.fifthtry.site/ui/auth-page as _
 export: auth-page
 
@@ -159,3 +162,7 @@ if: { lets-auth.user != NULL }
 -- ftd.text: login
 if: { lets-auth.user == NULL }
 link: $ftd.app-url(path=/signin/)
+
+-- ftd.text: forgot password
+if: { lets-auth.user == NULL }
+link: $ftd.app-url(path=/forgot-password/)

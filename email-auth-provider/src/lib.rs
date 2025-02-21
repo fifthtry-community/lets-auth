@@ -58,3 +58,27 @@ pub fn wasm_handler_link(
         app_url = app_url.unwrap_or_default().trim_end_matches('/'),
     )
 }
+
+/// Same as `ft_sdk::Scheme`
+/// - https only when host: 127.0.0.1
+struct HTTPSScheme(pub ft_sdk::Scheme);
+
+impl ft_sdk::FromRequest for HTTPSScheme {
+    fn from_request(req: &http::Request<serde_json::Value>) -> Result<Self, ft_sdk::Error> {
+        let host = ft_sdk::Host::from_request(req)?;
+
+        if host.without_port() == "127.0.0.1" {
+            Ok(HTTPSScheme(ft_sdk::Scheme::Http))
+        } else {
+            Ok(HTTPSScheme(ft_sdk::Scheme::Https))
+        }
+    }
+}
+
+impl std::ops::Deref for HTTPSScheme {
+    type Target = ft_sdk::Scheme;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}

@@ -2,26 +2,24 @@
 pub fn forgot_password(
     mut conn: ft_sdk::Connection,
     ft_sdk::Required(username_or_email): ft_sdk::Required<"username-or-email">,
-    ft_sdk::Optional(set_password_route): ft_sdk::Optional<"set-password-route">,
     ft_sdk::Optional(next): ft_sdk::Optional<"next">,
     host: ft_sdk::Host,
     app_url: ft_sdk::AppUrl,
     ft_sdk::Config(config): ft_sdk::Config<crate::Config>,
+    scheme: crate::HTTPSScheme,
 ) -> ft_sdk::form::Result {
     let (user_id, email, data) = get_user_data(&mut conn, username_or_email)?;
     let name = data.name.clone().unwrap_or_else(|| email.clone());
 
-    let set_password_route = set_password_route.unwrap_or_else(|| "/set-password/".to_string());
+    let set_password_url = app_url
+        .join(&scheme, &host, "/set-password/")
+        .inspect_err(|e| {
+            ft_sdk::println!("auth.wasm: failed to join url: {:?}", e);
+        })?;
 
-    let reset_link = generate_new_reset_key(
-        data,
-        &user_id,
-        &email,
-        set_password_route,
-        &host,
-        &mut conn,
-        app_url,
-    )?;
+    let reset_link = generate_new_reset_key(data, &user_id, &email, set_password_url, &mut conn)?;
+
+    ft_sdk::println!("======= Password reset link added {reset_link}");
 
     send_reset_password_email(email, name, &reset_link, &config)?;
 
@@ -71,14 +69,12 @@ pub fn generate_new_reset_key(
     mut data: ft_sdk::auth::ProviderData,
     user_id: &ft_sdk::auth::UserId,
     email: &str,
-    set_password_route: String,
-    host: &ft_sdk::Host,
+    set_password_url: String,
     conn: &mut ft_sdk::Connection,
-    app_url: ft_sdk::AppUrl,
-) -> Result<String, ft_sdk::Error> {
+) -> ft_sdk::Result<String> {
     let key = ft_sdk::Rng::generate_key(64);
 
-    let reset_link = reset_link(&key, email, set_password_route, host, app_url);
+    let reset_link = reset_link(&key, email, set_password_url);
 
     ft_sdk::println!("Password reset link added {reset_link}");
 
@@ -148,17 +144,6 @@ pub fn send_reset_password_email(
 }
 
 /// Link to reset password.
-/// `set_password_route`: E.g. `/set-password/`
-pub fn reset_link(
-    key: &str,
-    email: &str,
-    set_password_route: String,
-    host: &ft_sdk::Host,
-    app_url: ft_sdk::AppUrl,
-) -> String {
-    assert!(set_password_route.starts_with('/'));
-    assert!(set_password_route.ends_with('/'));
-
-    let url = crate::wasm_handler_link(&set_password_route, host, app_url);
-    format!("{url}?code={key}&email={email}&spr={set_password_route}",)
+pub fn reset_link(key: &str, email: &str, set_password_url: String) -> String {
+    format!("{set_password_url}?code={key}&email={email}")
 }
