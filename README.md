@@ -4,7 +4,7 @@ Authentication for sites and applications in fastn app ecosystem.
 
 ## UI Storybook
 
-All lets-talk UIs are developed using storybook.
+All lets-auth UIs are developed using storybook.
 
 Run `fastn` service using `run-ui` alias:
 
