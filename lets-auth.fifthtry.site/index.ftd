@@ -6,7 +6,7 @@ export: signin-page
 -- import: lets-auth.fifthtry.site/ui/signup as _
 export: signup-page
 
--- import: lets-auth.fifthtry.site/ui/reset-password as _
+-- import: lets-auth.fifthtry.site/ui/set-password as _
 export: set-password-page
 
 -- import: lets-auth.fifthtry.site/ui/forgot-password as _

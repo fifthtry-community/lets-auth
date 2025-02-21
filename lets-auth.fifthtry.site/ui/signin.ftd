@@ -3,8 +3,20 @@
 -- component signin-page:
 caption title: Sign in
 module action: signin
+boolean reset-success:
 
 -- lets-auth.auth-page: Sign in
+
+    -- ds.row:
+    if: { signin-page.reset-success == true }
+    spacing: $ds.spaces.vertical-gap.small
+    inset: $ds.spaces.inset-square.small
+    wrap: true
+
+        -- ds.copy-regular: Your password has been changed. Please sign in again.
+        width: hug-content
+
+    -- end: ds.row
 
     -- ds.form-field: Username or email address
     $field: $signin-page.action.username-or-email
