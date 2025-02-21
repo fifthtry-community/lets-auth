@@ -1,7 +1,14 @@
 -- import: lets-auth.fifthtry.site/actions/signin
+-- import: fastn/processors as pr
+
+;; User comes to the signin page after they have changed their password with
+;; this value set to true
+-- boolean reset-success: false
+$processor$: pr.request-data
 
 -- ftd.temporary-redirect: /
 if: { lets-auth.user != NULL }
 
 -- lets-auth.signin-page:
 action: signin
+reset-success: $reset-success
