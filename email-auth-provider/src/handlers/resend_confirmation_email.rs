@@ -1,12 +1,13 @@
-#[ft_sdk::form]
+#[ft_sdk::processor]
 // TODO: add a rate limit to this endpoint
 pub fn resend_confirmation_email(
     mut conn: ft_sdk::Connection,
     ft_sdk::Query(email): ft_sdk::Query<"email">,
+    ft_sdk::Query(next): ft_sdk::Query<"next", Option<String>>,
     host: ft_sdk::Host,
     app_url: ft_sdk::AppUrl,
     ft_sdk::Config(config): ft_sdk::Config<crate::Config>,
-) -> ft_sdk::form::Result {
+) -> ft_sdk::processor::Result {
     if !validator::ValidateEmail::validate_email(&email) {
         return Err(ft_sdk::single_error("email", "Incorrect email format.").into());
     }
@@ -23,7 +24,8 @@ pub fn resend_confirmation_email(
         email, name, &conf_link, &config,
     )?;
 
-    ft_sdk::form::redirect("/")
+    let next = format!("{}?mail-sent=true", next.unwrap_or_else(|| "/".to_string()));
+    ft_sdk::processor::temporary_redirect(next)
 }
 
 /// Generate a new confirmation key for a given email and update the user table
