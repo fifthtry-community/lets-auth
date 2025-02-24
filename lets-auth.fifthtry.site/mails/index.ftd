@@ -1,0 +1,13 @@
+-- string title: Authentication Related Mails
+
+-- ds.site-page: $title
+
+-- ds.heading-medium: $title
+
+-- ds.copy-regular: create account confirmation
+link: $ftd.app-url(path=/mails/create-account-confirmation/)
+
+-- ds.copy-regular: reset password
+link: $ftd.app-url(path=/mails/reset-password/)
+
+-- end: ds.site-page
