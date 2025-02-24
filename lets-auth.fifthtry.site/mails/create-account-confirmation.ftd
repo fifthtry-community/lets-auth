@@ -15,7 +15,7 @@ $processor$: pr.request-data
 -- string subject: $lets-auth.create-account-confirmation-subject(name=$first-name, link=$link)
 
 
--- ds.page:
+-- ds.page: Mail Preview
 theme-switcher: true
 
 -- ftd.row:
