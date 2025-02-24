@@ -15,8 +15,7 @@ $processor$: pr.request-data
 -- string subject: $lets-auth.create-account-confirmation-subject(name=$first-name, link=$link)
 
 
-;; TODO: commenting this out because currently this fails due to some fastn bug
-/-- ds.page:
+-- ds.page:
 theme-switcher: true
 
 -- ftd.row:
@@ -31,6 +30,7 @@ Ensure you are using light mode to see the mail properly.
 
 -- ftd.iframe:
 srcdoc: $html
+background.solid: white
 
 -- ds.heading-small: Text Mail
 
