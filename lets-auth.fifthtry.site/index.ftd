@@ -176,4 +176,4 @@ link: $ftd.app-url(path=/forgot-password/)
 -- string verification-link(email):
 string email:
 
-ftd.app_url_ex("/email_auth_provider/resend-confirmation-email/?email=" + email, "lets-auth")
+ftd.app_url_ex("/backend/resend-confirmation-email/?email=" + email, "lets-auth")

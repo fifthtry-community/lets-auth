@@ -1,5 +1,5 @@
 [package]
-name = "email_auth_provider"
+name = "backend"
 version = "0.1.2"
 edition.workspace = true
 authors.workspace = true
