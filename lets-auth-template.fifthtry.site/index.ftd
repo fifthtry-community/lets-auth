@@ -1,6 +1,6 @@
 -- import: fastn/processors
 
-;; This query parameter is set by the backend when you visit /-/auth/email_auth_provider/resend-confirmation-email/?email=<email>
+;; This query parameter is set by the backend when you visit /-/auth/backend/resend-confirmation-email/?email=<email>
 -- boolean mail-sent: false
 $processor$: processors.request-data
 

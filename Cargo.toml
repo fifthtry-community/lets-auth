@@ -1,5 +1,5 @@
 [workspace]
-members = ["common", "email-auth-provider", "mobile-auth-provider"]
+members = ["common", "backend", "mobile-auth-provider"]
 resolver = "2"
 
 

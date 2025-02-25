@@ -19,31 +19,6 @@ function popd2() {
     unset PUSHED
 }
 
-function build-mobile-wasm() {
-    pushd2 "${PROJ_ROOT}/mobile-auth-provider" || return 1
-    # cargo clean
-    cargo build --target wasm32-unknown-unknown --release || return 1
-    cp ../target/wasm32-unknown-unknown/release/mobile_auth_provider.wasm . || return 1
-    popd2
-}
-
-
-function build-email-wasm() {
-    pushd2 "${PROJ_ROOT}/email-auth-provider" || return 1
-    # cargo clean
-    cargo build --target wasm32-unknown-unknown --release || return 1
-    cp ../target/wasm32-unknown-unknown/release/email_auth_provider.wasm . || return 1
-    popd2
-}
-
-function dotcom() {
-  build-email-wasm || return 1
-  pushd2 "${PROJ_ROOT}" || return 1
-  cp ./email-auth-provider/email_auth_provider.wasm ../dotcom/frontend/email_auth.wasm || return 1
-  popd2
-}
-
-
 function update-ui() {
   pushd2 "${PROJ_ROOT}/lets-auth.fifthtry.site" || return 1
   $FASTN update
