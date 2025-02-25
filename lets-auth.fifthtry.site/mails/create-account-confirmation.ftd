@@ -1,4 +1,5 @@
 -- import: fastn/processors as pr
+-- import: lets-auth.fifthtry.site/mails as mail
 
 -- string first-name: User
 $processor$: pr.request-data
@@ -15,29 +16,14 @@ $processor$: pr.request-data
 -- string subject: $lets-auth.create-account-confirmation-subject(name=$first-name, link=$link)
 
 
--- ds.page: Mail Preview
-theme-switcher: true
-
--- ftd.row:
-
-    -- ds.heading-small: $subject
-
--- end: ftd.row
-
--- ds.heading-small: Html Mail
-
-Ensure you are using light mode to see the mail properly.
-
--- ftd.iframe:
-srcdoc: $html
-background.solid: white
-
--- ds.heading-small: Text Mail
-
-$text
-
--- end: ds.page
-
+-- mail.mail-preview: 
+subject: $subject
+html: $html
+text: $text
+from: John Deo
+from-email: john-deo@john-deo.com
+to: Jenny Deo
+to-email: jenny-deo@jenny-deo.com
 
 
 -- ftd.json:
