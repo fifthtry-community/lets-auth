@@ -11,3 +11,227 @@ link: $ftd.app-url(path=/mails/create-account-confirmation/)
 link: $ftd.app-url(path=/mails/reset-password/)
 
 -- end: ds.site-page
+
+
+
+
+
+-- component mail-preview:
+caption title: Mail Preview
+string subject:
+string from:
+string from-email:
+string to:
+string to-email:
+string html:
+string text:
+
+-- ds.page: $mail-preview.title
+theme-switcher: true
+margin: $ds.spaces.vertical-gap.zero
+
+-- ds.section-row:
+if: { ftd.device != "mobile" }
+align-content: top-left
+spacing: $ds.spaces.horizontal-gap.large
+
+-- sidebar:
+
+-- ds.column:
+align-content: left
+inset: $ds.spaces.inset-square.zero
+
+-- html-preview:
+subject: $mail-preview.subject
+from: $mail-preview.from
+from-email: $mail-preview.from-email
+to: $mail-preview.to
+to-email: $mail-preview.to-email
+html: $mail-preview.html
+
+-- ds.divider:
+placement: horizontal
+thickness: small
+border-color: $ds.colors.text-strong
+
+-- text-preview:
+subject: $mail-preview.subject
+from: $mail-preview.from
+from-email: $mail-preview.from-email
+to: $mail-preview.to
+to-email: $mail-preview.to-email
+text: $mail-preview.text
+
+-- end: ds.column
+
+-- end: ds.section-row
+
+-- ds.section-column:
+if: { ftd.device == "mobile" }
+align-content: top-left
+spacing: $ds.spaces.horizontal-gap.large
+margin: $ds.spaces.vertical-gap.large
+
+-- sidebar:
+
+-- html-preview:
+subject: $mail-preview.subject
+from: $mail-preview.from
+from-email: $mail-preview.from-email
+to: $mail-preview.to
+to-email: $mail-preview.to-email
+html: $mail-preview.html
+
+-- ds.divider:
+placement: horizontal
+thickness: small
+border-color: $ds.colors.text-strong
+
+-- text-preview:
+subject: $mail-preview.subject
+from: $mail-preview.from
+from-email: $mail-preview.from-email
+to: $mail-preview.to
+to-email: $mail-preview.to-email
+text: $mail-preview.text
+
+-- end: ds.section-column
+
+-- end: ds.page
+
+-- end: mail-preview
+
+
+-- component html-preview:
+string subject:
+string from:
+string from-email:
+string to:
+string to-email:
+string html:
+
+-- ds.column:
+align-content: left
+inset: $ds.spaces.inset-square.zero
+
+-- ds.heading-small: $html-preview.subject
+
+-- ds.column:
+align-content: left
+inset: $ds.spaces.inset-square.zero
+spacing: $ds.spaces.vertical-gap.extra-small
+
+-- email-label: $html-preview.from
+text: $html-preview.from-email
+
+-- email-label: $html-preview.to
+text: $html-preview.to-email
+to: true
+
+-- end: ds.column
+
+-- ftd.iframe:
+srcdoc: $html-preview.html
+background.solid: white
+width.fixed.vw: 50
+width.fixed.percent if { ftd.device == "mobile"}: 100
+height.fixed.px: 200
+margin-bottom.px: 6
+border-radius.px: 4
+
+-- end: ds.column
+
+-- end: html-preview
+
+
+-- component text-preview:
+string subject:
+string from:
+string from-email:
+string to:
+string to-email:
+string text:
+
+-- ds.column:
+align-content: left
+inset: $ds.spaces.inset-square.zero
+
+-- ds.heading-small: $text-preview.subject
+
+-- ds.column:
+align-content: left
+inset: $ds.spaces.inset-square.zero
+spacing: $ds.spaces.vertical-gap.extra-small
+
+-- email-label: $text-preview.from
+text: $text-preview.from-email
+
+-- email-label: $text-preview.to
+text: $text-preview.to-email
+to: true
+
+-- end: ds.column
+
+-- ds.code:
+lang: text
+max-width.fixed.vw: 50
+max-width.fixed.percent if { ftd.device == "mobile"}: 100
+
+$text-preview.text
+
+-- end: ds.column
+
+-- end: text-preview
+
+
+-- component sidebar:
+
+-- ds.column:
+background.solid: $ds.colors.background.step-1
+align-content: left
+width.fixed.percent if { ftd.device != "mobile"}: 26
+
+-- ds.copy-regular: create account confirmation
+link: $ftd.app-url(path=/mails/create-account-confirmation/)
+
+-- ds.copy-regular: reset password
+link: $ftd.app-url(path=/mails/reset-password/)
+
+-- end: ds.column
+
+-- end: sidebar
+
+
+
+-- component email-label:
+caption title:
+string text:
+boolean to: false
+
+-- ds.row:
+align-content: left
+spacing: $ds.spaces.horizontal-gap.small
+
+-- ds.copy-regular: $email-label.title
+if: { !email-label.to }
+color: $ds.colors.text-strong
+style: bold
+
+-- ds.row:
+if: { email-label.to }
+width: hug-content
+spacing: $ds.spaces.horizontal-gap.extra-small
+align-content: left
+
+-- ds.fine-print: to
+
+-- ds.fine-print: $email-label.title
+
+-- end: ds.row
+
+-- ds.fine-print: $email-label.text
+color: $ds.colors.text-strong
+
+-- end: ds.row
+
+-- end: email-label
