@@ -80,7 +80,7 @@ boolean verified-email:
 
 -- ds.heading-medium: Open Source
 
-This project is licensed under [BSD-3 license][1]. You can find our source code on
+This project is licensed under [MIT license][1]. You can find our source code on
 [fifthtry-community/lets-auth][2] on Github.
 
 [1]: https://github.com/fifthtry-community/lets-auth/blob/main/LICENSE
