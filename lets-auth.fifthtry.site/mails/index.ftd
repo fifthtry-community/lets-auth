@@ -26,7 +26,7 @@ string to-email:
 string html:
 string text:
 
--- ds.page: $mail-preview.title
+-- ds.site-page: $mail-preview.title
 theme-switcher: true
 margin: $ds.spaces.vertical-gap.zero
 
@@ -97,7 +97,7 @@ text: $mail-preview.text
 
 -- end: ds.section-column
 
--- end: ds.page
+-- end: ds.site-page
 
 -- end: mail-preview
 
