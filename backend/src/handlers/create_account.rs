@@ -12,6 +12,7 @@
 /// subscriber data, e.g. if there is double opt-in, or the `name` of user,
 /// `tags` for the user should be stored in any other `data` key (`data -> 'subscriptions')
 #[ft_sdk::form]
+#[expect(clippy::too_many_arguments)]
 pub fn create_account(
     mut conn: ft_sdk::Connection,
     ft_sdk::Form(payload): ft_sdk::Form<CreateAccountPayload>,
