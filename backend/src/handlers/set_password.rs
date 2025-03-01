@@ -7,9 +7,7 @@ pub fn set_password(
     ft_sdk::Query(code): ft_sdk::Query<"code", Option<String>>,
     ft_sdk::Query(email): ft_sdk::Query<"email", Option<String>>,
     ft_sdk::Query(next): ft_sdk::Query<"next", Option<String>>,
-    host: ft_sdk::Host,
     app_url: ft_sdk::AppUrl,
-    scheme: crate::HTTPSScheme,
     sid: ft_sdk::Cookie<{ ft_sdk::auth::SESSION_KEY }>,
     ft_sdk::Config(config): ft_sdk::Config<crate::Config>,
 ) -> ft_sdk::form::Result {
@@ -23,7 +21,7 @@ pub fn set_password(
 
     if let Some(sent_at) = sent_at {
         let set_password_url = app_url
-            .join(&scheme, &host, "/set-password/")
+            .join("/set-password/")
             .inspect_err(|e| {
                 ft_sdk::println!("auth.wasm: failed to join url: {:?}", e);
             })?;

@@ -3,16 +3,14 @@ pub fn forgot_password(
     mut conn: ft_sdk::Connection,
     ft_sdk::Required(username_or_email): ft_sdk::Required<"username-or-email">,
     ft_sdk::Optional(next): ft_sdk::Optional<"next">,
-    host: ft_sdk::Host,
     app_url: ft_sdk::AppUrl,
     ft_sdk::Config(config): ft_sdk::Config<crate::Config>,
-    scheme: crate::HTTPSScheme,
 ) -> ft_sdk::form::Result {
     let (user_id, email, data) = get_user_data(&mut conn, username_or_email)?;
     let name = data.name.clone().unwrap_or_else(|| email.clone());
 
     let set_password_url = app_url
-        .join(&scheme, &host, "/set-password/")
+        .join("/set-password/")
         .inspect_err(|e| {
             ft_sdk::println!("auth.wasm: failed to join url: {:?}", e);
         })?;
