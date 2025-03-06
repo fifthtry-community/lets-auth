@@ -55,7 +55,6 @@ name = "backend"
 version = "0.1.2"
 dependencies = [
  "argon2",
- "bytes",
  "chrono",
  "common",
  "diesel",
