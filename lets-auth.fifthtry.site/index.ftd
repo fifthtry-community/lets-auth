@@ -36,6 +36,7 @@ export: auth-page
 -- boolean is-personal-site: true
 
 -- record user-details:
+integer id:
 string name:
 string email:
 string identity:
