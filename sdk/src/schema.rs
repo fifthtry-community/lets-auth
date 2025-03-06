@@ -20,6 +20,9 @@ diesel::table! {
         identity -> Nullable<Text>,
         data -> Text,
 
+        folders -> Text,
+        denormalized_folders -> Text,
+
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
     }
