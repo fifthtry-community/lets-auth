@@ -343,8 +343,6 @@ dependencies = [
 [[package]]
 name = "ft-derive"
 version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0ce9216b0c4518bd4c2d31bb00f44b7647b57cd236b33c9b03812f0522f9f369"
 dependencies = [
  "quote",
  "syn",
@@ -352,9 +350,7 @@ dependencies = [
 
 [[package]]
 name = "ft-sdk"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e41046587125e0234fa2ffe0ed9669bb3097c7597f71b3649ff146e66d6c5f31"
+version = "0.6.3"
 dependencies = [
  "anyhow",
  "bytes",
@@ -375,9 +371,7 @@ dependencies = [
 
 [[package]]
 name = "ft-sys"
-version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b70eab6702e9f32349c3241614021c95fa7eed2748df1f35c8c630584c3936ca"
+version = "0.3.0"
 dependencies = [
  "bytes",
  "chrono",
@@ -393,8 +387,6 @@ dependencies = [
 [[package]]
 name = "ft-sys-shared"
 version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "420d7be8fdd40fb441ed09fa462dc663053c0b5786774eb99c52b35b8b7cc11a"
 dependencies = [
  "bytes",
  "chrono",
@@ -620,6 +612,16 @@ checksum = "1cfaf33c695fc6e08064efbc1f72ec937429614f25eef83af942d0e227c3a28f"
 dependencies = [
  "once_cell",
  "wasm-bindgen",
+]
+
+[[package]]
+name = "lets-auth"
+version = "0.1.0"
+dependencies = [
+ "ft-sdk",
+ "http",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
