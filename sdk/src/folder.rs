@@ -4,6 +4,7 @@ pub struct FolderID(pub String);
 #[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub struct Folder {
     pub guid: FolderID,
+    pub name: String,
     pub kind: Option<String>,
     pub parents: Vec<FolderID>,
 
@@ -16,6 +17,7 @@ pub struct Folder {
 #[diesel(check_for_backend(ft_sdk::Sqlite))]
 pub(crate) struct DbFolder {
     guid: String,
+    name: String,
     kind: Option<String>,
     parents: String,
 
@@ -29,6 +31,7 @@ impl DbFolder {
     pub(crate) fn into_folder(self) -> ft_sdk::Result<Folder> {
         Ok(Folder {
             guid: FolderID(self.guid),
+            name: self.name,
             kind: self.kind,
             parents: serde_json::from_str(&self.parents)?,
             created_at: self.created_at,

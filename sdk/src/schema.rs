@@ -2,6 +2,7 @@ diesel::table! {
     fastn_folder (guid) {
         // guid is the primary key
         guid -> Text,
+        name -> Text,
         // kind is "Folder" by default, but can be "Team", "Client", "Playlist", "Project", etc.
         kind -> Nullable<Text>,
         // for the root folder, parents will be an empty array
