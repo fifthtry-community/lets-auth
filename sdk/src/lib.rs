@@ -5,16 +5,18 @@
 
 extern crate self as lets_auth;
 
-mod config;
-mod first_folder;
 mod all_folders;
-pub mod schema;
+mod config;
+mod denormalized_folders;
+mod first_folder;
 mod folder;
+pub mod schema;
 
 pub const SYSTEM: &str = "lets-auth";
 pub type AppUrl = ft_sdk::RequiredAppUrl<SYSTEM>;
+pub use all_folders::all_folders;
 pub use config::Config;
-pub use folder::{Folder, FolderID};
+pub use denormalized_folders::denormalized_folders;
 #[expect(unused)]
 pub(crate) use folder::DbFolder;
-pub use all_folders::all_folders;
+pub use folder::{Folder, FolderID};

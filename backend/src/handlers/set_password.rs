@@ -20,11 +20,9 @@ pub fn set_password(
     let sent_at = data.get_custom(email_auth::PASSWORD_RESET_CODE_SENT_AT);
 
     if let Some(sent_at) = sent_at {
-        let set_password_url = app_url
-            .join("/set-password/")
-            .inspect_err(|e| {
-                ft_sdk::println!("auth.wasm: failed to join url: {:?}", e);
-            })?;
+        let set_password_url = app_url.join("/set-password/").inspect_err(|e| {
+            ft_sdk::println!("auth.wasm: failed to join url: {:?}", e);
+        })?;
 
         check_expired_and_send_reset_link(
             set_password_url,

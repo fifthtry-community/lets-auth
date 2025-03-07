@@ -9,11 +9,9 @@ pub fn forgot_password(
     let (user_id, email, data) = get_user_data(&mut conn, username_or_email)?;
     let name = data.name.clone().unwrap_or_else(|| email.clone());
 
-    let set_password_url = app_url
-        .join("/set-password/")
-        .inspect_err(|e| {
-            ft_sdk::println!("auth.wasm: failed to join url: {:?}", e);
-        })?;
+    let set_password_url = app_url.join("/set-password/").inspect_err(|e| {
+        ft_sdk::println!("auth.wasm: failed to join url: {:?}", e);
+    })?;
 
     let reset_link = generate_new_reset_key(data, &user_id, &email, set_password_url, &mut conn)?;
 
@@ -55,7 +53,7 @@ fn get_user_data(
                 "username-or-email",
                 "No email found for the given user. Password reset email can't be sent.",
             )
-            .into())
+            .into());
         }
     };
 
