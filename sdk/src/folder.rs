@@ -1,5 +1,3 @@
-use diesel::internal::derives::multiconnection::chrono;
-
 #[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub struct FolderID(pub String);
 

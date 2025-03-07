@@ -10,3 +10,4 @@ serde_json.workspace = true
 http.workspace = true
 serde.workspace = true
 diesel.workspace = true
+chrono.workspace = true
