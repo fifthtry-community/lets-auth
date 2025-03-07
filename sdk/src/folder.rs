@@ -23,7 +23,6 @@ pub(crate) struct DbFolder {
 
     created_at: chrono::DateTime<chrono::Utc>,
     updated_at: chrono::DateTime<chrono::Utc>,
-
 }
 
 impl DbFolder {
@@ -37,4 +36,5 @@ impl DbFolder {
             created_at: self.created_at,
             updated_at: self.updated_at,
         })
-    }}
+    }
+}

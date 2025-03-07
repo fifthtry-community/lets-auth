@@ -50,7 +50,7 @@ impl Config {
 pub fn wasm_handler_link(
     path: &str,
     ft_sdk::Host(host): &ft_sdk::Host,
-    ft_sdk::AppUrl{url, ..}: ft_sdk::AppUrl,
+    ft_sdk::AppUrl { url, .. }: ft_sdk::AppUrl,
 ) -> String {
     let path = path.trim_start_matches('/');
     let path = path.trim_end_matches('/');

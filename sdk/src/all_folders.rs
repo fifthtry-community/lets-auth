@@ -17,5 +17,8 @@ pub fn all_folders(conn: &mut ft_sdk::Connection, uid: i64) -> ft_sdk::Result<Fo
     let denormalized_folders = serde_json::from_str(&denormalized_folders)?;
     let folders = serde_json::from_str(&folders)?;
 
-    Ok (Folders { folders, denormalized_folders })
+    Ok(Folders {
+        folders,
+        denormalized_folders,
+    })
 }
