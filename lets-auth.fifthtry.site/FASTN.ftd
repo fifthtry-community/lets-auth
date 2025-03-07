@@ -20,6 +20,7 @@ ALTER TABLE fastn_user ADD COLUMN denormalized_folders TEXT DEFAULT '[]';
 CREATE TABLE IF NOT EXISTS fastn_folder
 (
     guid         TEXT NOT NULL PRIMARY KEY,
+    name         TEXT NOT NULL,
     kind         TEXT,
     parents      TEXT NOT NULL DEFAULT '[]',
 
