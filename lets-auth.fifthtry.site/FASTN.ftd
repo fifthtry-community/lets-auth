@@ -12,21 +12,76 @@ system-is-confidential: false
 -- fastn.auto-import: lets-auth.fifthtry.site/assets
 
 
--- fastn.migration: 0002-add-folders
-
-ALTER TABLE fastn_user ADD COLUMN folders TEXT DEFAULT '[]';
-ALTER TABLE fastn_user ADD COLUMN denormalized_folders TEXT DEFAULT '[]';
+-- fastn.migration: 0002-add-folders-and-permissions
 
 CREATE TABLE IF NOT EXISTS fastn_folder
 (
+    id           INTEGER PRIMARY KEY,
     guid         TEXT NOT NULL PRIMARY KEY,
     name         TEXT NOT NULL,
-    kind         TEXT,
-    parents      TEXT NOT NULL DEFAULT '[]',
+    kind         TEXT NOT NULL DEFAULT "folder",
 
     created_at   INTEGER NOT NULL,
     updated_at   INTEGER NOT NULL
 ) STRICT;
+
+
+CREATE TABLE IF NOT EXISTS fastn_folder_relation
+(
+    id             INTEGER PRIMARY KEY,
+    folder         INTEGER NOT NULL,
+    parent         INTEGER NOT NULL
+
+    CONSTRAINT fk_fastn_folder_relation_folder FOREIGN KEY (folder) REFERENCES fastn_folder (id)
+    CONSTRAINT fk_fastn_folder_relation_parent FOREIGN KEY (parent) REFERENCES fastn_folder (id)
+) STRICT;
+
+
+\-- permission can be given either to a folder or to a user
+\-- permission is defined by an app. it can be for all the objects, or for a
+\-- specific object (if oid is present)
+CREATE TABLE IF NOT EXISTS fastn_permission
+(
+    id             INTEGER PRIMARY KEY,
+    uid            INTEGER NULL,
+    fid            INTEGER NULL,
+    app            TEXT NOT NULL,
+    okind          TEXT NULL,
+    oid            TEXT NULL,
+    permission     TEXT NOT NULL DEFAULT "access",
+
+    valid_since    INTEGER NOT NULL, -- usually the time of creation
+    valid_till     INTEGER NULL,     -- if null, permission is valid forever
+    two_factor     BOOLEAN NOT NULL DEFAULT false, -- if true, user must use 2FA
+
+    CONSTRAINT fk_fastn_permission_user FOREIGN KEY (uid) REFERENCES fastn_user (id)
+    CONSTRAINT fk_fastn_permission_folder FOREIGN KEY (fid) REFERENCES fastn_folder (id)
+    \-- either user_id or folder_id must be present
+    CONSTRAINT check_fastn_permission_either_user_or_folder CHECK (uid IS NOT NULL OR fid IS NOT NULL)
+    \-- if oid is present, okind must be present
+    CONSTRAINT check_fastn_permission_okind_if_oid CHECK (oid IS NULL OR okind IS NOT NULL)
+) STRICT;
+
+
+\-- this table is used to store roles of a user in a folder
+\-- normally permission should be managed by fastn_permission table, but the
+\-- role can be used to decide what permissions you have on a given folder.
+\-- possible values of role: member, admin, owner. owner can remove owner, but
+\-- only other owner can remove an owner. only admin can remove a member, or
+\-- another admin.
+CREATE TABLE IF NOT EXISTS fastn_role
+(
+    id             INTEGER PRIMARY KEY,
+    uid            INTEGER NOT NULL,
+    fid            INTEGER NOT NULL,
+    role           TEXT NOT NULL DEFAULT "member"
+
+    CONSTRAINT fk_fastn_role_user FOREIGN KEY (uid) REFERENCES fastn_user (id)
+    CONSTRAINT fk_fastn_role_folder FOREIGN KEY (fid) REFERENCES fastn_folder (id)
+    CONSTRAINT check_fastn_role_unique_user_folder UNIQUE (uid, fid)
+    CONSTRAINT check_fastn_role_valid_role CHECK (role IN ("member", "admin", "owner"))
+) STRICT;
+
 
 
 -- fastn.migration: 0001-initial-migration
@@ -53,7 +108,5 @@ CREATE TABLE IF NOT EXISTS fastn_session
     updated_at INTEGER NOT NULL,
     expires_at INTEGER,
 
-    CONSTRAINT fk_fastn_user
-    FOREIGN KEY (uid)
-    REFERENCES fastn_user (id)
+    CONSTRAINT fk_fastn_user FOREIGN KEY (uid) REFERENCES fastn_user (id)
 ) STRICT;
