@@ -117,7 +117,13 @@ CREATE TABLE IF NOT EXISTS fastn_permission
 ;;    mentioned above, find all folders in which the user has that permission.
 ;; 2. find all objects in those folders.
 
+
+
 -- fastn.migration: 0001-initial-migration
+
+;; this migration used to exist in fastn, we are moving it to lets-auth
+;; https://github.com/fastn-stack/fastn/blob/main/fastn-core/src/migrations/fastn_migrations.rs
+
 
 CREATE TABLE IF NOT EXISTS fastn_user
 (
