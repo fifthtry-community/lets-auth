@@ -113,9 +113,9 @@ CREATE TABLE IF NOT EXISTS fastn_permission
 ;; any of the parents of the object is present in the list.
 
 ;; question: how to find all objects a user has specific permission for?
-;; for the specific permission, look into user's permission-folder cache
-;; mentioned above, and find all folders in which the user has that permission.
-;; then find all objects in those folders.
+;; 1. SQL: for the specific permission, look into user's permission-folder cache
+;;    mentioned above, find all folders in which the user has that permission.
+;; 2. find all objects in those folders.
 
 -- fastn.migration: 0001-initial-migration
 
