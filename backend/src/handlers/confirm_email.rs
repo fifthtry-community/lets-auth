@@ -21,7 +21,7 @@ pub fn confirm_email(
     ) {
         Ok(value) => value,
         Err(ft_sdk::auth::UserDataError::NoDataFound) => {
-            return ft_sdk::processor::temporary_redirect(next)
+            return ft_sdk::processor::temporary_redirect(next);
         }
         Err(e) => return Err(e.into()),
     };

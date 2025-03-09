@@ -1,0 +1,24 @@
+-- ds.site-page: lets-auth - Permissions
+
+-- ds.heading-large: `lets-auth`: Permissions
+
+This document is about how we manage permissions in `lets-auth`.
+
+-- ds.heading-medium: Requirement: Partial DB Sharing
+
+When designing the permission system in `lets-auth` one requirement is partial
+database sharing.
+
+`fastn` app ecosystem is designed with the assumption that you do not store your
+data exclusively on foreign websites. Instead, you store your data on your own
+database, and share it with other websites.
+
+The table schema of the two databases must be the same, but the data can be
+different.
+
+-- ds.heading-medium: Database Change Log
+
+The database change log is a table in the database that stores all the changes
+
+
+-- end: ds.site-page
