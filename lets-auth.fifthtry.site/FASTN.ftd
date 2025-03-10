@@ -82,7 +82,31 @@ CREATE TABLE IF NOT EXISTS fastn_folder_permission
     CONSTRAINT check_fastn_role_valid_role CHECK (role IN ("member", "admin", "owner"))
 ) STRICT;
 
+
+;; S: Siddhant
+;; A: Amit
+;; N: Nandini
+;; R: RG
+
+;; folder structure
+;; /{1]
+;;   /fifthtry{2} (SAN) [Blog:Read]
+;;      /finance{3} ()
+;;      /marketing{4} (AN) [Blog:Write]
+;;         ->{6}
+;;      /tech{5} (SA) [Blog:Write]
+;;         ->{7}
+;;      /blog{6} ()
+;;          /tech-posts{7} ()
+;;   /today-has-been{8} (AR)
+
+
+;; who is part of finance department: no one
+
+
 \-- semantics: store explicit permissions for a user on an object
+\-- this folder is only needed if we can not handle all permissions using
+\-- folder permissions.
 CREATE TABLE IF NOT EXISTS fastn_permission
 (
     id             INTEGER PRIMARY KEY,
@@ -116,6 +140,10 @@ CREATE TABLE IF NOT EXISTS fastn_permission
 ;; 1. SQL: for the specific permission, look into user's permission-folder cache
 ;;    mentioned above, find all folders in which the user has that permission.
 ;; 2. find all objects in those folders.
+
+
+
+
 
 
 
