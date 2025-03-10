@@ -14,6 +14,39 @@ system-is-confidential: false
 
 -- fastn.migration: 0002-add-folders-and-permissions
 
+
+;; how to think about permission.
+;;
+;; first there is a graph, a directed acyclic graph to be more precise, or multi
+;; parent tree. we will call the nodes folders, and graph will be called folder
+;; tree. for every site there is one such folder tree.
+;;
+;; all users are part of the folder tree (can be added to one or more folders)
+;;
+;; all objects are part of the folder tree (can be added to one or more folders)
+;;
+;; all permissions are part of the folder tree (can be added ...). all
+;; permissions for a given app/object combination, the permissions are sortable,
+;; so if you ask for a permission, if you have a higher permission, you are
+;; assumed to have lower permissions too.
+;;
+;; there is also a user permission table, which stores direct permission user
+;; has on any object. this is to be used if you are directly granting some
+;; specific permission on some object to some specific user, and do not want to
+;; use the folder tree based permissions. this is because some times we want to
+;; do adhoc permissions, and forcing people to always create folders, especially
+;; if they are adhoc with no logical meaning, it feels cumbersome etc, and
+;; people may not like it.
+;;
+;; question: how do i know if a user has permission to do something?
+;;
+;; first check if user permission table directly grants you enough permission.
+;; if not, find all the paths from the object to the root. for each each path,
+;; p1, p2 etc, find the highest permission user has on that path (user only has
+;; permission of a folder at same level as the folder or below where they are
+;; added). stop when first path returns high enough permission.
+
+
 \-- semantics: this table is used to store the folders
 CREATE TABLE IF NOT EXISTS fastn_folder
 (
