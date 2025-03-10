@@ -1,3 +1,8 @@
+#![allow(clippy::derive_partial_eq_without_eq, clippy::get_first)]
+#![deny(unused_crate_dependencies)]
+#![warn(clippy::used_underscore_binding)]
+#![forbid(unsafe_code)]
+
 extern crate self as email_auth;
 
 mod handlers;
@@ -45,7 +50,7 @@ impl Config {
 pub fn wasm_handler_link(
     path: &str,
     ft_sdk::Host(host): &ft_sdk::Host,
-    ft_sdk::AppUrl{url, ..}: ft_sdk::AppUrl,
+    ft_sdk::AppUrl { url, .. }: ft_sdk::AppUrl,
 ) -> String {
     let path = path.trim_start_matches('/');
     let path = path.trim_end_matches('/');

@@ -11,8 +11,202 @@ system-is-confidential: false
 -- fastn.auto-import: lets-auth.fifthtry.site as lets-auth
 -- fastn.auto-import: lets-auth.fifthtry.site/assets
 
--- fastn.migration: Empty
 
-;; We are interested in default tables ('fastn_user' for example) created by
-;; fastn. `fastn` requires at least one `-- fastn.migration:` decl to do that.
-SELECT 1;
+-- fastn.migration: 0002-add-folders-and-permissions
+
+
+;; how to think about permission.
+;;
+;; first there is a graph, a directed acyclic graph to be more precise, or multi
+;; parent tree. we will call the nodes folders, and graph will be called folder
+;; tree. for every site there is one such folder tree.
+;;
+;; all users are part of the folder tree (can be added to one or more folders)
+;;
+;; all objects are part of the folder tree (can be added to one or more folders)
+;;
+;; all permissions are part of the folder tree (can be added ...). all
+;; permissions for a given app/object combination, the permissions are sortable,
+;; so if you ask for a permission, if you have a higher permission, you are
+;; assumed to have lower permissions too.
+;;
+;; there is also a user permission table, which stores direct permission user
+;; has on any object. this is to be used if you are directly granting some
+;; specific permission on some object to some specific user, and do not want to
+;; use the folder tree based permissions. this is because some times we want to
+;; do adhoc permissions, and forcing people to always create folders, especially
+;; if they are adhoc with no logical meaning, it feels cumbersome etc, and
+;; people may not like it.
+;;
+;; question: how do i know if a user has permission to do something?
+;;
+;; first check if user permission table directly grants you enough permission.
+;; if not, find all the paths from the object to the root. for each each path,
+;; p1, p2 etc, find the highest permission user has on that path (user only has
+;; permission of a folder at same level as the folder or below where they are
+;; added). stop when first path returns high enough permission.
+
+
+\-- semantics: this table is used to store the folders
+CREATE TABLE IF NOT EXISTS fastn_folder
+(
+    id           INTEGER PRIMARY KEY,
+    guid         TEXT NOT NULL PRIMARY KEY,
+    name         TEXT NOT NULL,
+    kind         TEXT NOT NULL DEFAULT "folder",
+
+    created_at   INTEGER NOT NULL,
+    updated_at   INTEGER NOT NULL
+) STRICT;
+
+
+\-- semantics: this table is used to store the relation between folders
+CREATE TABLE IF NOT EXISTS fastn_folder_relation
+(
+    id             INTEGER PRIMARY KEY,
+    folder         INTEGER NOT NULL,
+    parent         INTEGER NOT NULL
+
+    CONSTRAINT fk_fastn_folder_relation_folder FOREIGN KEY (folder) REFERENCES fastn_folder (id)
+    CONSTRAINT fk_fastn_folder_relation_parent FOREIGN KEY (parent) REFERENCES fastn_folder (id)
+) STRICT;
+
+
+\-- semantics: this table is used to store the objects in a folder
+CREATE TABLE IF NOT EXISTS fastn_folder_object (
+    id             INTEGER PRIMARY KEY,
+    fid            INTEGER NULL,
+    app            TEXT NOT NULL,
+    okind          TEXT NOT NULL,
+    oid            TEXT NOT NULL
+)
+
+\-- semantics: this table is used to store the users in a folder
+CREATE TABLE IF NOT EXISTS fastn_folder_user (
+    id             INTEGER PRIMARY KEY,
+    fid            INTEGER NULL,
+    uid            INTEGER NULL,
+    role           TEXT NOT NULL,
+)
+
+\-- this table is used to store roles of a user in a folder
+\-- normally permission should be managed by fastn_permission table, but the
+\-- role can be used to decide what permissions you have on a given folder.
+\-- possible values of role: member, admin, owner. owner can remove owner, but
+\-- only other owner can remove an owner. only admin can remove a member, or
+\-- another admin.
+\-- semantics: people in this folder have these permissions on any object in
+\-- this folder. this will also contain the permissions for the folder itself,
+\-- e.g., if you can see the folder.
+CREATE TABLE IF NOT EXISTS fastn_folder_permission
+(
+    id             INTEGER PRIMARY KEY,
+    fid            INTEGER NOT NULL,
+    app            TEXT NOT NULL,
+    permission     TEXT NOT NULL,
+
+    valid_since    INTEGER NOT NULL, -- usually the time of creation
+    valid_till     INTEGER NULL,     -- if null, permission is valid forever
+    two_factor     BOOLEAN NOT NULL DEFAULT false, -- if true, user must use 2FA
+
+    CONSTRAINT fk_fastn_role_user FOREIGN KEY (uid) REFERENCES fastn_user (id)
+    CONSTRAINT fk_fastn_role_folder FOREIGN KEY (fid) REFERENCES fastn_folder (id)
+    CONSTRAINT check_fastn_role_unique_user_folder UNIQUE (uid, fid)
+    CONSTRAINT check_fastn_role_valid_role CHECK (role IN ("member", "admin", "owner"))
+) STRICT;
+
+
+;; S: Siddhant
+;; A: Amit
+;; N: Nandini
+;; R: RG
+
+;; folder structure
+;; /{1]
+;;   /fifthtry{2} (SAN) [Blog:Read]
+;;      /finance{3} ()
+;;      /marketing{4} (AN) [Blog:Write]
+;;         ->{6}
+;;      /tech{5} (SA) [Blog:Write]
+;;         ->{7}
+;;      /blog{6} ()
+;;          /tech-posts{7} ()
+;;   /today-has-been{8} (AR)
+
+
+;; who is part of finance department: no one
+
+
+\-- semantics: store explicit permissions for a user on an object
+\-- this folder is only needed if we can not handle all permissions using
+\-- folder permissions.
+CREATE TABLE IF NOT EXISTS fastn_permission
+(
+    id             INTEGER PRIMARY KEY,
+    uid            INTEGER NOT NULL,
+    app            TEXT NOT NULL,
+    okind          TEXT NOT NULL,
+    oid            TEXT NOT NULL,
+    permission     TEXT NOT NULL,
+
+    valid_since    INTEGER NOT NULL, -- usually the time of creation
+    valid_till     INTEGER NULL,     -- if null, permission is valid forever
+    two_factor     BOOLEAN NOT NULL DEFAULT false, -- if true, user must use 2FA
+
+    CONSTRAINT fk_fastn_permission_user FOREIGN KEY (uid) REFERENCES fastn_user (id)
+    CONSTRAINT check_fastn_permission_valid_permission CHECK (permission IN ("read", "write", "delete"))
+) STRICT;
+
+
+;; question: how to check if a user has permission to do something?
+;; 1. SQL: check if the user has a permission on that object, if yes return
+;; 2. SQL: find all parent folders of the object (possible in one query?)
+;; 3. for each folder, get the permission and check if the user belongs to that
+;;    folder, if so done.
+
+;; we can de-normalise user permissions for folders, eg in this folder sub tree
+;; I have read permission, so we do not have to keep track of all the folders
+;; below it. we can store <permission-name>: [<folder>] for user, and check if
+;; any of the parents of the object is present in the list.
+
+;; question: how to find all objects a user has specific permission for?
+;; 1. SQL: for the specific permission, look into user's permission-folder cache
+;;    mentioned above, find all folders in which the user has that permission.
+;; 2. find all objects in those folders.
+
+
+
+
+
+
+
+-- fastn.migration: 0001-initial-migration
+
+;; this migration used to exist in fastn, we are moving it to lets-auth
+;; https://github.com/fastn-stack/fastn/blob/main/fastn-core/src/migrations/fastn_migrations.rs
+
+
+CREATE TABLE IF NOT EXISTS fastn_user
+(
+    id           INTEGER PRIMARY KEY,
+    name         TEXT,
+    identity     TEXT    UNIQUE,
+    data         TEXT    NOT NULL,
+
+    created_at   INTEGER NOT NULL,
+    updated_at   INTEGER NOT NULL
+) STRICT;
+
+
+CREATE TABLE IF NOT EXISTS fastn_session
+(
+    id         TEXT    NOT NULL PRIMARY KEY,
+    uid        INTEGER,
+    data       TEXT    NOT NULL,
+
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    expires_at INTEGER,
+
+    CONSTRAINT fk_fastn_user FOREIGN KEY (uid) REFERENCES fastn_user (id)
+) STRICT;
