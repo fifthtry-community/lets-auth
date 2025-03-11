@@ -54,6 +54,7 @@ CREATE TABLE IF NOT EXISTS fastn_folder
     guid         TEXT NOT NULL PRIMARY KEY,
     name         TEXT NOT NULL,
     kind         TEXT NOT NULL DEFAULT "folder",
+    is_exception BOOLEAN,
 
     created_at   INTEGER NOT NULL,
     updated_at   INTEGER NOT NULL
@@ -86,13 +87,20 @@ CREATE TABLE IF NOT EXISTS fastn_folder_user (
     id             INTEGER PRIMARY KEY,
     fid            INTEGER NULL,
     uid            INTEGER NULL,
-    role           TEXT NOT NULL,
+)
+
+;; folder -> exception folder permission but group is also a folder
+;; You can attach a bunch of users and permissions to `exception_folder` but not child objects.
+CREATE TABLE IF NOT EXISTS fastn_folder_exception_permission (
+    id             INTEGER PRIMARY KEY,
+    fid            INTEGER NULL,
+    exception_folder   INTEGER NULL,
 )
 
 \-- this table is used to store roles of a user in a folder
 \-- normally permission should be managed by fastn_permission table, but the
 \-- role can be used to decide what permissions you have on a given folder.
-\-- possible values of role: member, admin, owner. owner can remove owner, but
+\-- possible values of role: member, admin, owner. owner can remove anyone, but
 \-- only other owner can remove an owner. only admin can remove a member, or
 \-- another admin.
 \-- semantics: people in this folder have these permissions on any object in
@@ -102,36 +110,51 @@ CREATE TABLE IF NOT EXISTS fastn_folder_permission
 (
     id             INTEGER PRIMARY KEY,
     fid            INTEGER NOT NULL,
-    app            TEXT NOT NULL,
-    permission     TEXT NOT NULL,
+    permission     INTEGER NOT NULL,
 
     valid_since    INTEGER NOT NULL, -- usually the time of creation
     valid_till     INTEGER NULL,     -- if null, permission is valid forever
     two_factor     BOOLEAN NOT NULL DEFAULT false, -- if true, user must use 2FA
 
     CONSTRAINT fk_fastn_role_user FOREIGN KEY (uid) REFERENCES fastn_user (id)
+    CONSTRAINT fk_fastn_folder_permission_permissions FOREIGN KEY (permission) REFERENCES fastn_app_permission (id)
     CONSTRAINT fk_fastn_role_folder FOREIGN KEY (fid) REFERENCES fastn_folder (id)
     CONSTRAINT check_fastn_role_unique_user_folder UNIQUE (uid, fid)
-    CONSTRAINT check_fastn_role_valid_role CHECK (role IN ("member", "admin", "owner"))
 ) STRICT;
+
 
 
 ;; S: Siddhant
 ;; A: Amit
 ;; N: Nandini
 ;; R: RG
+;; X: superuser
 
 ;; folder structure
-;; /{1]
+;; /{1} (X) [admin:*]
 ;;   /fifthtry{2} (SAN) [Blog:Read]
 ;;      /finance{3} ()
 ;;      /marketing{4} (AN) [Blog:Write]
-;;         ->{6}
+;;         ->{8}
 ;;      /tech{5} (SA) [Blog:Write]
 ;;         ->{7}
 ;;      /blog{6} ()
+            "blog x"
 ;;          /tech-posts{7} ()
+                "blog y"
+;;          /marketing{8} ()
+                "blog x"
 ;;   /today-has-been{8} (AR)
+
+;; A "Blog" under /fifthtry/ (/fifthtry/**) can be read by SAN
+;; A "Blog" created by A can have parent folders either /fifthtry/marketing/, /fifthtry/tech/, and, /fifthtry/marketing/blog/
+
+;; On /blog/ page. It'll show all the blogs associated with /fifthtry/blog/
+
+
+;; who can create an orphan blog?
+;; -> an app can insert "blog" with no "parent" to it.
+;; who can create a blog that has "parents column" set as /fifthtry/marketing/?
 
 
 ;; who is part of finance department: no one
@@ -140,13 +163,13 @@ CREATE TABLE IF NOT EXISTS fastn_folder_permission
 \-- semantics: store explicit permissions for a user on an object
 \-- this folder is only needed if we can not handle all permissions using
 \-- folder permissions.
-CREATE TABLE IF NOT EXISTS fastn_permission
+CREATE TABLE IF NOT EXISTS fastn_user_object_permission
 (
     id             INTEGER PRIMARY KEY,
     uid            INTEGER NOT NULL,
     app            TEXT NOT NULL,
     okind          TEXT NOT NULL,
-    oid            TEXT NOT NULL,
+    oid            INTEGER NOT NULL, -- not sure if this should be a integer. can't have fk anyway
     permission     TEXT NOT NULL,
 
     valid_since    INTEGER NOT NULL, -- usually the time of creation
@@ -154,8 +177,22 @@ CREATE TABLE IF NOT EXISTS fastn_permission
     two_factor     BOOLEAN NOT NULL DEFAULT false, -- if true, user must use 2FA
 
     CONSTRAINT fk_fastn_permission_user FOREIGN KEY (uid) REFERENCES fastn_user (id)
-    CONSTRAINT check_fastn_permission_valid_permission CHECK (permission IN ("read", "write", "delete"))
 ) STRICT;
+
+
+\-- semantics: permissions associated with a specific app. This lets you define permissions and precedence among them
+;; How do we know which permission implies other perms? For example, I want to
+;; assume "read" access if the user has "write" access.
+CREATE TABLE IF NOT EXISTS fastn_app_permission
+(
+    id
+    app
+    okind        TEXT NOT NULL,
+    permission   TEXT NOT NULL,
+    parent_permission fk to itself,
+) STRICT;
+
+;; fastn:can_read_folder -> This will show/hide folder name/meta
 
 
 ;; question: how to check if a user has permission to do something?
@@ -178,12 +215,10 @@ CREATE TABLE IF NOT EXISTS fastn_permission
 
 
 
-
-
 -- fastn.migration: 0001-initial-migration
 
 ;; this migration used to exist in fastn, we are moving it to lets-auth
-;; https://github.com/fastn-stack/fastn/blob/main/fastn-core/src/migrations/fastn_migrations.rs
+;; https://github.com/fastn-stack/fastn/blob/899ad96/fastn-core/src/migrations/fastn_migrations.rs
 
 
 CREATE TABLE IF NOT EXISTS fastn_user
