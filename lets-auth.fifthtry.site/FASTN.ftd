@@ -89,13 +89,31 @@ CREATE TABLE IF NOT EXISTS fastn_folder_user (
     uid            INTEGER NULL,
 )
 
-;; folder -> exception folder permission but group is also a folder
+;; folder -> exception folder permission
 ;; You can attach a bunch of users and permissions to `exception_folder` but not child objects.
+;; This allows you to have a `superuser` exception_folder and some users are
+;; attached to this folder. And this folder is attached to `fid`
+;; This way you manage super users on the `exception_folder` but apply those privileges to selected `fid`s
 CREATE TABLE IF NOT EXISTS fastn_folder_exception_permission (
     id             INTEGER PRIMARY KEY,
     fid            INTEGER NULL,
     exception_folder   INTEGER NULL,
+
+
+    ;; TODO: setup fks
 )
+
+;; folder -> exception user permission
+;; exception_user is a normal `fastn_user` that has a certain `permission` on `fid` folder
+CREATE TABLE IF NOT EXISTS fastn_folder_exception_permission (
+    id             INTEGER PRIMARY KEY,
+    fid            INTEGER NULL,
+    exception_user fk to fastn_user,
+    permission     fk to fastn_app_permission,
+
+    ;; TODO: setup fks
+)
+
 
 \-- this table is used to store roles of a user in a folder
 \-- normally permission should be managed by fastn_permission table, but the
