@@ -12,7 +12,8 @@ system-is-confidential: false
 -- fastn.auto-import: lets-auth.fifthtry.site/assets
 
 
--- fastn.migration: 0002-add-folders-and-permissions
+;; TODO: uncomment the following when we have some use of the folder based permissions model
+\-- fastn.migration: 0002-add-folders-and-permissions
 
 
 ;; how to think about permission.
