@@ -48,7 +48,7 @@ system-is-confidential: false
 
 
 \-- semantics: this table is used to store the folders
-CREATE TABLE IF NOT EXISTS lets_auth_folder
+CREATE TABLE IF NOT EXISTS fastn_folder
 (
     id           INTEGER PRIMARY KEY,
     guid         TEXT NOT NULL UNIQUE,
@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS lets_auth_folder
 ) STRICT;
 
 \-- semantics: this table is used to store the users in a folder
-CREATE TABLE IF NOT EXISTS lets_auth_folder_user (
+CREATE TABLE IF NOT EXISTS fastn_folder_user (
     id             INTEGER PRIMARY KEY,
     fid            INTEGER NULL,
     uid            INTEGER NULL,
