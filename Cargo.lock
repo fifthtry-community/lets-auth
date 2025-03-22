@@ -349,7 +349,7 @@ dependencies = [
 
 [[package]]
 name = "ft-sdk"
-version = "0.6.3"
+version = "0.6.2"
 dependencies = [
  "anyhow",
  "bytes",
