@@ -9,6 +9,7 @@ on:
       - mobile-auth-provider/**
       - scripts/*.sh
       - .github/workflows/app-to-ft.yml
+      - Cargo.toml
 
 
 jobs:
