@@ -19,4 +19,4 @@ pub use config::Config;
 pub use denormalized_folders::denormalized_folders;
 #[expect(unused)]
 pub(crate) use folder::DbFolder;
-pub use folder::{Folder, FolderID};
+pub use folder::{Folder, FolderID, has_perms_on_folder};

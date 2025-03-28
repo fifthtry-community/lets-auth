@@ -12,8 +12,7 @@ system-is-confidential: false
 -- fastn.auto-import: lets-auth.fifthtry.site/assets
 
 
-;; TODO: uncomment the following when we have some use of the folder based permissions model
-\-- fastn.migration: 0002-add-folders-and-permissions
+-- fastn.migration: 0002-add-folder-and-folder-users
 
 
 ;; how to think about permission.
@@ -52,76 +51,26 @@ system-is-confidential: false
 CREATE TABLE IF NOT EXISTS fastn_folder
 (
     id           INTEGER PRIMARY KEY,
-    guid         TEXT NOT NULL,
+    guid         TEXT NOT NULL UNIQUE,
     name         TEXT NOT NULL,
-    kind         TEXT NOT NULL DEFAULT "folder",
-    is_exception INTEGER DEFAULT false,
+    is_exception INTEGER DEFAULT false, -- see fastn_folder_exception_permission for more context
 
     created_at   INTEGER NOT NULL,
     updated_at   INTEGER NOT NULL
 ) STRICT;
 
-
-\-- semantics: this table is used to store the relation between folders
-CREATE TABLE IF NOT EXISTS fastn_folder_relation
-(
-    id             INTEGER PRIMARY KEY,
-    folder         INTEGER NOT NULL,
-    parent         INTEGER NOT NULL,
-
-    FOREIGN KEY (folder) REFERENCES fastn_folder (id),
-    FOREIGN KEY (parent) REFERENCES fastn_folder (id)
-) STRICT;
-
-
-\-- semantics: this table is used to store the objects in a folder
-CREATE TABLE IF NOT EXISTS fastn_folder_object (
-    id             INTEGER PRIMARY KEY,
-    fid            INTEGER NOT NULL,
-    app            TEXT NOT NULL,
-    okind          TEXT NOT NULL,
-    oid            INTEGER NOT NULL,
-
-    FOREIGN KEY (fid) REFERENCES fastn_folder (id)
-) STRICT;
-
 \-- semantics: this table is used to store the users in a folder
 CREATE TABLE IF NOT EXISTS fastn_folder_user (
     id             INTEGER PRIMARY KEY,
-    fid            INTEGER NULL,
-    uid            INTEGER NULL,
+    fguid          TEXT NOT NULL,
+    uid            INTEGER NOT NULL,
 
-    FOREIGN KEY (fid) REFERENCES fastn_folder (id),
+    created_at   INTEGER NOT NULL,
+    updated_at   INTEGER NOT NULL,
+
+    FOREIGN KEY (fguid) REFERENCES fastn_folder (guid),
     FOREIGN KEY (uid) REFERENCES fastn_user (id)
 ) STRICT;
-
-;; folder -> exception folder permission
-;; You can attach a bunch of users and permissions to `exception_folder` but not child objects.
-;; This allows you to have a `superuser` exception_folder and some users are
-;; attached to this folder. And this folder is attached to `fid`
-;; This way you manage super users on the `exception_folder` but apply those privileges to selected `fid`s
-CREATE TABLE IF NOT EXISTS fastn_folder_exception_permission (
-    id                INTEGER PRIMARY KEY,
-    fid               INTEGER NULL,
-    exception_folder  INTEGER NULL,
-
-    FOREIGN KEY (fid) REFERENCES fastn_folder (id),
-    FOREIGN KEY (exception_folder) REFERENCES fastn_folder (id)
-) STRICT;
-
-;; folder -> exception user permission
-;; exception_user is a normal `fastn_user` that has a certain `permission` on `fid` folder
-CREATE TABLE IF NOT EXISTS fastn_user_exception_permission (
-    id             INTEGER PRIMARY KEY,
-    fid            INTEGER NULL,
-    exception_user INTEGER NULL,
-    permission     INTEGER NULL,
-
-    FOREIGN KEY (fid) REFERENCES fastn_folder (id),
-    FOREIGN KEY (exception_user) REFERENCES fastn_user (id),
-    FOREIGN KEY (permission) REFERENCES fastn_app_permission (id)
-) STRICT;
-
 
 \-- this table is used to store roles of a user in a folder
 \-- normally permission should be managed by fastn_permission table, but the
@@ -135,16 +84,73 @@ CREATE TABLE IF NOT EXISTS fastn_user_exception_permission (
 CREATE TABLE IF NOT EXISTS fastn_folder_permission
 (
     id             INTEGER PRIMARY KEY,
-    fid            INTEGER NOT NULL,
+    fguid          TEXT NOT NULL,
     permission     INTEGER NOT NULL,
 
     valid_since    INTEGER NOT NULL, -- usually the time of creation
     valid_till     INTEGER NULL,     -- if null, permission is valid forever
     two_factor     INTEGER NOT NULL DEFAULT false, -- if true, user must use 2FA
 
-    FOREIGN KEY (fid) REFERENCES fastn_folder (id),
+    created_at   INTEGER NOT NULL,
+    updated_at   INTEGER NOT NULL,
+
+    FOREIGN KEY (fguid) REFERENCES fastn_folder (guid),
     FOREIGN KEY (permission) REFERENCES fastn_app_permission (id)
 ) STRICT;
+
+
+
+\-- semantics: this table is used to store the relation between folders
+;; CREATE TABLE IF NOT EXISTS fastn_folder_relation
+;; (
+;;     id             INTEGER PRIMARY KEY,
+;;     folder         INTEGER NOT NULL,
+;;     parent         INTEGER NOT NULL,
+;; 
+;;     FOREIGN KEY (folder) REFERENCES fastn_folder (id),
+;;     FOREIGN KEY (parent) REFERENCES fastn_folder (id)
+;; ) STRICT;
+;; 
+;; 
+;; \-- semantics: this table is used to store the objects in a folder
+;; CREATE TABLE IF NOT EXISTS fastn_folder_object (
+;;     id             INTEGER PRIMARY KEY,
+;;     fid            INTEGER NOT NULL,
+;;     app            TEXT NOT NULL,
+;;     okind          TEXT NOT NULL,
+;;     oid            INTEGER NOT NULL,
+;; 
+;;     FOREIGN KEY (fid) REFERENCES fastn_folder (id)
+;; ) STRICT;
+
+;; folder -> exception folder permission
+;; You can attach a bunch of users and permissions to `exception_folder` but not child objects.
+;; This allows you to have a `superuser` exception_folder and some users are
+;; attached to this folder. And this folder is attached to `fid`
+;; This way you manage super users on the `exception_folder` but apply those privileges to selected `fid`s
+;; CREATE TABLE IF NOT EXISTS fastn_folder_exception_permission (
+;;     id                INTEGER PRIMARY KEY,
+;;     fid               INTEGER NULL,
+;;     exception_folder  INTEGER NULL,
+;; 
+;;     FOREIGN KEY (fid) REFERENCES fastn_folder (id),
+;;     FOREIGN KEY (exception_folder) REFERENCES fastn_folder (id)
+;; ) STRICT;
+
+;; folder -> exception user permission
+;; exception_user is a normal `fastn_user` that has a certain `permission` on `fid` folder
+;; CREATE TABLE IF NOT EXISTS fastn_user_exception_permission (
+;;     id             INTEGER PRIMARY KEY,
+;;     fid            INTEGER NULL,
+;;     exception_user INTEGER NULL,
+;;     permission     INTEGER NULL,
+;; 
+;;     FOREIGN KEY (fid) REFERENCES fastn_folder (id),
+;;     FOREIGN KEY (exception_user) REFERENCES fastn_user (id),
+;;     FOREIGN KEY (permission) REFERENCES fastn_app_permission (id)
+;; ) STRICT;
+
+
 
 
 
@@ -182,35 +188,35 @@ CREATE TABLE IF NOT EXISTS fastn_folder_permission
 \-- semantics: store explicit permissions for a user on an object
 \-- this folder is only needed if we can not handle all permissions using
 \-- folder permissions.
-CREATE TABLE IF NOT EXISTS fastn_user_object_permission
-(
-    id             INTEGER PRIMARY KEY,
-    uid            INTEGER NOT NULL,
-    oid            INTEGER NOT NULL, -- not sure if this should be a integer. can't have fk anyway
-    permission    INTEGER NOT NULL,
-
-    valid_since    INTEGER NOT NULL, -- usually the time of creation
-    valid_till     INTEGER NULL,     -- if null, permission is valid forever
-    two_factor     INTEGER NOT NULL DEFAULT false, -- if true, user must use 2FA
-
-    FOREIGN KEY (uid) REFERENCES fastn_user (id),
-    FOREIGN KEY (permission) REFERENCES fastn_app_permission (id)
-) STRICT;
+;; CREATE TABLE IF NOT EXISTS fastn_user_object_permission
+;; (
+;;     id             INTEGER PRIMARY KEY,
+;;     uid            INTEGER NOT NULL,
+;;     oid            INTEGER NOT NULL, -- not sure if this should be a integer. can't have fk anyway
+;;     permission    INTEGER NOT NULL,
+;; 
+;;     valid_since    INTEGER NOT NULL, -- usually the time of creation
+;;     valid_till     INTEGER NULL,     -- if null, permission is valid forever
+;;     two_factor     INTEGER NOT NULL DEFAULT false, -- if true, user must use 2FA
+;; 
+;;     FOREIGN KEY (uid) REFERENCES fastn_user (id),
+;;     FOREIGN KEY (permission) REFERENCES fastn_app_permission (id)
+;; ) STRICT;
 
 
 \-- semantics: permissions associated with a specific app. This lets you define permissions and precedence among them
 ;; How do we know which permission implies other perms? For example, I want to
 ;; assume "read" access if the user has "write" access. We traverse the the tree using `parent_permission`, a parent permission implies child perms
-CREATE TABLE IF NOT EXISTS fastn_app_permission
-(
-    id                 INTEGER PRIMARY KEY,
-    app                TEXT NOT NULL,
-    okind              TEXT NOT NULL,
-    permission         TEXT NOT NULL,
-    parent_permission  INTEGER NULL,
-
-    FOREIGN KEY (parent_permission) REFERENCES fastn_app_permission (id)
-) STRICT;
+;; CREATE TABLE IF NOT EXISTS fastn_app_permission
+;; (
+;;     id                 INTEGER PRIMARY KEY,
+;;     app                TEXT NOT NULL,
+;;     okind              TEXT NOT NULL,
+;;     permission         TEXT NOT NULL,
+;;     parent_permission  INTEGER NULL,
+;; 
+;;     FOREIGN KEY (parent_permission) REFERENCES fastn_app_permission (id)
+;; ) STRICT;
 
 ;; fastn:can_read_folder -> This will show/hide folder name/meta
 
