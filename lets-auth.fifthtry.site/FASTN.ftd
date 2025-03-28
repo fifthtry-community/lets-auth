@@ -62,11 +62,40 @@ CREATE TABLE IF NOT EXISTS fastn_folder
 \-- semantics: this table is used to store the users in a folder
 CREATE TABLE IF NOT EXISTS fastn_folder_user (
     id             INTEGER PRIMARY KEY,
-    fid            INTEGER NULL,
-    uid            INTEGER NULL,
+    fguid          TEXT NOT NULL,
+    uid            INTEGER NOT NULL,
 
-    FOREIGN KEY (fid) REFERENCES fastn_folder (id),
+    created_at   INTEGER NOT NULL,
+    updated_at   INTEGER NOT NULL,
+
+    FOREIGN KEY (fguid) REFERENCES fastn_folder (guid),
     FOREIGN KEY (uid) REFERENCES fastn_user (id)
+) STRICT;
+
+\-- this table is used to store roles of a user in a folder
+\-- normally permission should be managed by fastn_permission table, but the
+\-- role can be used to decide what permissions you have on a given folder.
+\-- possible values of role: member, admin, owner. owner can remove anyone, but
+\-- only other owner can remove an owner. only admin can remove a member, or
+\-- another admin.
+\-- semantics: people in this folder have these permissions on any object in
+\-- this folder. this will also contain the permissions for the folder itself,
+\-- e.g., if you can see the folder.
+CREATE TABLE IF NOT EXISTS fastn_folder_permission
+(
+    id             INTEGER PRIMARY KEY,
+    fguid          TEXT NOT NULL,
+    permission     INTEGER NOT NULL,
+
+    valid_since    INTEGER NOT NULL, -- usually the time of creation
+    valid_till     INTEGER NULL,     -- if null, permission is valid forever
+    two_factor     INTEGER NOT NULL DEFAULT false, -- if true, user must use 2FA
+
+    created_at   INTEGER NOT NULL,
+    updated_at   INTEGER NOT NULL,
+
+    FOREIGN KEY (fguid) REFERENCES fastn_folder (guid),
+    FOREIGN KEY (permission) REFERENCES fastn_app_permission (id)
 ) STRICT;
 
 
@@ -122,28 +151,6 @@ CREATE TABLE IF NOT EXISTS fastn_folder_user (
 ;; ) STRICT;
 
 
-\-- this table is used to store roles of a user in a folder
-\-- normally permission should be managed by fastn_permission table, but the
-\-- role can be used to decide what permissions you have on a given folder.
-\-- possible values of role: member, admin, owner. owner can remove anyone, but
-\-- only other owner can remove an owner. only admin can remove a member, or
-\-- another admin.
-\-- semantics: people in this folder have these permissions on any object in
-\-- this folder. this will also contain the permissions for the folder itself,
-\-- e.g., if you can see the folder.
-;; CREATE TABLE IF NOT EXISTS fastn_folder_permission
-;; (
-;;     id             INTEGER PRIMARY KEY,
-;;     fid            INTEGER NOT NULL,
-;;     permission     INTEGER NOT NULL,
-;; 
-;;     valid_since    INTEGER NOT NULL, -- usually the time of creation
-;;     valid_till     INTEGER NULL,     -- if null, permission is valid forever
-;;     two_factor     INTEGER NOT NULL DEFAULT false, -- if true, user must use 2FA
-;; 
-;;     FOREIGN KEY (fid) REFERENCES fastn_folder (id),
-;;     FOREIGN KEY (permission) REFERENCES fastn_app_permission (id)
-;; ) STRICT;
 
 
 
