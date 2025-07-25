@@ -1,5 +1,5 @@
 [workspace]
-members = ["common", "backend", "mobile-auth-provider", "sdk"]
+members = ["xtask", "common", "backend", "mobile-auth-provider", "sdk"]
 resolver = "2"
 
 
